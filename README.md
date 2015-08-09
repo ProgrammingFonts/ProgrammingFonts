@@ -183,7 +183,7 @@ Fira Code/Regular/16:
 
 ![](https://raw.githubusercontent.com/ifeegoo/ifeegoo-programming-fonts-collections/master/Fira-Code/programming-font-fira-code-display-result.png "Programming Font Fira Code Display Result")
 
-#### MoreInformation:
+#### More Information:
 
 [http://www.ifeegoo.com/recommended-programming-fonts.html](http://www.ifeegoo.com/recommended-programming-fonts.html)
 
