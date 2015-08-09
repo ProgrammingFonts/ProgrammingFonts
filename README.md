@@ -124,7 +124,7 @@ Droid Sans Mono/Regular/14:
 
 | Information         | Description
 | ------------------- | -----------
-| Designer(s)         | [Paul D. Hunt](http://www.adobe.com/products/type/font-designers/paul-hunt.html)
+| Designer(s)         | Deja Vu
 | Date created        | 2004
 | License             | [Bitstream Vera Fonts Copyright](http://dejavu-fonts.org/wiki/License),[Arev Fonts Copyright](http://dejavu-fonts.org/wiki/License)
 | Official Site       | [http://dejavu-fonts.org/wiki/Main_Page](http://dejavu-fonts.org/wiki/Main_Page)
@@ -136,6 +136,53 @@ Sample:
 Deja Vu Sans Mono/Book/16:
 
 ![](https://raw.githubusercontent.com/ifeegoo/ifeegoo-programming-fonts-collections/master/Deja-Vu-Sans-Mono/programming-font-deja-vu-sans-mono-display-result.png "Programming Font Deja Vu Sans Mono Display Result")
+
+9.Consolas
+
+| Information         | Description
+| ------------------- | -----------
+| Designer(s)         | [Luc(as) de Groot](https://en.wikipedia.org/wiki/Luc(as)_de_Groot)
+| Foundry             | [Microsoft](http://www.microsoft.com/)
+| Date created        | Unknown
+
+Sample:
+
+![](https://raw.githubusercontent.com/ifeegoo/ifeegoo-programming-fonts-collections/master/Consolas/font-consolas-sample.png "Font Consolas Sample")
+
+Consolas/Regular/16:
+
+![](https://raw.githubusercontent.com/ifeegoo/ifeegoo-programming-fonts-collections/master/Consolas/programming-font-consolas-display-result.png "Programming Font Consolas Display Result")
+
+10.Inconsolata
+
+| Information         | Description
+| ------------------- | -----------
+| Designer(s)         | [Raph Levien](https://en.wikipedia.org/wiki/Raph_Levien)
+| Date created        | 2001
+| Design based on     | Consolas, Avenir, Letter Gothic
+| License             | [SIL Open Font License](https://en.wikipedia.org/wiki/SIL_Open_Font_License)
+
+Sample:
+
+![](https://raw.githubusercontent.com/ifeegoo/ifeegoo-programming-fonts-collections/master/Inconsolata/font-inconsolata-sample.png "Font Inconsolata Sample")
+
+Source Code Pro/Extra Light/16:
+
+![](https://raw.githubusercontent.com/ifeegoo/ifeegoo-programming-fonts-collections/master/Inconsolata/programming-font-inconsolata-display-result.png "Programming Font Inconsolata Display Result")
+
+11.Fira Code
+
+| Information         | Description
+| ------------------- | -----------
+| Designer(s)         | [Nikita Prokopov](https://github.com/tonsky)
+| Date created        | 2014
+| License             | [SIL Open Font License](https://en.wikipedia.org/wiki/SIL_Open_Font_License)
+
+
+Fira Code/Regular/16:
+
+![](https://raw.githubusercontent.com/ifeegoo/ifeegoo-programming-fonts-collections/master/Fira-Code/programming-font-fira-code-display-result.png "Programming Font Fira Code Display Result")
+
 
 #### Notice:
 
