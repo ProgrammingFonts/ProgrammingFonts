@@ -166,7 +166,7 @@ Sample:
 
 ![](https://raw.githubusercontent.com/ifeegoo/ifeegoo-programming-fonts-collections/master/Inconsolata/font-inconsolata-sample.png "Font Inconsolata Sample")
 
-Source Code Pro/Extra Light/16:
+Inconsolata/Medium/16:
 
 ![](https://raw.githubusercontent.com/ifeegoo/ifeegoo-programming-fonts-collections/master/Inconsolata/programming-font-inconsolata-display-result.png "Programming Font Inconsolata Display Result")
 
@@ -183,6 +183,9 @@ Fira Code/Regular/16:
 
 ![](https://raw.githubusercontent.com/ifeegoo/ifeegoo-programming-fonts-collections/master/Fira-Code/programming-font-fira-code-display-result.png "Programming Font Fira Code Display Result")
 
+#### MoreInformation:
+
+[http://www.ifeegoo.com/recommended-programming-fonts.html](http://www.ifeegoo.com/recommended-programming-fonts.html)
 
 #### Notice:
 
