@@ -1,8 +1,8 @@
-# ifeegoo-programming-fonts-collections
+# ifeegoo-programming-fonts-collection
 
 #### What's this?
 
-This is only collections of programming fonts,just share this with the programmers.
+This is only a collection of programming fonts,just share this with the programmers.
 
 #### Copyright Declaration:
 
