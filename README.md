@@ -191,7 +191,7 @@ Fira Code/Regular/16:
 
 The fonts here maybe not the latest,and lack of some fonts,but I will update by continuous.
 
-#### Share:
+#### Contribution:
 
-If you have more programming fonts to share with programmers,please tell me in the issues!
+If you what to share the programming fonts that you know or update this project,you can fork this repository to contribute or tell me in the issues.
 
