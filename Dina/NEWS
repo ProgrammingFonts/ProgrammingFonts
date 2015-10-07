@@ -1,0 +1,22 @@
+Dina 2.92 (2013.09.07)
+
+  * Moved bold, italic, and bold italic styles to separate files
+  * Updated BDF files
+
+Dina 2.91 (2013.08.25)
+
+  * Fixed `&` in Dina 10 regular
+  * Updated copyright strings in all fonts
+
+Dina 2.90 (2013.08.23)
+
+  * Added a 6 point version of Dina regular
+  * Extended top line in `j` to make it easier to distinguish from `i`
+  * Moved top part of `&` right and adjusted height
+  * Moved `%` up
+  * Changed `ø` and `Ø` to look less like `0`
+  * Changed `æ` and `ß` to look more harmonious in text
+  * Moved down starting question and exclamation marks
+  * Fixed single and double text quotes
+  * Fixed positioning of degree, ordinals, and powers
+  * Fixed various other symbols
