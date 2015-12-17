@@ -5,7 +5,7 @@
 
 ![https://raw.githubusercontent.com/ProgrammingFonts/programming-fonts-collection/master/Pragmata-Pro/demo/progmata-pro-demo-1.png](https://raw.githubusercontent.com/ProgrammingFonts/programming-fonts-collection/master/Pragmata-Pro/demo/progmata-pro-demo-1.png)
 
-![https://raw.githubusercontent.com/ProgrammingFonts/programming-fonts-collection/master/Pragmata-Pro/demo/progmata-pro-demo-2.png](https://raw.githubusercontent.com/ProgrammingFonts/programming-fonts-collection/master/Pragmata-Pro/demo/progmata-pro-demo-2.png)
+![https://raw.githubusercontent.com/ProgrammingFonts/programming-fonts-collection/master/Pragmata-Pro/demo/progmata-pro-demo-2.jpg](https://raw.githubusercontent.com/ProgrammingFonts/programming-fonts-collection/master/Pragmata-Pro/demo/progmata-pro-demo-2.jpg)
 
 ![https://raw.githubusercontent.com/ProgrammingFonts/programming-fonts-collection/master/Pragmata-Pro/demo/progmata-pro-demo-3.png](https://raw.githubusercontent.com/ProgrammingFonts/programming-fonts-collection/master/Pragmata-Pro/demo/progmata-pro-demo-3.png)
 
@@ -13,7 +13,7 @@
 
 ![https://raw.githubusercontent.com/ProgrammingFonts/programming-fonts-collection/master/Pragmata-Pro/demo/progmata-pro-demo-5.png](https://raw.githubusercontent.com/ProgrammingFonts/programming-fonts-collection/master/Pragmata-Pro/demo/progmata-pro-demo-5.png)
 
-![https://raw.githubusercontent.com/ProgrammingFonts/programming-fonts-collection/master/Pragmata-Pro/demo/progmata-pro-demo-6.png](https://raw.githubusercontent.com/ProgrammingFonts/programming-fonts-collection/master/Pragmata-Pro/demo/progmata-pro-demo-6.png)
+![https://raw.githubusercontent.com/ProgrammingFonts/programming-fonts-collection/master/Pragmata-Pro/demo/progmata-pro-demo-6.jpg](https://raw.githubusercontent.com/ProgrammingFonts/programming-fonts-collection/master/Pragmata-Pro/demo/progmata-pro-demo-6.jpg)
 
 ![https://raw.githubusercontent.com/ProgrammingFonts/programming-fonts-collection/master/Pragmata-Pro/demo/progmata-pro-demo-7.png](https://raw.githubusercontent.com/ProgrammingFonts/programming-fonts-collection/master/Pragmata-Pro/demo/progmata-pro-demo-7.png)
 
