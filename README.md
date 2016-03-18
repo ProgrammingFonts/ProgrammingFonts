@@ -2,7 +2,9 @@
 
 #### Official website:
 
-[http://www.programmingfonts.com](http://www.programmingfonts.com) [Notice:I have changed my domain supplier these days,so I need to modify some configuration to make it work later.]
+[http://www.programmingfonts.com](http://www.programmingfonts.com) 
+
+[Notice:I have changed my domain supplier these days,so I need to modify some configuration to make it work later.]
 
 #### Github
 
