@@ -1,0 +1,72 @@
+INPUT
+===============
+
+## FONT INSTALLATION
+
+Once you have downloaded and unzipped your fonts, you can install them on your system. Please choose one of the methods below and follow the instructions to install your fonts. 
+
+Using Font Management Software:
+
+Many users managing large collections of fonts use font management software, which allow them to activate and deactivate fonts, organize their font library, and provide various other features.
+
+If you are using font management software, follow the installation instructions that came with the software. Typically installation is as simple as dragging the font file into the font management software. 
+
+
+### Using Mac OS:
+
+Close all open applications, and locate the folder of fonts that you want to install in Finder.
+
+On Mac OS X, we recommend installing fonts using Font Book, an app. Simply drag the font files onto Font Book to install.
+
+Alternatively, you can drag the font files manually to the /User/Library/Fonts folder, or in versions prior to OS X, the /System/Fonts folder.
+
+
+### Using Windows:
+
+	1. Navigate to Control Panel > Fonts. You can find the Control Panel in Start > Control Panel, or in versions prior to Windows XP,  Start > Settings > Control Panel. 
+
+	2. Choose File > Install New Font.
+
+	3. In the dialog, locate the fonts you want to install by choosing the drive and folder where the fonts are located. Once the folder is selected, the fonts will appear under List of Fonts.
+
+	4. From the List of Fonts, select the fonts that you would like to install (CTRL+A will select all fonts in the list). We recommend that you select Copy fonts to the Fonts folder.
+
+	5. When you see the font name in the Fonts folder, the font has been loaded and is ready for use.
+
+Alternatively, in recent versions of Windows, you can simply right-click on a font file and choose “Install” from the menu.
+
+
+### Using other operating systems:
+
+I have to admit, I don't have tons of experience installing fonts on other operating systems, but usually it’s as easy as putting the font files in the right folder. Please consult your the manual for your operating system. 
+
+
+## TROUBLESHOOTING
+
+Many font installation issues are due to issues in the operating system's font caches. If you find that the fonts are not appearing in the font menu, follow the instructions below to clear your caches. If you continue to have issues installing your fonts, please contact us for assistance.
+
+
+### Clearing the Font Caches in Mac OS X:
+
+There are a variety of font cache files in Mac OS X, so we recommend you use a third party utility to clear them.
+
+FontNuke <http://www.jamapi.com/pr/fn/> is a free download that will clear font caches. Simply download the program, open it, and follow the instructions provided. Note that it requires you to restart your system.
+
+Many font management programs are also equipped to clear font caches. Please consult the instructions that came with that software.
+
+If you wish to clear the font caches manually, follow the instructions on this page: 
+
+<http://www.glyphsapp.com/tutorials/eliminating-font-cache-problems>
+
+Or, for earlier versions of OS X:
+
+<http://helpx.adobe.com/x-productkb/global/troubleshoot-fonts-mac-os-x.html>
+
+
+### Clearing the Font Cache in Windows:
+
+	1. Locate the font cache file by navigating to C:\Windows\System32\FNTCACHE.DAT. In versions prior to Windows XP, the cache file is C:\WINDOWS\ttfCache.
+
+	2. Delete this cache file by pressing the delete key or moving it to the Recycle Bin.
+
+	3. Restart your computer, and the cache file will be rebuilt.

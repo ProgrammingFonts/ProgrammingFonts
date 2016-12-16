@@ -1,0 +1,26 @@
+INPUT
+CHANGE LOG
+
+* v 1.2  2015-06-24 David Jonathan Ross <input@fontbureau.com>
+	* Removed ligatures and reset widths in Monospaced fonts so that they are strictly monospaced (all glyphs have same width value). This helps Input get recognized as monospaced by Ubuntu Terminal other apps.
+	* Fixed bug in Stylistic Set 20, fancy math characters.
+
+* v 1.1.5  2014-09-19  David Jonathan Ross  <input@fontbureau.com>
+
+	* Changed default line-height option to 1.2x.	
+	* Added web customization support for alternate curly bracket glyphs and dotless zero glyphs.
+	* Added “Download with these settings” button to preview page, which will automatically fill out the customization form on the download page.
+	* Added live-updating URL to preview and download pages, which allows bookmarking and sharing of customization settings.
+
+* v 1.1  2014-09-03  David Jonathan Ross  <input@fontbureau.com>
+	
+	* Added glyphs for [Powerline](https://github.com/Lokaltog/powerline) (U+E0A0–E0A2, U+E0B0–E0B3).
+	* Added glyph for high voltage sign character (U+26A1).
+	* Added alternate curly bracket glyphs for users who prefer simplified forms.
+	* Added alternate dotless zero glyph for users who don’t want a dot or slash in the zero.
+	* Added zero width space (U+200B) and zero width no-break space (U+FEFF).
+	* Added Stylistic Alternates {salt} OpenType feature.
+
+* v 1.0  2014-08-03  David Jonathan Ross  <input@fontbureau.com>
+	
+	* Initial release.
