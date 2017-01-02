@@ -8,8 +8,6 @@
 
 [http://www.programmingfonts.com](http://www.programmingfonts.com) 
 
-[Notice:I have changed my domain supplier these days,so I need to modify some configuration to make it work later.]
-
 #### Github
 
 [https://github.com/ProgrammingFonts/programming-fonts-collection](https://github.com/ProgrammingFonts/programming-fonts-collection)
