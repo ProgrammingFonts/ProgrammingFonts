@@ -196,9 +196,13 @@ Fira Code/Regular/16:
 
 ![](https://raw.githubusercontent.com/ifeegoo/ifeegoo-programming-fonts-collections/master/Fira-Code/programming-font-fira-code-display-result.png "Programming Font Fira Code Display Result")
 
-#### More Information:
+[iosevka](https://github.com/be5invis/Iosevka):
 
-[http://www.ifeegoo.com/recommended-programming-fonts.html](http://www.ifeegoo.com/recommended-programming-fonts.html)
+![](https://raw.githubusercontent.com/be5invis/Iosevka/master/images/preview-all.png)
+
+[Hasklig](https://github.com/i-tu/Hasklig/)
+
+![](https://github.com/i-tu/Hasklig/blob/master/hasklig_example.png?raw=true)
 
 #### Notice:
 
