@@ -1,5 +1,7 @@
 # Inter UI
 
+![Sample](sample.png)
+
 Inter UI is a typeface specially designed for user interfaces
 with focus on high legibility of small-to-medium sized text on computer screens.
 
