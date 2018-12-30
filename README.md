@@ -212,12 +212,22 @@ Fira Code/Regular/16:
 
 14. [Inter UI](https://github.com/rsms/inter)
 
+Inter UI is a typeface specially designed for user interfaces
+with focus on high legibility of small-to-medium sized text on computer screens.
+
 Sample:
 
 ![](Inter-UI-3/sample.png)
 
-Inter UI is a typeface specially designed for user interfaces
-with focus on high legibility of small-to-medium sized text on computer screens.
+
+
+15. [Input Mono](http://input.fontbureau.com/download/)
+
+Input is a flexible system of fonts designed specifically for code by David Jonathan Ross. It offers both monospaced and proportional fonts, all with a large range of widths, weights, and styles for richer code formatting.
+
+Sample: 
+
+![](Input/programming-font-input.png "Font Input Sample")
 
 
 
