@@ -206,6 +206,19 @@ Fira Code/Regular/16:
 
 ![](https://github.com/i-tu/Hasklig/blob/master/hasklig_example.png?raw=true)
 
+
+[Inter UI](https://github.com/rsms/inter)
+
+Sample:
+
+![](Inter-UI-3/sample.png)
+
+Inter UI is a typeface specially designed for user interfaces
+with focus on high legibility of small-to-medium sized text on computer screens.
+
+
+
+
 #### Notice:
 
 The fonts here maybe not the latest,and lack of some fonts,but I will update by continuous.
