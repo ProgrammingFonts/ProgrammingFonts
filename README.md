@@ -185,6 +185,7 @@ Inconsolata/Medium/16:
 
 ![](https://raw.githubusercontent.com/ifeegoo/ifeegoo-programming-fonts-collections/master/Inconsolata/programming-font-inconsolata-display-result.png "Programming Font Inconsolata Display Result")
 
+
 11.Fira Code
 
 | Information         | Description
@@ -198,16 +199,18 @@ Fira Code/Regular/16:
 
 ![](https://raw.githubusercontent.com/ifeegoo/ifeegoo-programming-fonts-collections/master/Fira-Code/programming-font-fira-code-display-result.png "Programming Font Fira Code Display Result")
 
-[iosevka](https://github.com/be5invis/Iosevka):
+
+12. [iosevka](https://github.com/be5invis/Iosevka):
 
 ![](https://raw.githubusercontent.com/be5invis/Iosevka/master/images/preview-all.png)
 
-[Hasklig](https://github.com/i-tu/Hasklig/)
+
+13. [Hasklig](https://github.com/i-tu/Hasklig/)
 
 ![](https://github.com/i-tu/Hasklig/blob/master/hasklig_example.png?raw=true)
 
 
-[Inter UI](https://github.com/rsms/inter)
+14. [Inter UI](https://github.com/rsms/inter)
 
 Sample:
 
