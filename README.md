@@ -319,6 +319,12 @@ Wyse700b        | 16x16 |12  |■|
 Wyse700b-2y     | 16x32 |24  |■|
 
 
+##### Proggy Fonts
+
+![](https://raw.githubusercontent.com/bluescan/proggyfonts/master/ProggyVector/ProggyVector_Sample.png)
+
+![](https://raw.githubusercontent.com/bluescan/proggyfonts/master/ProggyVector/ProggyVector_SampleVS.png)
+
 #### Notice:
 
 The fonts here maybe not the latest,and lack of some fonts,but I will update by continuous.
