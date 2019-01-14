@@ -24,5 +24,5 @@
 ![https://raw.githubusercontent.com/ProgrammingFonts/programming-fonts-collection/master/Pragmata-Pro/demo/progmata-pro-demo-10.png](https://raw.githubusercontent.com/ProgrammingFonts/programming-fonts-collection/master/Pragmata-Pro/demo/progmata-pro-demo-10.png)
 ### Buy It
 
-[http://www.myfonts.com/fonts/fsd/pragmata-pro/](http://www.myfonts.com/fonts/fsd/pragmata-pro/)
+[https://www.fsd.it/shop/fonts/pragmatapro/](https://www.fsd.it/shop/fonts/pragmatapro/)
 
