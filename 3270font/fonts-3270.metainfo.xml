@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="font">
+  <id>fonts-3270</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>OFL-1.1</project_license>
+  <name>IBM 3270</name>
+  <summary>monospaced font based on IBM 3270 terminals</summary>
+  <description>
+    <p>
+       This font is derived from the x3270 font, which, in turn, was translated
+ from the one in Georgia Tech's 3270tool, which was itself hand-copied
+ from a 3270 terminal.
+ .
+ While looking reasonably close to its bitmap ancestors, this is a vector
+ font that looks good at any size.  Its recommended use is, obviously, a
+ text terminal, same as nearly half a century ago.
+    </p>
+  </description>
+  <url type="homepage">https://github.com/rbanffy/3270font</url>
+  <update_contact>Ricardo Banffy</update_contact>
+</component>
