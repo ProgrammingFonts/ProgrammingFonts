@@ -38,3 +38,9 @@ Make your first font
 TypeTool 3 is our basic font editor for Windows (and macOS≤10.14).
 
 It is the little sibling to FontLab Studio 5, so it has most of the same tools, plus the same interface used to create most of the world’s commercial fonts. It is a great option for beginning type designers wanting to get started on designing typefaces and creating or modifying fonts, without a major investment.
+
+### [FontBase](https://fontba.se/)
+
+Font management. Perfected.
+
+All platforms. Professional features. Beautiful UI. Totally free. FontBase is the font manager of the new generation, built by designers, for designers.
