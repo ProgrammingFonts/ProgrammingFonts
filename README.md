@@ -13,8 +13,6 @@
 
 [https://github.com/ProgrammingFonts/ProgrammingFonts](https://github.com/ProgrammingFonts/ProgrammingFonts)
 
-**Note:Since lots of people pay attention to this repository,I will build a website for this project and make it easy for us to choose & compare these programming fonts,just wait us!**
-
 #### What's this?
 
 This is only a collection of programming fonts,just share this with the programmers.
