@@ -1,0 +1,25 @@
+ProFont Quick Start
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+Please read the file LICENSE which is included in this ProFont Distribution.
+If the terms stated in this file are not acceptable to you, then you must not use any part of "ProFont Distribution".
+
+
+Installing ProFont on Mac OS X
+
+In Mac OS X, the easiest way to install a new font is to double-clock the font file, i.e. if you want to install the latest version of the ProFont font, open the "ProFont 2.2" folder and double-click the "ProFont" file. You'll get a window showing a preview of the font and a button labelled "Install".
+You also can use the application "Font Book" which is to be found in the "Applications" folder on your hard drive.
+
+If you want to manage your fonts manually, refer to this document of Apple's knowledge base:
+http://support.apple.com/kb/ht2435
+
+
+
+Installing ProFont on classic Mac OS
+
+If you want to install the latest version of the ProFont font, open the "ProFont 2.2" folder and drag the "ProFont" suitcase to your System Folder icon.  When asked if it's OK to put it in the "Fonts Folder", say "OK".
+
+If you want to use ProFont as a replacement for Monaco 9, then first install ProFont as outlined above.  Then, open the "Monaco Tuner 1.1.1" folder and drag the "Monaco Tuner" control panel to your System Folder icon.  When asked if it's OK to put it in the "Control Panels Folder", say "OK".  Then restart your Macintosh.
+
+After following the above instructions, you'll see ProFont 9 wherever you would otherwise have seen Monaco 9.
+Enjoy.
