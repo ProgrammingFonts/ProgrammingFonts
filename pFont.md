@@ -18,7 +18,7 @@ All of the characters must be easily identified.There must be no confusion about
 
 ## Programming Fonts List
 
-<table border="1">
+<table border="0">
 <tr>
 <td style="text-align:center;font-size:12pt">&nbsp;No.&nbsp;</td>
 <td style="text-align:center;font-size:12pt">&nbsp;NAME&nbsp;</td>
@@ -27,6 +27,7 @@ All of the characters must be easily identified.There must be no confusion about
 <td style="text-align:center;font-size:12pt">&nbsp;FOUNDRY&nbsp;</td>
 <td style="text-align:center;font-size:12pt">&nbsp;CLASSIFICATION&nbsp;</td>
 <td style="text-align:center;font-size:12pt">&nbsp;FORMAT&nbsp;</td>
+<td style="text-align:center;font-size:12pt">&nbsp;LICENSE&nbsp;</td>
 </tr>
 <tr>
 <td style="text-align:center;font-size:12pt">&nbsp;&nbsp;</td>
@@ -36,8 +37,10 @@ All of the characters must be easily identified.There must be no confusion about
 <td style="text-align:center;font-size:12pt">&nbsp;&nbsp;</td>
 <td style="text-align:center;font-size:12pt">&nbsp;&nbsp;</td>
 <td style="text-align:center;font-size:12pt">&nbsp;&nbsp;</td>
+<td style="text-align:center;font-size:12pt">&nbsp;&nbsp;</td>
 </tr>
 <tr>
+<td style="text-align:center;font-size:12pt">&nbsp;&nbsp;</td>
 <td style="text-align:center;font-size:12pt">&nbsp;&nbsp;</td>
 <td style="text-align:center;font-size:12pt">&nbsp;&nbsp;</td>
 <td style="text-align:center;font-size:12pt">&nbsp;&nbsp;</td>
