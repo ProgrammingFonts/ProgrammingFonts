@@ -20,7 +20,6 @@ All of the characters must be easily identified.There must be no confusion about
 
 <table border="0">
 <tr>
-<td style="text-align:center;font-size:12pt">&nbsp;No.&nbsp;</td>
 <td style="text-align:center;font-size:12pt">&nbsp;NAME&nbsp;</td>
 <td style="text-align:center;font-size:12pt">&nbsp;DATE CREATED&nbsp;</td>
 <td style="text-align:center;font-size:12pt">&nbsp;DESIGNER(S)&nbsp;</td>
@@ -37,10 +36,40 @@ All of the characters must be easily identified.There must be no confusion about
 <td style="text-align:center;font-size:12pt">&nbsp;&nbsp;</td>
 <td style="text-align:center;font-size:12pt">&nbsp;&nbsp;</td>
 <td style="text-align:center;font-size:12pt">&nbsp;&nbsp;</td>
-<td style="text-align:center;font-size:12pt">&nbsp;&nbsp;</td>
 </tr>
 <tr>
 <td style="text-align:center;font-size:12pt">&nbsp;&nbsp;</td>
+<td style="text-align:center;font-size:12pt">&nbsp;&nbsp;</td>
+<td style="text-align:center;font-size:12pt">&nbsp;&nbsp;</td>
+<td style="text-align:center;font-size:12pt">&nbsp;&nbsp;</td>
+<td style="text-align:center;font-size:12pt">&nbsp;&nbsp;</td>
+<td style="text-align:center;font-size:12pt">&nbsp;&nbsp;</td>
+<td style="text-align:center;font-size:12pt">&nbsp;&nbsp;</td>
+</tr>
+</table>
+
+## The differences between different font formats.
+
+<table border="0">
+<tr>
+<td style="text-align:center;font-size:12pt">&nbsp;NAME&nbsp;</td>
+<td style="text-align:center;font-size:12pt">&nbsp;SHORT OF&nbsp;</td>
+<td style="text-align:center;font-size:12pt">&nbsp;FILENAME EXTENSION&nbsp;</td>
+<td style="text-align:center;font-size:12pt">&nbsp;INTERNET MEDIA TYPE&nbsp;</td>
+<td style="text-align:center;font-size:12pt">&nbsp;TYPE CODE&nbsp;</td>
+<td style="text-align:center;font-size:12pt">&nbsp;DEVELOPED BY&nbsp;</td>
+<td style="text-align:center;font-size:12pt">&nbsp;TYPE&nbsp;</td>
+</tr>
+<tr>
+<td style="text-align:center;font-size:12pt">&nbsp;TTF&nbsp;</td>
+<td style="text-align:center;font-size:12pt">&nbsp;&nbsp;</td>
+<td style="text-align:center;font-size:12pt">&nbsp;&nbsp;</td>
+<td style="text-align:center;font-size:12pt">&nbsp;&nbsp;</td>
+<td style="text-align:center;font-size:12pt">&nbsp;&nbsp;</td>
+<td style="text-align:center;font-size:12pt">&nbsp;&nbsp;</td>
+<td style="text-align:center;font-size:12pt">&nbsp;&nbsp;</td>
+</tr>
+<tr>
 <td style="text-align:center;font-size:12pt">&nbsp;&nbsp;</td>
 <td style="text-align:center;font-size:12pt">&nbsp;&nbsp;</td>
 <td style="text-align:center;font-size:12pt">&nbsp;&nbsp;</td>
