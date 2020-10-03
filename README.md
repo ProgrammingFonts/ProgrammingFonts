@@ -47,7 +47,7 @@ Source Code Pro/Extra Light/16:
 | Classification      | [Slab serif](https://en.wikipedia.org/wiki/Slab_serif)
 | Designer(s)         | [Adrian Frutiger](https://en.wikipedia.org/wiki/Adrian_Frutiger)
 | Foundry             | [IBM](http://www.ibm.com)
-| Date created        | Unknown
+| Date created        | 6 November 2009
 
 Sample:
 
@@ -63,7 +63,7 @@ Courier New/Regular/16:
 | ------------------- | -----------
 | Designer(s)         | [Steve Matteson](https://en.wikipedia.org/wiki/Steve_Matteson)
 | Foundry             | [Monotype Imaging, Inc.](https://en.wikipedia.org/wiki/Monotype_Corporation)
-| Date created        | Unknown
+| Date created        | 1993
 
 Sample:
 
@@ -80,6 +80,7 @@ Andale Mono/Regular/16:
 | Designer(s)         | [Susan Kare](https://en.wikipedia.org/wiki/Susan_Kare) [Kris Holmes](https://en.wikipedia.org/wiki/Kris_Holmes)
 | Foundry             | [Apple Inc.](http://www.apple.com/)
 | Date created        | Unknown
+Replaced by Menlo in 2009.
 
 Sample:
 
@@ -124,6 +125,7 @@ ProggyCleanTT/Regular/16:
 | Foundry             | [Ascender Corp.](https://en.wikipedia.org/wiki/Ascender_Corporation)
 | Date created        | Unknown
 | License             | [Apache License](https://en.wikipedia.org/wiki/Apache_License)
+Upload date = 2 January 2009
 
 Sample:
 
@@ -141,6 +143,7 @@ Droid Sans Mono/Regular/14:
 | Date created        | 2004
 | License             | [Bitstream Vera Fonts Copyright](http://dejavu-fonts.org/wiki/License),[Arev Fonts Copyright](http://dejavu-fonts.org/wiki/License)
 | Official Site       | [http://dejavu-fonts.org/wiki/Main_Page](http://dejavu-fonts.org/wiki/Main_Page)
+Upload date = 23 July 2009
 
 Sample:
 
