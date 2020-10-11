@@ -320,6 +320,15 @@ Wyse700b        | 16x16 |12  |■|
 Wyse700b-2y     | 16x32 |24  |■|
 
 
+17. [Julia Mono](https://github.com/cormullion/juliamono):
+
+![](https://raw.githubusercontent.com/cormullion/juliamono/master/images/specimen_2.png)
+![](https://raw.githubusercontent.com/cormullion/juliamono/master/images/specimen_3.png)
+![](https://raw.githubusercontent.com/cormullion/juliamono/master/images/specimen_4.png)
+![](https://raw.githubusercontent.com/cormullion/juliamono/master/images/specimen_14.png)
+
+
+
 ##### Proggy Fonts
 
 ![](https://raw.githubusercontent.com/bluescan/proggyfonts/master/ProggyVector/ProggyVector_Sample.png)
