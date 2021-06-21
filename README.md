@@ -1,17 +1,17 @@
-# ProgrammingFonts
+# Programming Fonts
 
 <img src="logo-programming-fonts.png" width="" height="200"/>
 
 
-### If you have a try of another kind of programming font,maybe you can have a new different feeling of coding which will make you feel fabulous,so just have a try!
+### If you have a try of another kind of programming font,maybe you can have a new different feeling of coding which will make you feel fabulous like me 😉 ,so just have a try!
 
 #### Official website:
 
-[http://www.programmingfonts.com](http://www.programmingfonts.com)
+[http://www.programmingfonts.com]
 
 #### Github
 
-[https://github.com/ammarmukadam367/ProgrammingFonts](https://github.com/ProgrammingFonts/ProgrammingFonts)
+[https://github.com/ammarmukadam367/ProgrammingFonts](https://github.com/ammarmukadam367/ProgrammingFonts)
 
 #### What's this?
 
@@ -35,7 +35,7 @@ All of the characters must be easily identified.There must be no confusion about
 
 #### Copyright Declaration:
 
-All the fonts are from the internet.If I have copyright infringement,please tell me to remove the fonts.
+All the fonts are from the internet. If I have Copyright infringement, please tell me to remove the fonts. 🤗
 
 #### The following fonts are here:
 
