@@ -11,11 +11,11 @@
 
 #### Github
 
-[https://github.com/ProgrammingFonts/ProgrammingFonts](https://github.com/ProgrammingFonts/ProgrammingFonts)
+[https://github.com/ammarmukadam367/ProgrammingFonts](https://github.com/ProgrammingFonts/ProgrammingFonts)
 
 #### What's this?
 
-This is only a collection of programming fonts,just share this with the programmers.
+This is only a collection of programming fonts, Just share this with the programmers.
 
 #### Which kind of font can be programming font?
 
@@ -353,8 +353,8 @@ Wyse700b-2y     | 16x32 |24  |■|
 
 #### Notice:
 
-The fonts here maybe not the latest,and lack of some fonts,but I will update by continuous.
+The fonts here maybe not the latest, and lack of some fonts. but I will update by continuous.
 
 #### Contribution:
 
-If you what to share the programming fonts that you know or update this project,you can fork this repository to contribute or tell me in the issues.
+If you want to share the ProgrammingFonts that you know or update this project, You can fork this repository to contribute or tell me in the issues.
