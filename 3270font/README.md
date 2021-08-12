@@ -4,4 +4,4 @@ This font is derived from the x3270 font, which, in turn, was translated from th
 
 # Offical Website
 
-[https://github.com/rbanffy/3270font] (https://github.com/rbanffy/3270font]
+https://github.com/rbanffy/3270font
