@@ -1,3 +1,3 @@
 # Akkurat Mono
 
-Please refer [https://lineto.com/typefaces/akkurat-mono](https://lineto.com/typefaces/akkurat-mono)
+Akkurat Mono is not free for use, please refer [https://lineto.com/typefaces/akkurat-mono](https://lineto.com/typefaces/akkurat-mono)
