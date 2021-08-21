@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<glyph name="uniE0B2" format="1">
+  <advance width="618"/>
+  <unicode hex="E0B2"/>
+  <note>
+    uniE0B2
+  </note>
+  <outline>
+    <contour>
+      <point x="618" y="961" type="line"/>
+      <point x="0" y="274" type="line"/>
+      <point x="618" y="-414" type="line"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ColorIndex</key>
+      <integer>5</integer>
+      <key>com.schriftgestaltung.Glyphs.lastChange</key>
+      <string>2017-05-28 20:41:13 +0000</string>
+      <key>public.markColor</key>
+      <string>0.04,0.57,0.04,1</string>
+    </dict>
+  </lib>
+</glyph>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<glyph name="tildecomb" format="1">
+  <advance width="618"/>
+  <unicode hex="0303"/>
+  <outline>
+    <component base="asciitilde" yOffset="316"/>
+    <contour>
+      <point x="308" y="500" type="move" name="_top"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.lastChange</key>
+      <string>2017-05-28 19:54:21 +0000</string>
+    </dict>
+  </lib>
+</glyph>

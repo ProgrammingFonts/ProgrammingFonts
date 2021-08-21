@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<glyph name="braceright" format="1">
+  <advance width="618"/>
+  <unicode hex="007D"/>
+  <note>
+    braceright
+  </note>
+  <outline>
+    <contour>
+      <point x="263" y="-90"/>
+      <point x="354" y="-90"/>
+      <point x="354" y="142" type="curve" smooth="yes"/>
+      <point x="354" y="284"/>
+      <point x="355" y="285"/>
+      <point x="501" y="285" type="curve"/>
+      <point x="501" y="375" type="line"/>
+      <point x="355" y="375"/>
+      <point x="354" y="376"/>
+      <point x="354" y="518" type="curve" smooth="yes"/>
+      <point x="354" y="750"/>
+      <point x="263" y="750"/>
+      <point x="117" y="750" type="curve"/>
+      <point x="117" y="660" type="line"/>
+      <point x="263" y="660"/>
+      <point x="264" y="660"/>
+      <point x="264" y="518" type="curve" smooth="yes"/>
+      <point x="264" y="420"/>
+      <point x="264" y="363"/>
+      <point x="282" y="330" type="curve"/>
+      <point x="264" y="297"/>
+      <point x="264" y="240"/>
+      <point x="264" y="142" type="curve" smooth="yes"/>
+      <point x="264" y="0"/>
+      <point x="263" y="0"/>
+      <point x="117" y="0" type="curve"/>
+      <point x="117" y="-90" type="line"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.lastChange</key>
+      <string>2017-05-28 19:57:30 +0000</string>
+    </dict>
+  </lib>
+</glyph>

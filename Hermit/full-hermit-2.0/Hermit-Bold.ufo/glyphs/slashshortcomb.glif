@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<glyph name="slashshortcomb" format="1">
+  <advance width="618"/>
+  <unicode hex="0337"/>
+  <outline>
+    <contour>
+      <point x="532" y="342" type="line"/>
+      <point x="532" y="463" type="line"/>
+      <point x="86" y="166" type="line"/>
+      <point x="86" y="45" type="line"/>
+    </contour>
+    <contour>
+      <point x="308" y="250" type="move" name="_center"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.lastChange</key>
+      <string>2017-05-28 19:57:41 +0000</string>
+    </dict>
+  </lib>
+</glyph>

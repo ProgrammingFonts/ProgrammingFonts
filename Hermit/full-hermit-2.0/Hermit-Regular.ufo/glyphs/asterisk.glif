@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<glyph name="asterisk" format="1">
+  <advance width="618"/>
+  <unicode hex="002A"/>
+  <note>
+    asterisk
+  </note>
+  <outline>
+    <contour>
+      <point x="354" y="80" type="line"/>
+      <point x="354" y="243" type="line"/>
+      <point x="489" y="150" type="line"/>
+      <point x="540" y="222" type="line"/>
+      <point x="386" y="330" type="line"/>
+      <point x="540" y="438" type="line"/>
+      <point x="489" y="510" type="line"/>
+      <point x="354" y="417" type="line"/>
+      <point x="354" y="580" type="line"/>
+      <point x="264" y="580" type="line"/>
+      <point x="264" y="417" type="line"/>
+      <point x="130" y="510" type="line"/>
+      <point x="78" y="438" type="line"/>
+      <point x="230" y="330" type="line"/>
+      <point x="78" y="222" type="line"/>
+      <point x="130" y="150" type="line"/>
+      <point x="264" y="243" type="line"/>
+      <point x="264" y="80" type="line"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.lastChange</key>
+      <string>2017-05-28 19:57:29 +0000</string>
+    </dict>
+  </lib>
+</glyph>

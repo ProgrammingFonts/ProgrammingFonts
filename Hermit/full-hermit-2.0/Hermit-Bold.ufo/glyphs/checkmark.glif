@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<glyph name="checkmark" format="1">
+  <advance width="618"/>
+  <unicode hex="2713"/>
+  <outline>
+    <contour>
+      <point x="618" y="418" type="line"/>
+      <point x="533" y="503" type="line"/>
+      <point x="202" y="169" type="line"/>
+      <point x="83" y="285" type="line"/>
+      <point x="0" y="202" type="line"/>
+      <point x="202" y="0" type="line"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.lastChange</key>
+      <string>2017-05-28 19:57:41 +0000</string>
+    </dict>
+  </lib>
+</glyph>

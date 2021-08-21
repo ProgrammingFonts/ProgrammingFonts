@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<glyph name="filledbox" format="1">
+  <advance width="618"/>
+  <unicode hex="25A0"/>
+  <note>
+    filledbox
+  </note>
+  <outline>
+    <contour>
+      <point x="618" y="0" type="line"/>
+      <point x="618" y="617" type="line"/>
+      <point x="0" y="617" type="line"/>
+      <point x="0" y="0" type="line"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.lastChange</key>
+      <string>2017-05-28 19:54:21 +0000</string>
+    </dict>
+  </lib>
+</glyph>

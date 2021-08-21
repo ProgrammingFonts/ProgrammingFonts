@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<glyph name="uni2589" format="1">
+  <advance width="618"/>
+  <unicode hex="2589"/>
+  <note>
+    uni2589
+  </note>
+  <outline>
+    <contour>
+      <point x="540" y="-375" type="line"/>
+      <point x="540" y="875" type="line"/>
+      <point x="0" y="875" type="line"/>
+      <point x="0" y="-375" type="line"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.lastChange</key>
+      <string>2017-05-28 19:54:21 +0000</string>
+    </dict>
+  </lib>
+</glyph>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<glyph name="ordfeminine" format="1">
+  <advance width="618"/>
+  <unicode hex="00AA"/>
+  <note>
+    ordfeminine
+  </note>
+  <outline>
+    <contour>
+      <point x="501" y="375" type="line"/>
+      <point x="501" y="596" type="line" smooth="yes"/>
+      <point x="501" y="628"/>
+      <point x="487" y="750"/>
+      <point x="309" y="750" type="curve" smooth="yes"/>
+      <point x="247" y="750"/>
+      <point x="189" y="729"/>
+      <point x="138" y="705" type="curve"/>
+      <point x="171" y="648" type="line"/>
+      <point x="208" y="664"/>
+      <point x="243" y="682"/>
+      <point x="309" y="682" type="curve" smooth="yes"/>
+      <point x="371" y="682"/>
+      <point x="427" y="668"/>
+      <point x="427" y="596" type="curve"/>
+      <point x="309" y="596" type="line" smooth="yes"/>
+      <point x="192" y="596"/>
+      <point x="117" y="580"/>
+      <point x="117" y="486" type="curve" smooth="yes"/>
+      <point x="117" y="402"/>
+      <point x="192" y="375"/>
+      <point x="309" y="375" type="curve" smooth="yes"/>
+    </contour>
+    <contour>
+      <point x="501" y="205" type="line"/>
+      <point x="501" y="295" type="line"/>
+      <point x="117" y="295" type="line"/>
+      <point x="117" y="205" type="line"/>
+    </contour>
+    <contour>
+      <point x="249" y="442"/>
+      <point x="192" y="443"/>
+      <point x="192" y="486" type="curve" smooth="yes"/>
+      <point x="192" y="529"/>
+      <point x="260" y="530"/>
+      <point x="309" y="530" type="curve" smooth="yes"/>
+      <point x="427" y="530" type="line"/>
+      <point x="427" y="442" type="line"/>
+      <point x="309" y="442" type="line" smooth="yes"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.lastChange</key>
+      <string>2017-05-28 19:57:30 +0000</string>
+    </dict>
+  </lib>
+</glyph>

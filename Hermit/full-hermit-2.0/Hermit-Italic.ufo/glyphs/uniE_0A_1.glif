@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<glyph name="uniE0A1" format="1">
+  <advance width="618"/>
+  <unicode hex="E0A1"/>
+  <note>
+    uniE0A1
+  </note>
+  <outline>
+    <contour>
+      <point x="276" y="-281" type="line"/>
+      <point x="276" y="-165" type="line"/>
+      <point x="265" y="65" type="line"/>
+      <point x="407" y="-281" type="line"/>
+      <point x="505" y="-281" type="line"/>
+      <point x="505" y="252" type="line"/>
+      <point x="412" y="252" type="line"/>
+      <point x="412" y="158" type="line"/>
+      <point x="424" y="-95" type="line"/>
+      <point x="280" y="252" type="line"/>
+      <point x="183" y="252" type="line"/>
+      <point x="183" y="-281" type="line"/>
+    </contour>
+    <contour>
+      <point x="409" y="300" type="line"/>
+      <point x="409" y="378" type="line"/>
+      <point x="203" y="378" type="line"/>
+      <point x="203" y="832" type="line"/>
+      <point x="113" y="832" type="line"/>
+      <point x="113" y="300" type="line"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ColorIndex</key>
+      <integer>5</integer>
+      <key>com.schriftgestaltung.Glyphs.lastChange</key>
+      <string>2017-05-28 20:41:13 +0000</string>
+      <key>public.markColor</key>
+      <string>0.04,0.57,0.04,1</string>
+    </dict>
+  </lib>
+</glyph>

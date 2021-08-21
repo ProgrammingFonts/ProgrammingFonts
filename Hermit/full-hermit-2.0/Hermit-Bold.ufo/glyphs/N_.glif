@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<glyph name="N" format="1">
+  <advance width="618"/>
+  <unicode hex="004E"/>
+  <note>
+    N
+  </note>
+  <outline>
+    <contour>
+      <point x="188" y="0" type="line"/>
+      <point x="188" y="470" type="line"/>
+      <point x="425" y="0" type="line"/>
+      <point x="560" y="0" type="line"/>
+      <point x="560" y="750" type="line"/>
+      <point x="430" y="750" type="line"/>
+      <point x="430" y="279" type="line"/>
+      <point x="193" y="750" type="line"/>
+      <point x="58" y="750" type="line"/>
+      <point x="58" y="0" type="line"/>
+    </contour>
+    <contour>
+      <point x="309" y="750" type="move" name="top"/>
+    </contour>
+    <contour>
+      <point x="309" y="0" type="move" name="bottom"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.lastChange</key>
+      <string>2017-05-28 19:57:29 +0000</string>
+    </dict>
+  </lib>
+</glyph>

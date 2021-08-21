@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<glyph name="uni25BF" format="1">
+  <advance width="618"/>
+  <unicode hex="25BF"/>
+  <note>
+    uni25BF
+  </note>
+  <outline>
+    <contour>
+      <point x="459" y="525" type="line"/>
+      <point x="159" y="525" type="line"/>
+      <point x="309" y="225" type="line"/>
+    </contour>
+    <contour>
+      <point x="223" y="485" type="line"/>
+      <point x="395" y="485" type="line"/>
+      <point x="309" y="314" type="line"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.lastChange</key>
+      <string>2017-05-28 19:54:21 +0000</string>
+    </dict>
+  </lib>
+</glyph>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<glyph name="jdotless" format="1">
+  <advance width="618"/>
+  <unicode hex="0237"/>
+  <outline>
+    <contour>
+      <point x="534" y="-250"/>
+      <point x="550" y="-78"/>
+      <point x="550" y="-35" type="curve" smooth="yes"/>
+      <point x="550" y="500" type="line"/>
+      <point x="138" y="500" type="line"/>
+      <point x="138" y="390" type="line"/>
+      <point x="420" y="390" type="line"/>
+      <point x="420" y="-35" type="line" smooth="yes"/>
+      <point x="420" y="-110"/>
+      <point x="385" y="-140"/>
+      <point x="299" y="-140" type="curve" smooth="yes"/>
+      <point x="217" y="-140"/>
+      <point x="183" y="-115"/>
+      <point x="123" y="-87" type="curve"/>
+      <point x="71" y="-183" type="line"/>
+      <point x="132" y="-214"/>
+      <point x="212" y="-250"/>
+      <point x="299" y="-250" type="curve" smooth="yes"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.lastChange</key>
+      <string>2017-05-28 19:57:41 +0000</string>
+    </dict>
+  </lib>
+</glyph>

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<glyph name="thorn" format="1">
+  <advance width="618"/>
+  <unicode hex="00FE"/>
+  <note>
+    thorn
+  </note>
+  <outline>
+    <contour>
+      <point x="168" y="-250" type="line"/>
+      <point x="168" y="90" type="line"/>
+      <point x="168" y="90"/>
+      <point x="169" y="45"/>
+      <point x="309" y="45" type="curve" smooth="yes"/>
+      <point x="539" y="45"/>
+      <point x="540" y="250"/>
+      <point x="540" y="250" type="curve" smooth="yes"/>
+      <point x="540" y="250"/>
+      <point x="539" y="455"/>
+      <point x="309" y="455" type="curve" smooth="yes"/>
+      <point x="169" y="455"/>
+      <point x="168" y="410"/>
+      <point x="168" y="410" type="curve"/>
+      <point x="168" y="750" type="line"/>
+      <point x="78" y="750" type="line"/>
+      <point x="78" y="-250" type="line"/>
+    </contour>
+    <contour>
+      <point x="169" y="135"/>
+      <point x="168" y="180"/>
+      <point x="168" y="180" type="curve"/>
+      <point x="168" y="320" type="line"/>
+      <point x="168" y="320"/>
+      <point x="169" y="365"/>
+      <point x="309" y="365" type="curve" smooth="yes"/>
+      <point x="449" y="365"/>
+      <point x="450" y="250"/>
+      <point x="450" y="250" type="curve" smooth="yes"/>
+      <point x="450" y="250"/>
+      <point x="449" y="135"/>
+      <point x="309" y="135" type="curve" smooth="yes"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.lastChange</key>
+      <string>2017-05-28 19:57:35 +0000</string>
+    </dict>
+  </lib>
+</glyph>

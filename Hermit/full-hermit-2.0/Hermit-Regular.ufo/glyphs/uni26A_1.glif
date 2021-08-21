@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<glyph name="uni26A1" format="1">
+  <advance width="618"/>
+  <unicode hex="26A1"/>
+  <note>
+    uni26A1
+  </note>
+  <outline>
+    <contour>
+      <point x="538" y="300" type="line"/>
+      <point x="345" y="300" type="line"/>
+      <point x="498" y="750" type="line"/>
+      <point x="80" y="200" type="line"/>
+      <point x="273" y="200" type="line"/>
+      <point x="120" y="-250" type="line"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.lastChange</key>
+      <string>2017-05-28 19:54:21 +0000</string>
+    </dict>
+  </lib>
+</glyph>

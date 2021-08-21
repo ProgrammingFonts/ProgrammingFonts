@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<glyph name="uniE0B3" format="1">
+  <advance width="618"/>
+  <unicode hex="E0B3"/>
+  <note>
+    uniE0B3
+  </note>
+  <outline>
+    <contour>
+      <point x="650" y="-331" type="line"/>
+      <point x="108" y="274" type="line"/>
+      <point x="650" y="880" type="line"/>
+      <point x="594" y="936" type="line"/>
+      <point x="0" y="274" type="line"/>
+      <point x="594" y="-388" type="line"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.ColorIndex</key>
+      <integer>5</integer>
+      <key>com.schriftgestaltung.Glyphs.lastChange</key>
+      <string>2017-05-28 20:41:13 +0000</string>
+      <key>public.markColor</key>
+      <string>0.04,0.57,0.04,1</string>
+    </dict>
+  </lib>
+</glyph>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<glyph name="H18533" format="1">
+  <advance width="618"/>
+  <unicode hex="25CF"/>
+  <note>
+    H18533
+  </note>
+  <outline>
+    <contour>
+      <point x="309" y="125"/>
+      <point x="559" y="125"/>
+      <point x="559" y="375" type="curve" smooth="yes"/>
+      <point x="559" y="625"/>
+      <point x="309" y="625"/>
+      <point x="309" y="625" type="curve" smooth="yes"/>
+      <point x="309" y="625"/>
+      <point x="59" y="625"/>
+      <point x="59" y="375" type="curve" smooth="yes"/>
+      <point x="59" y="125"/>
+      <point x="309" y="125"/>
+      <point x="309" y="125" type="curve" smooth="yes"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.lastChange</key>
+      <string>2017-05-28 19:54:21 +0000</string>
+    </dict>
+  </lib>
+</glyph>
