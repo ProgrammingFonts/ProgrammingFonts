@@ -1,11 +1,11 @@
-package com.ifeegoo.demo.font;
+package com.programmingfonts.demo.font;
 
 /**
  * <p>
  * Programming Font Manager.
  * </p>
  * 
- * @author ifeegoo
+ * @author ProgrammingFonts.com
  * 
  * @since 1.0.0
  */
