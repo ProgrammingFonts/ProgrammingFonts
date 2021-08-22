@@ -4,7 +4,7 @@ Dina Programming Font
 
 Copyright (c) 2005-2013 Joergen Ibsen
 
-<http://www.donationcoder.com/Software/Jibz/Dina/>
+<https://www.dcmembers.com/jibsen/download/61/>
 
 
 About
