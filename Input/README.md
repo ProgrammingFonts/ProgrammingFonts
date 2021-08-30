@@ -6,12 +6,4 @@ Input is a flexible system of fonts designed specifically for code by David Jona
 
 ![](programming-font-input.png "Font Input Sample")
 
-#### [Download](http://input.fontbureau.com/download/)
-
-
-
----
-Note: The Input fonts here is only for you to test,please support the official!
-------------------------------------------------------------------------
-
----
+#### [Download](https://input.djr.com/download/)
