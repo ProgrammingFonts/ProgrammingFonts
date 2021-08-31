@@ -1,11 +1,11 @@
 # Proggy Fonts
 Monospaced fonts for programming. This Github page is now the official home of the Proggy fonts.
 
-The fonts are a cset of fixed-width screen fonts that are designed for programming. They were optimized while coding in C or C++. For this reason, characters like the `*` are vertically centered as `*` usually means dereference or multiply, but never 'to the power of' like in Fortran.
+The fonts are all fixed-width and designed for programming. They were optimized while writing C or C++. For this reason, characters like the `*` are vertically centered as `*` usually means dereference or multiply, but never 'to the power of' like in Fortran.
 
 The {}s are centered horizontally (in case you align braces vertically), the zero looks different from the capital oh, and there is never any confusion between ells, ones, and eyes.
 
-Additionally, the arithmetic operators (+ - * < >) are all axis aligned... unlike the last ones you just saw.
+Additionally, the arithmetic operators (+ - * < >) are all axis-aligned... unlike the last ones you just saw.
 
 
 # Proggy Vector
@@ -37,30 +37,44 @@ These fonts will not benefit form having ClearType turned on. You're better off 
 
 Most fonts contain the Latin-1 character set (ISO 8859-1) except ProggyCleanCE.ttf which can be used for the Czech language (Latin-2). You can try it if the characters you want are missing and you were able to read English enough to understand this paragraph.
 
-Lastly, the two Webby fonts are not monospaced, but may be useful for other purposes like websites.
+The two Webby fonts are not monospaced, but may be useful for other purposes like websites.
 
-![Proggy Clean](https://raw.githubusercontent.com/bluescan/proggyfonts/master/images/example_proggy_clean.gif)
+![Proggy Clean](https://raw.githubusercontent.com/bluescan/proggyfonts/master/ProggyOriginal/images/example_proggy_clean.gif)
 
-![Proggy Clean CP](https://raw.githubusercontent.com/bluescan/proggyfonts/master/images/example_proggy_clean_cp.gif)
+![Proggy Clean CP](https://raw.githubusercontent.com/bluescan/proggyfonts/master/ProggyOriginal/images/example_proggy_clean_cp.gif)
 
-![Proggy Clean SZ](https://raw.githubusercontent.com/bluescan/proggyfonts/master/images/example_proggy_clean_sz.gif)
+![Proggy Clean SZ](https://raw.githubusercontent.com/bluescan/proggyfonts/master/ProggyOriginal/images/example_proggy_clean_sz.gif)
 
-![Proggy Clean SZ BP](https://raw.githubusercontent.com/bluescan/proggyfonts/master/images/example_proggy_clean_sz_bp.gif)
+![Proggy Clean SZ BP](https://raw.githubusercontent.com/bluescan/proggyfonts/master/ProggyOriginal/images/example_proggy_clean_sz_bp.gif)
 
-![Proggy Small](https://raw.githubusercontent.com/bluescan/proggyfonts/master/images/example_proggy_small.gif)
+![Proggy Small](https://raw.githubusercontent.com/bluescan/proggyfonts/master/ProggyOriginal/images/example_proggy_small.gif)
 
-![Proggy Square](https://raw.githubusercontent.com/bluescan/proggyfonts/master/images/example_proggy_square.gif)
+![Proggy Square](https://raw.githubusercontent.com/bluescan/proggyfonts/master/ProggyOriginal/images/example_proggy_square.gif)
 
-![Proggy Square BP](https://raw.githubusercontent.com/bluescan/proggyfonts/master/images/example_proggy_square_bp.gif)
+![Proggy Square BP](https://raw.githubusercontent.com/bluescan/proggyfonts/master/ProggyOriginal/images/example_proggy_square_bp.gif)
 
-![Proggy Square SZ](https://raw.githubusercontent.com/bluescan/proggyfonts/master/images/example_proggy_square_sz.gif)
+![Proggy Square SZ](https://raw.githubusercontent.com/bluescan/proggyfonts/master/ProggyOriginal/images/example_proggy_square_sz.gif)
 
-![Proggy Tiny](https://raw.githubusercontent.com/bluescan/proggyfonts/master/images/example_proggy_tiny.gif)
+![Proggy Tiny](https://raw.githubusercontent.com/bluescan/proggyfonts/master/ProggyOriginal/images/example_proggy_tiny.gif)
 
-![Proggy Tiny BP](https://raw.githubusercontent.com/bluescan/proggyfonts/master/images/example_proggy_tiny_bp.gif)
+![Proggy Tiny BP](https://raw.githubusercontent.com/bluescan/proggyfonts/master/ProggyOriginal/images/example_proggy_tiny_bp.gif)
 
-![Proggy Tiny SZ](https://raw.githubusercontent.com/bluescan/proggyfonts/master/images/example_proggy_tiny_sz.gif)
+![Proggy Tiny SZ](https://raw.githubusercontent.com/bluescan/proggyfonts/master/ProggyOriginal/images/example_proggy_tiny_sz.gif)
 
-![Proggy Webby Caps](https://raw.githubusercontent.com/bluescan/proggyfonts/master/images/example_webby_caps.gif)
+![Proggy Webby Caps](https://raw.githubusercontent.com/bluescan/proggyfonts/master/ProggyOriginal/images/example_webby_caps.gif)
 
-![Proggy Webby Small](https://raw.githubusercontent.com/bluescan/proggyfonts/master/images/example_webby_small.gif)
+![Proggy Webby Small](https://raw.githubusercontent.com/bluescan/proggyfonts/master/ProggyOriginal/images/example_webby_small.gif)
+
+# Contributions
+Contributed fonts that were hosted by the original proggyfonts site are found in the *Contributed* directory. The licences, if originally supplied, are inside the zip files.
+
+The contributed fonts include:
+* CGMono
+* CodingFontTobi
+* Crisp
+* Dina
+* Opti
+* PixelCarnageMono
+* ProggyOpti
+* Progsole
+* Speedy
