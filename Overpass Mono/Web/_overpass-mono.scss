@@ -1,0 +1,41 @@
+/* Overpass Mono helper mixins */
+
+//-- This is a map of the current font weights, keyed on their file names
+$supported-weights: (
+    light: 300,
+    regular: 400,
+    semibold: 500,
+    bold: 600
+);
+
+//-- This simple mixin adds the overpass basic styles to a typography element
+@mixin _overpass-monostyles {
+    font-family: 'overpass-mono';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+//-- This mixins will dynamically print the font-face declarations based on your levels of support
+// * Weights can be limited to those your wish to incorporate in your styles; if left with defaults,
+//   this will add support for all supported font variations
+// * The weight map can be customized if you wish to set your own values
+//   Example: To use `font-weight: bolder` instead of `font-weight: 600`, we create a custom map
+//            that maps the key bold to the value bolder -> `bold: bolder`
+// * The path to dist represents the location of the overpass font files relative to your architecture
+@mixin print-overpass-mono-font-face(
+    $weights: map-keys($supported-weights),
+    $weight-map: $supported-weights,
+    $path_to_dist: './'
+) {
+    @each $weight in $weights {
+        @font-face {
+        font-family: 'overpass-mono';
+        src: url("#{$path_to_dist}overpass-mono-#{$weight}.eot?");
+        src: url("#{$path_to_dist}overpass-mono-#{$weight}.eot?#iefix") format("embedded-opentype"),
+                url("#{$path_to_dist}overpass-mono-#{$weight}.woff?") format("woff"),
+                url("#{$path_to_dist}overpass-mono-#{$weight}.ttf?") format("truetype");
+        font-weight: map-get($weight-map, $weight);
+        font-style: normal;
+        }
+    }
+}
