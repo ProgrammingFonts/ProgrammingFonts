@@ -8,6 +8,14 @@ FontLab 7 for macOS and Windows is a modern, professional font editor, crafted f
 
 It lets you create, open, modify, draw, space, kern, hint and export desktop, web, color and variable OpenType fonts for any Unicode writing system, from Latin, Cyrillic and Greek, to Arabic, Hebrew and Indic, all the way to Chinese, Japanese, emoji, symbols and icons.
 
+### [FontForge](https://fontforge.org/)
+
+FontForge is a free and open source font editor brought to you by a community of fellow type lovers. You can donate to support the project financially.
+
+### [Glyphs])(https://glyphsapp.com/)
+
+Glyphs 3 is a Mac font editor that puts you in control.
+
 ### [TransType](https://www.fontlab.com)
 
 Latest version:TransType 4
