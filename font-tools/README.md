@@ -47,6 +47,10 @@ TypeTool 3 is our basic font editor for Windows (and macOS≤10.14).
 
 It is the little sibling to FontLab Studio 5, so it has most of the same tools, plus the same interface used to create most of the world’s commercial fonts. It is a great option for beginning type designers wanting to get started on designing typefaces and creating or modifying fonts, without a major investment.
 
+### [FontCreator](https://www.high-logic.com/font-editor/fontcreator)
+
+With over 5 million downloads to date, FontCreator is considered the world's most popular and best font editor. Create and edit (variable) OpenType and web fonts. An advanced feature set makes it the tool of choice for professionals, and its intuitive interface is straightforward enough for users at any expertise level.
+
 ### [FontBase](https://fontba.se/)
 
 Font management. Perfected.
