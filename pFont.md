@@ -14,10 +14,9 @@
 </tr>
 <tr>
 <td style="text-align:center;font-size:12pt">&nbsp;<a href="https://github.com/rbanffy/3270font">3270font</a>&nbsp;</td>
-<td style="text-align:center;font-size:12pt">&nbsp;&nbsp;</td>
-<td style="text-align:center;font-size:12pt">&nbsp;&nbsp;</td>
-<td style="text-align:center;font-size:12pt">&nbsp;&nbsp;</td>
-<td style="text-align:center;font-size:12pt">&nbsp;&nbsp;</td>
+<td style="text-align:center;font-size:12pt">&nbsp;2014-04-22&nbsp;</td>
+<td style="text-align:center;font-size:12pt">&nbsp;<a href="https://about.me/rbanffy">Ricardo Bánffy</a>&nbsp;</td>
+<td style="text-align:center;font-size:12pt">&nbsp;-&nbsp;</td>
 <td style="text-align:center;font-size:12pt">&nbsp;&nbsp;</td>
 <td style="text-align:center;font-size:12pt">&nbsp;&nbsp;</td>
 <td style="text-align:center;font-size:12pt">&nbsp;&nbsp;</td>
