@@ -1,0 +1,111 @@
+@font-face {
+  font-family: 'Fifteen-Web';
+  src: url('Fifteen-Thin.woff2') format('woff2'),
+  url('Fifteen-Thin.woff') format('woff');
+  font-weight: 100;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Fifteen-Web';
+  src: url('Fifteen-ThinItalic.woff2') format('woff2'),
+  url('Fifteen-ThinItalic.woff') format('woff');
+  font-weight: 100;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Fifteen-Web';
+  src: url('Fifteen-ExtraLight.woff2') format('woff2'),
+  url('Fifteen-ExtraLight.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Fifteen-Web';
+  src: url('Fifteen-ExtraLightItalic.woff2') format('woff2'),
+  url('Fifteen-ExtraLightItalic.woff') format('woff');
+  font-weight: 200;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Fifteen-Web';
+  src: url('Fifteen-Light.woff2') format('woff2'),
+  url('Fifteen-Light.woff') format('woff');
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Fifteen-Web';
+  src: url('Fifteen-LightItalic.woff2') format('woff2'),
+  url('Fifteen-LightItalic.woff') format('woff');
+  font-weight: 300;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Fifteen-Web';
+  src: url('Fifteen-Regular.woff2') format('woff2'),
+  url('Fifteen-Regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Fifteen-Web';
+  src: url('Fifteen-Italic.woff2') format('woff2'),
+  url('Fifteen-Italic.woff') format('woff');
+  font-weight: 400;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Fifteen-Web';
+  src: url('Fifteen-Medium.woff2') format('woff2'),
+  url('Fifteen-Medium.woff') format('woff');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Fifteen-Web';
+  src: url('Fifteen-MediumItalic.woff2') format('woff2'),
+  url('Fifteen-MediumItalic.woff') format('woff');
+  font-weight: 500;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Fifteen-Web';
+  src: url('Fifteen-SemiBold.woff2') format('woff2'),
+  url('Fifteen-SemiBold.woff') format('woff');
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Fifteen-Web';
+  src: url('Fifteen-SemiBoldItalic.woff2') format('woff2'),
+  url('Fifteen-SemiBoldItalic.woff') format('woff');
+  font-weight: 600;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Fifteen-Web';
+  src: url('Fifteen-Bold.woff2') format('woff2'),
+  url('Fifteen-Bold.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Fifteen-Web';
+  src: url('Fifteen-BoldItalic.woff2') format('woff2'),
+  url('Fifteen-BoldItalic.woff') format('woff');
+  font-weight: 700;
+  font-style: italic;
+}
