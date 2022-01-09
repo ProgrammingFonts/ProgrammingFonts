@@ -3,21 +3,13 @@
 <img src="logo-programming-fonts.png" width="" height="200"/>
 
 
-### If you have a try of another kind of programming font,maybe you can have a new different feeling of coding which will make you feel fabulous,so just have a try!
+**If you have a try of another kind of programming font,maybe you can have a new different feeling of coding which will make you feel fabulous,so just have a try!**
 
-#### Official website:
+## What's this?
 
-[http://www.programmingfonts.com](http://www.programmingfonts.com)
+This is a collection of programming fonts,just share this with the programmers.
 
-#### Github
-
-[https://github.com/ProgrammingFonts/ProgrammingFonts](https://github.com/ProgrammingFonts/ProgrammingFonts)
-
-#### What's this?
-
-This is only a collection of programming fonts,just share this with the programmers.
-
-#### Which kind of font can be programming font?
+## Which kind of font can be programming font?
 
 The programming fonts must have these features.
 
@@ -33,10 +25,10 @@ Most of the important and popular programming languages are build on English cha
 
 All of the characters must be easily identified.There must be no confusion about some similar characters, such as l and 1, o and 0, i and l, g and 9.
 
-#### Copyright Declaration:
+## Copyright Declaration:
 
 All the fonts are from the internet.If I have copyright infringement,please tell me to remove the fonts.
 
-#### The following fonts are here:
+## The following fonts are here:
 
 [106 programming fonts](https://github.com/ProgrammingFonts/ProgrammingFonts/tree/master/fonts)
