@@ -21,3 +21,5 @@ Just check it: [Font Tools](/knowledge/font-tools/README.md)
 [Fonts - TrueType Reference Manual - Apple Developer](https://developer.apple.com/fonts/TrueType-Reference-Manual/)
 
 [Microsoft Typography documentation - Typography | Microsoft Docs](https://docs.microsoft.com/en-us/typography/)
+
+[Category:Font formats - Wikipedia](https://en.wikipedia.org/wiki/Category:Font_formats)
