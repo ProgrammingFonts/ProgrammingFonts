@@ -14,8 +14,10 @@ Just check it: [Font Tools](/knowledge/font-tools/README.md)
 | SVG  | Scalable Vector Graphics |           |              |      |
 | EOT  | Embedded Open Type       |           |              |      |
 
-
-
 ## Tips
 
 [Creating an SVG color font | Glyphs](https://glyphsapp.com/learn/creating-an-svg-color-font)
+
+[Fonts - TrueType Reference Manual - Apple Developer](https://developer.apple.com/fonts/TrueType-Reference-Manual/)
+
+[Microsoft Typography documentation - Typography | Microsoft Docs](https://docs.microsoft.com/en-us/typography/)
