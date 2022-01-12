@@ -4,8 +4,6 @@
 
 Just check it: [Font Tools](/knowledge/font-tools/README.md)
 
-
-
 ## The differences between different font formats.
 
 | NAME | FILENAME EXTENSION       | TYPE CODE | DEVELOPED BY | TYPE |
@@ -15,3 +13,9 @@ Just check it: [Font Tools](/knowledge/font-tools/README.md)
 | WOFF | Web Open Font Format     |           |              |      |
 | SVG  | Scalable Vector Graphics |           |              |      |
 | EOT  | Embedded Open Type       |           |              |      |
+
+
+
+## Tips
+
+[Creating an SVG color font | Glyphs](https://glyphsapp.com/learn/creating-an-svg-color-font)
