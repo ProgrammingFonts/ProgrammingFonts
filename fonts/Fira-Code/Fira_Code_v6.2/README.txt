@@ -10,7 +10,7 @@ OR
 
 Use https://chocolatey.org:
 
-    choco install firacode-ttf
+    choco install firacode
 
 
 macOS
@@ -27,7 +27,7 @@ OR
 Use http://brew.sh:
 
     `brew tap homebrew/cask-fonts`
-    `brew cask install font-fira-code`
+    `brew install font-fira-code`
 
 
 Ubuntu Zesty (17.04), Debian Stretch (9) or newer
@@ -40,7 +40,7 @@ Ubuntu Zesty (17.04), Debian Stretch (9) or newer
 Arch Linux
 ----------
 
-Fira Code package is available in the official repository: https://www.archlinux.org/packages/community/any/otf-fira-code/.
+Fira Code package is available in the official repository: https://www.archlinux.org/packages/community/any/ttf-fira-code/.
 
 Variant of Fira Code package is available in the AUR: https://aur.archlinux.org/packages/otf-fira-code-git/.
 
@@ -54,11 +54,8 @@ Gentoo
 Fedora
 ------
 
-A Fedora copr repository is available: https://copr.fedorainfracloud.org/coprs/evana/fira-code-fonts/. Package sources https://gitlab.com/evana11/fira-code-fonts-fedora.
-
 To install, perform the following commands:
 
-    dnf copr enable evana/fira-code-fonts
     dnf install fira-code-fonts
 
 
@@ -172,7 +169,7 @@ Brackets
 --------
 
 1. From the `View` menu choose `Themes....`
-2. Paste `'Fira Code'`, at the begining of `Font Family`
+2. Paste `'Fira Code'`, at the beginning of `Font Family`
 
 
 Emacs
