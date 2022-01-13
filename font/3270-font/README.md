@@ -1,3 +1,11 @@
+
+
+# About 3270font
+
+[3270font official website](https://github.com/rbanffy/3270font)
+
+[3270font source](https://github.com/rbanffy/3270font)
+
 3270font: A font for the nostalgic
 ==================================
 
@@ -89,9 +97,8 @@ requirements.txt file lists everything you need to do it.
 If all you want is an easier way to provide feedback, you can use
 a container runtime, Docker, Podman, and etc, and use these make targets:
 
-  - ```make image``` - builds a local image with ```fontforge``` and ```make```
-  - ```make generate``` -  uses the local container image to run ```make font```
-
+- ```make image``` - builds a local image with ```fontforge``` and ```make```
+- ```make generate``` -  uses the local container image to run ```make font```
 
 Screenshots
 -----------
