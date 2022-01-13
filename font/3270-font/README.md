@@ -1,9 +1,9 @@
 3270font: A font for the nostalgic
 ==================================
 
-![Screenshot](/image/emacs.png)
+![Screenshot](image/emacs.png)
 
-![Sample](/image/3270_sample.png)
+![Sample](image/3270_sample.png)
 
 A little bit of history
 -----------------------
@@ -14,7 +14,7 @@ hand-copied from a 3270 series terminal. I built it because I felt
 terminals deserve to be pretty. The .sfd font file contains a x3270
 bitmap font that was used for guidance.
 
-![Using with the cool-old-tern (now cool-retro-term) terminal program](/image/cool-retro-term.png)
+![Using with the cool-old-tern (now cool-retro-term) terminal program](image/cool-retro-term.png)
 
 Getting it
 ----------
@@ -36,7 +36,7 @@ Adobe Type 1, TTF, OTF and WOFF versions are available for download on
 https://3270font.s3.amazonaws.com/3270_fonts_3b8f2fb.zip (although this
 URL may not always reflect the latest version).
 
-![ASCII is so 60's](/image/cyrillic.png)
+![ASCII is so 60's](image/cyrillic.png)
 
 The format
 ----------
@@ -48,13 +48,13 @@ fontforge` or even `port install fontforge`. On others, you may need to
 grab your copy from https://fontforge.org/. I encourage you to drop by
 and read the tutorials.
 
-![Using it on OSX (don't forget to turn antialiasing on)](/image/osx_terminal.png)
+![Using it on OSX (don't forget to turn antialiasing on)](image/osx_terminal.png)
 
 If you are running Windows, you'll probably need something like WSL or
 Cygwin, but, in the end, the font works correctly (with some very minor
 hinting issues).
 
-![Works on Windows](/image/windows_10.png)
+![Works on Windows](image/windows_10.png)
 
 Generating usable font files
 ----------------------------
@@ -69,7 +69,7 @@ slightly more condensed .sfd file with the base font narrowed to 488
 units, with no glyph rescaling (or cropping - we need to fix that) and
 its corresponding PostScript, TTF, OTF and WOFF versions.
 
-![For your favorite editor](/image/symbols.png)
+![For your favorite editor](image/symbols.png)
 
 Contributing
 ------------
@@ -96,15 +96,15 @@ a container runtime, Docker, Podman, and etc, and use these make targets:
 Screenshots
 -----------
 
-![xterm](/image/xterm.png)
+![xterm](image/xterm.png)
 
-![Gnome Terminal](/image/gnome-terminal.png)
+![Gnome Terminal](image/gnome-terminal.png)
 
-![Konsole](/image/konsole.png)
+![Konsole](image/konsole.png)
 
-![Terminator](/image/terminator.png)
+![Terminator](image/terminator.png)
 
-![urxvt](/image/urxvt.png)
+![urxvt](image/urxvt.png)
 
 Known problems
 --------------
@@ -124,8 +124,8 @@ font. Those grids are not used yet, but they are intended to be used to
 align font features to provide better rendering at common font size
 choices. The captures below exemplify these choices:
 
-![x3270 with 32 pixel font (used as bitmap template for the font)](/image/measurements_x3270_32.png)
+![x3270 with 32 pixel font (used as bitmap template for the font)](image/measurements_x3270_32.png)
 
-![x3270 with 20 pixel font](/image/measurements_x3270_20.png)
+![x3270 with 20 pixel font](image/measurements_x3270_20.png)
 
-![Gnome Terminal on Ubuntu 17.10](/image/measurements_gnome_terminal.png)
+![Gnome Terminal on Ubuntu 17.10](image/measurements_gnome_terminal.png)
