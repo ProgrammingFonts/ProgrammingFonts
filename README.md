@@ -30,4 +30,5 @@ All the fonts are from the internet.If I have copyright infringement,please tell
 
 ## The following fonts are here:
 
-[105 programming fonts](https://github.com/ProgrammingFonts/ProgrammingFonts/tree/master/fonts)
+[105 programming fonts](https://github.com/ProgrammingFonts/ProgrammingFonts/tree/master/font)
+
