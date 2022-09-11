@@ -2,7 +2,7 @@
 
 <img src="logo-programming-fonts.png" width="" height="200"/>
 
-**If you have a try of another kind of programming font,maybe you can have a new different feeling of coding which will make you feel fabulous, so just have a try!**
+**If you have a try of another kind of programming font, maybe you can have a new different feeling of coding which will make you feel fabulous, so just have a try!**
 
 ## What's this?
 
