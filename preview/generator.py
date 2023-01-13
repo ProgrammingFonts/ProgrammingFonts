@@ -14,7 +14,7 @@ for font_file in os.listdir(path):
         draw.text((10, 10), f"""Sample Text\n1234567890\nABCDEFGHIJKLMNOPQRSTUVWXYZ\nabcdefghijklmnopqrstuvwxyz\n!@#$%%^&*()_+-=|{{}}[]':;<>,.?"
                             \n\nFont: {font_file}\nAuthor: ifeegoo\nScript: DiluteOxygen""", font=font, fill=(255, 255, 255))
 
-        img.save(os.path.join(path, f"preview_{font_name}_black.jpg"))
+        img.save(os.path.join(path, f"preview_{font_name}_black.jpg"), "JPEG", quality=100)
         
         # Create a new image with a white background
         img = Image.new("RGB", (800, 400), (255, 255, 255))
@@ -22,4 +22,4 @@ for font_file in os.listdir(path):
         draw.text((10, 10), f"""Sample Text\n1234567890\nABCDEFGHIJKLMNOPQRSTUVWXYZ\nabcdefghijklmnopqrstuvwxyz\n!@#$%%^&*()_+-=|{{}}[]':;<>,.?"
                             \n\nFont: {font_file}\nAuthor: ifeegoo\nScript: DiluteOxygen""", font=font, fill=(0, 0, 0))
 
-        img.save(os.path.join(path, f"preview_{font_name}_white.jpg"))
+        img.save(os.path.join(path, f"preview_{font_name}_white.jpg"), "JPEG", quality=100)
