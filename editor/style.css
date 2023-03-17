@@ -1,0 +1,82 @@
+.CodeMirror {
+font-family: 'Fira Code', monospace;
+height: 800px !important;
+padding: 0 10px;
+font-size: 24px;
+border-bottom-left-radius: 10px;
+border-bottom-right-radius: 10px;
+}
+
+body {
+margin: 0;
+padding: 0;
+height: 100vh;
+display: flex;
+justify-content: center;
+align-items: center;
+font-family: 'Fira Code', monospace;
+font-size: 14px;
+font-weight: 500;
+background-color: #1e1e1e;
+}
+
+
+.window {
+width: 1000px;
+height: 800px;
+background-color: #1e1e1e;
+box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+border-radius: 10px;
+display: flex;
+flex-direction: column;
+}
+
+.titlebar {
+height: 30px;
+background-color: #2d2d2d;
+display: flex;
+align-items: center;
+padding: 0 10px;
+border-top-left-radius: 10px;
+border-top-right-radius: 10px;
+}
+
+.titlebar .title {
+color: white;
+font-size: 14px;
+font-family: monospace;
+font-weight: thin;
+}
+
+.titlebar .icon {
+width: 16px;
+height: 16px;
+margin-left: 5px;
+margin-right: 15px;
+}
+
+.buttons {
+display: flex;
+align-items: center;
+margin-left: auto;
+}
+
+.button {
+width: 12px;
+height: 12px;
+border-radius: 50%;
+margin-left: 5px;
+cursor: pointer;
+}
+
+.minimize {
+background-color: #ffc107;
+}
+
+.maximize {
+background-color: #28a745;
+}
+
+.close {
+background-color: #dc3545;
+}
