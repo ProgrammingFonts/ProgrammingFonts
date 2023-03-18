@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ProgrammingFonts Editor</title>
+  <link rel="stylesheet" href="style.css" type="text/css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.3/theme/3024-night.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.3/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.3/theme/dracula.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.3/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.3/mode/javascript/javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.3/mode/python/python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.3/mode/clike/clike.min.js"></script>
+</head>
+<body>
+  <div class="window">
+    <div class="titlebar">
+      <img src="logo-programming-fonts.png" class="icon">
+      <div class="title">ProgrammingFonts</div>
+      <div class="buttons">
+        <div class="button minimize"></div>
+        <div class="button maximize"></div>
+        <div class="button close"></div>
+      </div>
+    </div>
+    <textarea id="editor">// This is a comment
+const message = `Hello, world!`;
+const number = 42;
+const regex = /ProgrammingFonts/g;
+const boolean = true;
+const array = [1, 2, 3];
+const object = { name: "Felix", age: 30 };
+const arrowFunction = () => {
+  console.log("This is an arrow function");
+};
+const templateLiteral = `The answer is ${number}`;
+const specialChars = `!@#$%^&*()_+-={}[]|\\:;"'<>,.?/~\``;
+
+CodeMirror.defineMode("myMode", () => {
+  return {
+    token: (stream) => {
+      if (stream.match(message)) {
+        return "message";
+      } else if (stream.match(number)) {
+        return "number";
+      } else if (stream.match(regex)) {
+        return "regex";
+      } else if (stream.match(/(\[|\])/)) {
+        return "bracket";
+      } else if (stream.match(/(\{|\})/)) {
+        return "brace";
+      } else if (stream.match(/(\(|\))/)) {
+        return "paren";
+      } else if (stream.match(/,/)) {
+        return "comma";
+      } else if (stream.match(/:/)) {
+        return "colon";
+      } else if (stream.match(/;/)) {
+        return "semicolon";
+      } else if (stream.match(/=>/)) {
+        return "arrow";
+      } else if (stream.match(/`/)) {
+        return "backtick";
+      } else if (stream.match(/["']/)) {
+        return "string";
+      } else if (stream.match(/[!@#$%^&*()_+\-={}\[\]|\\:;"'<>,.?/~`]/)) {
+        return "special";
+      } else {
+        stream.next();
+        return null;
+      }
+    },
+  };
+});
+
+const editor = CodeMirror(document.body, {
+  value: None,
+  mode: "myMode",
+  theme: "3024-night",
+  lineNumbers: true,
+});
+
+editor.setValue(
+  `${message}\n${number}\n${regex}\n${array}\n${object}\n${arrowFunction}\n${templateLiteral}\n${specialChars}`
+);</textarea>
+    <script src="script.js"></script>
+  </div>
+</body>
+</html>
