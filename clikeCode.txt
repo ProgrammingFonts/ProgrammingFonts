@@ -1,0 +1,36 @@
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+// Define some variables of different types
+string message = "Hello, world!";
+int number = 42;
+string regex = "ProgrammingFonts";
+bool boolean = true;
+int array[] = {1, 2, 3};
+struct Person {
+  string name;
+  int age;
+};
+Person object = {"Felix", 30};
+
+// Define a function
+int square(int x) {
+  return x * x;
+}
+
+// Main function
+int main() {
+  // Print everything using different fonts
+  cout << "Regular: " << message << " " << number << " " << regex << " " << boolean << " " << array[0] << " " << object.name << endl;
+  cout << "Bold: " << message << " " << number << " " << regex << " " << boolean << " " << array[0] << " " << object.name << endl;
+  cout << "Italic: " << message << " " << number << " " << regex << " " << boolean << " " << array[0] << " " << object.name << endl;
+  cout << "Bold and Italic: " << message << " " << number << " " << regex << " " << boolean << " " << array[0] << " " << object.name << endl;
+
+  // Call the function and print the result
+  int result = square(number);
+  cout << "Code: square(" << number << ") = " << result << endl;
+
+  return 0;
+}

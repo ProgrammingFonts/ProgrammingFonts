@@ -2,7 +2,6 @@
 font-family: 'Fira Code', monospace;
 height: 800px !important;
 padding: 0 10px;
-font-size: 24px;
 border-bottom-left-radius: 10px;
 border-bottom-right-radius: 10px;
 }
@@ -29,6 +28,8 @@ box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
 border-radius: 10px;
 display: flex;
 flex-direction: column;
+border: 1px solid rgba(255, 255, 255, 0);
+transition: background-color 400ms, border-color 400ms;
 }
 
 .titlebar {
@@ -48,11 +49,18 @@ font-family: monospace;
 font-weight: thin;
 }
 
-.titlebar .icon {
+.titlebar .logo {
 width: 16px;
 height: 16px;
 margin-left: 5px;
 margin-right: 15px;
+}
+
+.titlebar .cog_icon {
+width: 16px;
+height: 16px;
+margin-left: 5px;
+margin-right: 5px;
 }
 
 .buttons {
@@ -79,4 +87,277 @@ background-color: #28a745;
 
 .close {
 background-color: #dc3545;
+}
+
+.fonts_panel {
+width: 300px;
+height: 470px;
+margin-right: 50px;
+background-color: #0e0e0e;
+box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+border-radius: 10px;
+display: flex;
+flex-direction: column;
+border: 1px solid rgba(255, 255, 255, 0);
+transition: background-color 400ms, border-color 400ms;
+}
+
+.settings_panel {
+width: 300px;
+height: 300px;
+margin-top: 30px;
+margin-right: 50px;
+background-color: #0e0e0e;
+box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+border-radius: 10px;
+display: flex;
+flex-direction: column;
+border: 1px solid rgba(255, 255, 255, 0);
+transition: background-color 400ms, border-color 400ms;
+}
+
+#git > i {
+    color: rgb(94, 106, 210);
+}
+
+.link {
+align-items: center;
+backdrop-filter: blur(3px);
+background-color: rgba(255, 255, 255, 0.05);
+border: 1px solid rgba(255, 255, 255, 0.1);
+border-radius: 6px;
+bottom: 10px;
+box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.1);
+cursor: pointer;  
+display: inline-flex;
+gap: 10px;
+right: 10px;
+padding: 10px 20px;
+position: fixed;
+text-decoration: none;
+transition: background-color 400ms, border-color 400ms;
+z-index: 10000;
+}
+
+.link:hover {
+background-color: rgba(255, 255, 255, 0.1);
+border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.fonts_panel:hover {
+    background-color: #0c0c0c;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.settings_panel:hover {
+    background-color: #0c0c0c;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.window:hover {
+    background-color: #0c0c0c;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.link > i, .link > span {
+height: 20px;
+line-height: 20px;
+}
+
+.link > span {
+color: white;
+font-family: "Rubik", sans-serif;
+font-weight: 500;
+}
+#search-container {
+display: flex;
+position: relative;
+justify-content: center;
+align-items: center;
+min-height: 5px;
+}
+input[type="text"] {
+flex: 1;
+font-size: 12px;
+font-family: 'Fira Code', monospace;
+border: none;
+color: #FFFFFF;
+background-color: transparent;
+outline: none;
+padding: 2px;
+padding-left: 20px;
+}
+form {
+display: flex;
+align-items: center;
+background-color: #222222;
+padding: 6px;
+margin-top: 10px;
+width: 80%;
+margin-left: 10px;
+border-radius: 20px;
+}
+
+.filter{
+width: 10px;
+height: 11px;
+margin-top: 10px;
+margin-left: 3px;
+margin-right: 10px;
+padding: 10px;
+cursor: pointer;
+background-color: #ffffff;
+opacity: 30%;
+border-radius: 20px;
+}
+
+.setting-container {
+    padding: 30px;
+    color: #c1c1c1;
+    font-size: 18px;
+    position: relative;
+}
+
+.sub{
+padding: 10px;
+align-items: center;
+justify-content: flex-end;
+}
+
+.setting-container {
+padding: 16px;
+}
+.sub input[type="number"] {
+}
+
+.sub select {
+margin-left: 8px;
+padding: 4px;
+border: none;
+background-color: #222222;
+color: #ffffff;
+font-size: 14px;
+border-radius: 4px;
+float: right;
+}
+
+.sub select:focus {
+outline: none;
+}
+
+option {
+background-color: #222222;
+color: #ffffff;
+border: none;
+font-size: 14px;
+border-radius: 4px;
+}
+
+option:hover {
+background-color: #333333;
+}
+
+option:checked {
+background-color: #00c853;
+}
+
+
+input[type=number] {
+  color: #fff;
+  background-color: #222222;
+  border: none;
+  border-radius: 5px;
+  padding: 4px;
+  font-size: 14px;
+  box-shadow: none;
+  float: right;
+  width: 50px;
+}
+
+input[type=number]:focus {
+  outline: none;
+}
+
+.sub > * {
+  width: 50%;
+}
+
+.switch {
+  position: relative;
+  float: right;
+  display: inline-block;
+  width: 30px;
+  height: 17px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 13px;
+  width: 13px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(13px);
+  -ms-transform: translateX(13px);
+  transform: translateX(13px);
+}
+
+.slider.round {
+  border-radius: 17px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+.reset-button {
+  background-color: #d9534f;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 16px;
+  cursor: pointer;
+  height: 30px;
+  width: 100%;
+}
+
+.reset-button:hover {
+  background-color: #c9302c;
+}
+
+.reset-icon {
+  margin-right: 8px;
 }

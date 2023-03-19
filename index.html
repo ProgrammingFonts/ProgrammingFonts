@@ -2,19 +2,91 @@
 <html>
 <head>
   <title>ProgrammingFonts Editor</title>
-  <link rel="stylesheet" href="style.css" type="text/css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.3/theme/3024-night.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.3/codemirror.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.3/theme/dracula.min.css">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://kit.fontawesome.com/1267ba8054.js" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.3/codemirror.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.3/mode/javascript/javascript.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.3/mode/python/python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.3/mode/clike/clike.min.js"></script>
 </head>
 <body>
+
+  <div class="sidebar">
+  <div class="fonts_panel">
+      <div class="titlebar">
+        <img src="font.png" class="cog_icon">
+        <div class="title">Fonts</div>
+        <div class="buttons">
+          <div class="button minimize"></div>
+          <div class="button maximize"></div>
+          <div class="button close"></div>
+        </div>
+      </div>
+      <div id="search-container">
+        <form>
+          <input type="text" placeholder="Font Name..." id="search-input" autocomplete="off">
+        </form>
+        <div class="filter"></div>
+      </div>
+  </div>
+  <div class="settings_panel">
+    <div class="titlebar">
+      <img src="cog.png" class="cog_icon">
+      <div class="title">Settings</div>
+      <div class="buttons">
+        <div class="button minimize"></div>
+        <div class="button maximize"></div>
+        <div class="button close"></div>
+      </div>
+    </div>
+    <div class="setting-container">
+      <div class="sub">Theme
+        <select id="theme" onchange="changeTheme()">
+          <option value="3024-night">3024 Night</option>
+          <option value="">Light</option>
+          <option value="dracula">Dracula</option>
+          <option value="3024-day">3024 Day</option>
+          <option value="abcdef">ABCDEF</option>
+          <option value="ambiance">Ambiance</option>
+          <option value="base16-dark">Base16 Dark</option>
+          <option value="base16-light">Base16 Light</option>
+          <option value="blackboard">Blackboard</option>
+          </select>
+      </div>
+      <div class="sub">Language  
+        <select id="language" onchange="changeMode()">
+        <option value="javascript">JavaScript</option>
+        <option value="python">Python</option>
+        <option value="clike">C/C++/Java</option>
+        </select>
+      </div>
+      <div class="sub">Font Size
+        <input type="number" id="font-size" min="8" max="32" step="1" value="24" onchange="changeSize()">
+      </div>
+      <div class="sub">Line Wrap
+        <label class="switch">
+          <input type="checkbox" id="line-wrap" data-toggle="toggle" data-on="true" data-off="false" onchange="changeWrap()" checked>
+          <span class="slider round"></span>
+        </label>
+      </div>
+      <div class="sub">Line Num
+        <label class="switch">
+          <input type="checkbox" id="line-number" data-toggle="toggle" data-on="true" data-off="false" onchange="changeNum()" checked>
+          <span class="slider round"></span>
+        </label>
+      </div>
+      <div class="sub1">
+        <button class="reset-button" onclick="resetSettings()">
+          <i class="fa-solid fa-rotate-right"></i> Default
+        </button>        
+      </div>
+    </div>
+</div>
+</div>
+  
   <div class="window">
     <div class="titlebar">
-      <img src="logo-programming-fonts.png" class="icon">
+      <img src="logo-programming-fonts.png" class="logo">
       <div class="title">ProgrammingFonts</div>
       <div class="buttons">
         <div class="button minimize"></div>
@@ -22,67 +94,14 @@
         <div class="button close"></div>
       </div>
     </div>
-    <textarea id="editor">// This is a comment
-const message = `Hello, world!`;
-const number = 42;
-const regex = /ProgrammingFonts/g;
-const boolean = true;
-const array = [1, 2, 3];
-const object = { name: "Felix", age: 30 };
-const arrowFunction = () => {
-  console.log("This is an arrow function");
-};
-const templateLiteral = `The answer is ${number}`;
-const specialChars = `!@#$%^&*()_+-={}[]|\\:;"'<>,.?/~\``;
-
-CodeMirror.defineMode("myMode", () => {
-  return {
-    token: (stream) => {
-      if (stream.match(message)) {
-        return "message";
-      } else if (stream.match(number)) {
-        return "number";
-      } else if (stream.match(regex)) {
-        return "regex";
-      } else if (stream.match(/(\[|\])/)) {
-        return "bracket";
-      } else if (stream.match(/(\{|\})/)) {
-        return "brace";
-      } else if (stream.match(/(\(|\))/)) {
-        return "paren";
-      } else if (stream.match(/,/)) {
-        return "comma";
-      } else if (stream.match(/:/)) {
-        return "colon";
-      } else if (stream.match(/;/)) {
-        return "semicolon";
-      } else if (stream.match(/=>/)) {
-        return "arrow";
-      } else if (stream.match(/`/)) {
-        return "backtick";
-      } else if (stream.match(/["']/)) {
-        return "string";
-      } else if (stream.match(/[!@#$%^&*()_+\-={}\[\]|\\:;"'<>,.?/~`]/)) {
-        return "special";
-      } else {
-        stream.next();
-        return null;
-      }
-    },
-  };
-});
-
-const editor = CodeMirror(document.body, {
-  value: None,
-  mode: "myMode",
-  theme: "3024-night",
-  lineNumbers: true,
-});
-
-editor.setValue(
-  `${message}\n${number}\n${regex}\n${array}\n${object}\n${arrowFunction}\n${templateLiteral}\n${specialChars}`
-);</textarea>
+    <textarea id="editor"></textarea>
     <script src="script.js"></script>
+  </div>
+  <div class="layout">
+    <a id="git" class="link" href="https://github.com/ProgrammingFonts/ProgrammingFonts" target="_blank">
+      <i class="fa-brands fa-github"></i>
+      <span>Github</span>
+    </a>
   </div>
 </body>
 </html>

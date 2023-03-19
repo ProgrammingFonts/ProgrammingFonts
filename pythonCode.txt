@@ -1,0 +1,24 @@
+import random
+import string
+
+# Define some variables of different types
+message = "Hello, world!"
+number = 42
+regex = r"ProgrammingFonts"
+boolean = True
+array = [1, 2, 3]
+object = {"name": "Felix", "age": 30}
+
+# Define a function
+def square(x):
+    return x ** 2
+
+# Generate some random text
+random_text = "".join(random.choices(string.ascii_letters + string.digits, k=50))
+
+# Print everything using different fonts
+print(f"Regular: {message} {number} {regex} {boolean} {array} {object}")
+print(f"Bold: {message} {number} {regex} {boolean} {array} {object}")
+print(f"Italic: {message} {number} {regex} {boolean} {array} {object}")
+print(f"Bold and Italic: {message} {number} {regex} {boolean} {array} {object}")
+print(f"Code: {square} {random_text}")
