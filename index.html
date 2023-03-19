@@ -10,7 +10,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.3/mode/clike/clike.min.js"></script>
 </head>
 <body>
-
   <div class="sidebar">
   <div class="fonts_panel">
       <div class="titlebar">
@@ -63,6 +62,9 @@
       <div class="sub">Font Size
         <input type="number" id="font-size" min="8" max="32" step="1" value="24" onchange="changeSize()">
       </div>
+      <div class="sub">Letter Spacing
+        <input type="number" id="font-spacing" min="-1" max="6" step="0.1" value="1" onchange="changeSpace()">
+      </div>
       <div class="sub">Line Wrap
         <label class="switch">
           <input type="checkbox" id="line-wrap" data-toggle="toggle" data-on="true" data-off="false" onchange="changeWrap()" checked>
@@ -83,7 +85,6 @@
     </div>
 </div>
 </div>
-  
   <div class="window">
     <div class="titlebar">
       <img src="logo-programming-fonts.png" class="logo">

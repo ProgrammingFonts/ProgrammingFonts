@@ -1,6 +1,6 @@
 .CodeMirror {
 font-family: 'Fira Code', monospace;
-height: 800px !important;
+height: calc(100% - 20px) !important;
 padding: 0 10px;
 border-bottom-left-radius: 10px;
 border-bottom-right-radius: 10px;
@@ -21,8 +21,8 @@ background-color: #1e1e1e;
 
 
 .window {
-width: 1000px;
-height: 800px;
+width: calc(75% - 100px);
+height: calc(100% - 20px);
 background-color: #1e1e1e;
 box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
 border-radius: 10px;
@@ -90,23 +90,22 @@ background-color: #dc3545;
 }
 
 .fonts_panel {
-width: 300px;
-height: 470px;
-margin-right: 50px;
+width: calc(50vh - 10px);
+height: calc(70vh - 60px);
+margin-right: 20px;
+margin-left: 30px;
 background-color: #0e0e0e;
 box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
 border-radius: 10px;
-display: flex;
-flex-direction: column;
 border: 1px solid rgba(255, 255, 255, 0);
 transition: background-color 400ms, border-color 400ms;
 }
 
 .settings_panel {
-width: 300px;
-height: 300px;
-margin-top: 30px;
-margin-right: 50px;
+width: calc(50vh - 10px);
+height: calc(30vh + 10px);
+margin-top: 20px;
+margin-left: 30px;
 background-color: #0e0e0e;
 box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
 border-radius: 10px;
@@ -212,20 +211,19 @@ border-radius: 20px;
 }
 
 .setting-container {
-    padding: 30px;
     color: #c1c1c1;
     font-size: 18px;
     position: relative;
 }
 
 .sub{
-padding: 10px;
+padding: 7px;
 align-items: center;
 justify-content: flex-end;
 }
 
 .setting-container {
-padding: 16px;
+padding: 10px;
 }
 .sub input[type="number"] {
 }

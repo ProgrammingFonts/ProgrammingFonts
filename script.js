@@ -8,10 +8,19 @@ async function loadFiles() {
 loadFiles();
 var editor = CodeMirror.fromTextArea(document.getElementById("editor"), {
     lineNumbers: true,
+    theme: "3024-night",
     scrollbarStyle: "null",
     lineWrapping: true
 });
+window.onload = function() {
+  const theme = localStorage.getItem("theme") || "3024-night";
+  const themeSelect = document.getElementById("theme");
+  themeSelect.value = theme;
+  changeTheme();
+}
 var cElement = editor.getWrapperElement();
+cElement.style.letterSpacing = (localStorage.getItem("letter-spacing") ?? "1") + "px";
+document.getElementById("font-spacing").value = localStorage.getItem("letter-spacing") ?? "1";
 cElement.style.fontSize = (localStorage.getItem("font-size") ?? "24") + "px";
 document.getElementById("font-size").value = localStorage.getItem("font-size") ?? "24";
 document.getElementById("theme").value = localStorage.getItem("theme") ?? "default";
@@ -49,7 +58,11 @@ const changeSize = () => {
   cElement.style.fontSize = `${size}px`;
   localStorage.setItem("font-size", size);
 };
-
+const changeSpace = () => {
+  const space = document.getElementById("font-spacing").value;
+  cElement.style.letterSpacing = `${space}px`;
+  localStorage.setItem("letter-spacing", space);
+};
 const changeWrap = () => {
   const isChecked = document.getElementById("line-wrap").checked;
   editor.setOption("lineWrapping", isChecked);
@@ -64,6 +77,7 @@ const changeNum = () => {
 
 function resetSettings() {
   localStorage.clear();
+  document.getElementById("font-spacing").value = 1;
   document.getElementById("theme").value = "3024-night";
   document.getElementById("font-size").value = 24;
   document.getElementById("language").value = "javascript";
@@ -74,4 +88,5 @@ function resetSettings() {
   changeMode();
   changeWrap();
   changeNum();
+  changeSpace()
 }
