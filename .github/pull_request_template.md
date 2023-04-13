@@ -1,7 +1,7 @@
 ### All Submissions
-* [] Have you followed the guidelines in our [Contributing](https://github.com/ProgrammingFonts/ProgrammingFonts/blob/master/contributing.md) document?
-* [] Have you checked to ensure there aren't other open [Pull Requests](https://github.com/ProgrammingFonts/ProgrammingFonts/pulls) for the same update/change?
-* [] Have you checked the proposed font(s) isn't already in the [list](https://github.com/ProgrammingFonts/ProgrammingFonts#the-following-fonts-are-here)?
+* [ ] Have you followed the guidelines in our [Contributing](https://github.com/ProgrammingFonts/ProgrammingFonts/blob/master/contributing.md) document?
+* [ ] Have you checked to ensure there aren't other open [Pull Requests](https://github.com/ProgrammingFonts/ProgrammingFonts/pulls) for the same update/change?
+* [ ] Have you checked the proposed font(s) isn't already in the [list](https://github.com/ProgrammingFonts/ProgrammingFonts#the-following-fonts-are-here)?
 
 ## Proposed Font Addition
 
