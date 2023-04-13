@@ -1,5 +1,4 @@
 <!-- Please read the contribution guidelines before submitting a pull request. -->
-
 <!-- Thank you for your contribution! -->
 ### All Submissions 
 * [ ] Have you followed the guidelines in our [Contributing](https://github.com/ProgrammingFonts/ProgrammingFonts/blob/master/contributing.md) document?
