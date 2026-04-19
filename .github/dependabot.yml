@@ -1,0 +1,46 @@
+# To get started with Dependabot version updates, you'll need to specify which
+# package ecosystems to update and where the package manifests are located.
+# Please see the documentation for all configuration options:
+# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  # Enable version updates for Swift Package Manager
+  - package-ecosystem: "swift"
+    # Look for `Package.swift` and `Package.resolved` files in the `root` directory
+    directory: "/"
+    # Check for updates every weekday
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    # Allow up to 10 open pull requests for dependencies
+    open-pull-requests-limit: 10
+    # Assign reviewers to pull requests
+    assignees:
+      - "maintainer"
+    # Add labels to pull requests
+    labels:
+      - "dependencies"
+      - "security"
+    # Group updates by dependency name
+    groups:
+      dependencies:
+        patterns:
+          - "*"
+    # Security updates should be created immediately
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+      
+  # Enable version updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    # Security updates should be created immediately
+    pull-request-branch-name:
+      separator: "-"
+    commit-message:
+      prefix: "ci"
+      include: "scope"

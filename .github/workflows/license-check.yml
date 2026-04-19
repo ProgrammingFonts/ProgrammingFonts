@@ -1,0 +1,80 @@
+name: License Check
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run weekly on Monday at 9am UTC
+    - cron: '0 9 * * 1'
+
+jobs:
+  license-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.1'
+        
+    - name: Install licensee
+      run: gem install licensee
+        
+    - name: Check repository license
+      run: licensee detect . --json > license-report.json
+      
+    - name: Display license information
+      run: |
+        echo "=== License Report ==="
+        cat license-report.json | jq '.'
+        echo ""
+        echo "License detected: $(cat license-report.json | jq -r '.license.key')"
+        
+    - name: Verify Apache 2.0 license
+      run: |
+        LICENSE_KEY=$(cat license-report.json | jq -r '.license.key')
+        if [ "$LICENSE_KEY" != "apache-2.0" ]; then
+          echo "❌ ERROR: License should be Apache-2.0, but found: $LICENSE_KEY"
+          exit 1
+        else
+          echo "✅ License correctly set to Apache-2.0"
+        fi
+        
+    - name: Check for missing license headers
+      run: |
+        echo "Checking for source files without license headers..."
+        # Find source files and check for Apache license header
+        find . -name "*.swift" -type f ! -path "./.git/*" | while read file; do
+          if ! grep -q "Apache License" "$file"; then
+            echo "⚠️  Warning: $file may not have Apache license header"
+          fi
+        done
+        
+    - name: Upload license report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: license-report
+        path: license-report.json
+        
+  fossa-scan:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: FOSSA License Scan
+      uses: fossa-contrib/fossa-action@v1
+      with:
+        api-key: ${{ secrets.FOSSA_API_KEY }}
+        fossa-version: latest
+      continue-on-error: true

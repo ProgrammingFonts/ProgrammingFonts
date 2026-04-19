@@ -1,0 +1,75 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Xcode
+build/
+DerivedData/
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata/
+*.xccheckout
+*.moved-aside
+*.xcuserstate
+*.xcscmblueprint
+
+# Swift Package Manager
+.build/
+Packages/
+Package.resolved
+.swiftpm/
+
+# Carthage
+Carthage/Build/
+
+# AppCode
+.idea/
+
+# Vim
+*.swp
+*.swo
+
+# Temporary files
+*~
+*.tmp
+
+# Logs
+*.log
+
+# Crashlytics
+crashlytics.properties
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+
+# Code coverage
+*.gcda
+*.gcno
+
+# Profiling data
+*.profdata
+*.profraw
+
+# Environment files
+.env
+.env.local
+
+# App Store Connect API key
+*.p8
+
+# License compliance tools
+license-report.json
+
+# Secrets
+secrets.json
+*.encrypted
