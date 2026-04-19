@@ -73,7 +73,7 @@ jobs:
       uses: actions/checkout@v4
       
     - name: FOSSA License Scan
-      uses: fossa-contrib/fossa-action@v1
+      uses: fossa-contrib/fossa-action@v3
       with:
         api-key: ${{ secrets.FOSSA_API_KEY }}
         fossa-version: latest
