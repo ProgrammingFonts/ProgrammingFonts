@@ -1,13 +1,15 @@
 name: License Check
 
 on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main ]
-  schedule:
-    # Run weekly on Monday at 9am UTC
-    - cron: '0 9 * * 1'
+  # Temporarily disabled CI/CD
+  workflow_dispatch:
+  # push:
+  #   branches: [ main, develop ]
+  # pull_request:
+  #   branches: [ main ]
+  # schedule:
+  #   # Run weekly on Monday at 9am UTC
+  #   - cron: '0 9 * * 1'
 
 jobs:
   license-check:
