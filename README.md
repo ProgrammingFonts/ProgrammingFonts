@@ -1,6 +1,6 @@
 # RootFont
 
-![RootFont Logo](logo-rootfont.png)
+![RootFont Logo](logo-rootfont-400x400.png)
 
 The native font manager for designers and programmers on macOS.
 
