@@ -1,5 +1,7 @@
 # RootFont
 
+![RootFont Logo](logo-rootfont.png)
+
 The native font manager for designers and programmers on macOS.
 
 ## License
