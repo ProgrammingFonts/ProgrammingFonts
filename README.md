@@ -2,6 +2,10 @@
 
 ![RootFont Logo](logo-rootfont-300x300.png)
 
+**🚧 Under Active Development**
+
+> RootFont is currently in development. We're building the first version and welcome you to follow our progress. Stay tuned for the initial release!
+
 The native font manager for designers and programmers on macOS.
 
 ## License
