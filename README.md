@@ -1,6 +1,6 @@
 # RootFont
 
-Next-generation font management system for macOS.
+The native font manager for designers and programmers on macOS.
 
 ## License
 
