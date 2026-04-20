@@ -18,7 +18,31 @@ hi@rootfont.com.
 
 ## Quick Start
 
-[Project setup and usage instructions will be added here]
+### Requirements
+
+- macOS 14+
+- Xcode 15+ (includes Swift toolchain)
+
+### Run
+
+```bash
+swift run RootFontApp
+```
+
+### Test
+
+```bash
+swift test
+```
+
+## Demo Script (1 minute)
+
+1. Run `swift run RootFontApp` and wait for the font catalog to load.
+2. In the center panel, switch display to `Grid` and density to `Compact`.
+3. Enter a keyword (for example `Noto` or `Arial`) to show search filtering.
+4. Toggle source/style filters and show the active filter summary text.
+5. Click a font card, then in the preview panel switch quick presets (`Mixed/English/Chinese/Numeric`).
+6. Adjust preview size slider, star the current font, and click `Favorites` / `Recents` quick jump in the top bar.
 
 ## Contributing
 

@@ -1,0 +1,25 @@
+import AppKit
+import Foundation
+
+protocol FontStyleResolverProtocol {
+    func resolveStyleTags(for font: NSFont) -> Set<FontStyleTag>
+}
+
+struct FontStyleResolver: FontStyleResolverProtocol {
+    func resolveStyleTags(for font: NSFont) -> Set<FontStyleTag> {
+        var tags = Set<FontStyleTag>()
+        let traits = NSFontManager.shared.traits(of: font)
+
+        if traits.contains(.boldFontMask) {
+            tags.insert(.bold)
+        }
+        if traits.contains(.italicFontMask) {
+            tags.insert(.italic)
+        }
+        if tags.isEmpty {
+            tags.insert(.regular)
+        }
+
+        return tags
+    }
+}

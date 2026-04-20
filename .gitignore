@@ -73,3 +73,6 @@ license-report.json
 # Secrets
 secrets.json
 *.encrypted
+
+# Local docs drafts
+docs/

@@ -1,0 +1,82 @@
+import Foundation
+
+protocol PreferencesStoreProtocol: AnyObject {
+    var favoriteIDs: Set<String> { get set }
+    var recentFontIDs: [String] { get set }
+    var previewText: String { get set }
+    var previewSize: Double { get set }
+    var appLanguage: AppLanguage { get set }
+    var didChooseAppLanguage: Bool { get set }
+    var appearanceMode: AppAppearanceMode { get set }
+}
+
+final class PreferencesStore: PreferencesStoreProtocol {
+    private let defaults: UserDefaults
+
+    private enum Keys {
+        static let favoriteIDs = "rootfont.favoriteIDs"
+        static let recentFontIDs = "rootfont.recentFontIDs"
+        static let previewText = "rootfont.previewText"
+        static let previewSize = "rootfont.previewSize"
+        static let appLanguage = "rootfont.appLanguage"
+        static let didChooseAppLanguage = "rootfont.didChooseAppLanguage"
+        static let appearanceMode = "rootfont.appearanceMode"
+    }
+
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+    }
+
+    var favoriteIDs: Set<String> {
+        get { Set(defaults.stringArray(forKey: Keys.favoriteIDs) ?? []) }
+        set { defaults.set(Array(newValue), forKey: Keys.favoriteIDs) }
+    }
+
+    var recentFontIDs: [String] {
+        get { defaults.stringArray(forKey: Keys.recentFontIDs) ?? [] }
+        set { defaults.set(newValue, forKey: Keys.recentFontIDs) }
+    }
+
+    var previewText: String {
+        get { defaults.string(forKey: Keys.previewText) ?? "The quick brown fox jumps over the lazy dog 你好，RootFont" }
+        set { defaults.set(newValue, forKey: Keys.previewText) }
+    }
+
+    var previewSize: Double {
+        get {
+            let value = defaults.double(forKey: Keys.previewSize)
+            return value == 0 ? 32 : value
+        }
+        set { defaults.set(newValue, forKey: Keys.previewSize) }
+    }
+
+    var appLanguage: AppLanguage {
+        get {
+            guard didChooseAppLanguage,
+                  let raw = defaults.string(forKey: Keys.appLanguage),
+                  let lang = AppLanguage(rawValue: raw) else {
+                return .english
+            }
+            return lang
+        }
+        set {
+            defaults.set(newValue.rawValue, forKey: Keys.appLanguage)
+        }
+    }
+
+    var didChooseAppLanguage: Bool {
+        get { defaults.bool(forKey: Keys.didChooseAppLanguage) }
+        set { defaults.set(newValue, forKey: Keys.didChooseAppLanguage) }
+    }
+
+    var appearanceMode: AppAppearanceMode {
+        get {
+            guard let raw = defaults.string(forKey: Keys.appearanceMode),
+                  let mode = AppAppearanceMode(rawValue: raw) else {
+                return .system
+            }
+            return mode
+        }
+        set { defaults.set(newValue.rawValue, forKey: Keys.appearanceMode) }
+    }
+}
