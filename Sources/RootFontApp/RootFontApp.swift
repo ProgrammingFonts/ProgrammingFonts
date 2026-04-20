@@ -3,6 +3,8 @@ import SwiftUI
 
 @main
 struct RootFontApp: App {
+    private static var aboutWindow: NSWindow?
+
     init() {
         NSApplication.shared.setActivationPolicy(.regular)
         NSApplication.shared.activate(ignoringOtherApps: true)
@@ -55,17 +57,43 @@ struct RootFontApp: App {
     }
 
     private func showAboutPanel() {
-        var options: [NSApplication.AboutPanelOptionKey: Any] = [
-            .applicationName: "RootFont",
-            .version: appVersion,
-            .applicationVersion: buildNumber
-        ]
-
-        if let icon = NSImage(named: "logo-rootfont-300x300") {
-            options[.applicationIcon] = icon
-        }
-
-        NSApplication.shared.orderFrontStandardAboutPanel(options: options)
+        let versionDisplay = "\(appVersion)(\(buildNumber))"
+        let aboutView = AboutPanelView(versionText: "v\(versionDisplay)")
+        let window = RootFontApp.aboutWindow ?? NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 380, height: 320),
+            styleMask: [.titled, .closable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "About RootFont"
+        window.isReleasedWhenClosed = false
+        window.center()
+        window.contentView = NSHostingView(rootView: aboutView)
+        RootFontApp.aboutWindow = window
+        window.makeKeyAndOrderFront(nil)
         NSApplication.shared.activate(ignoringOtherApps: true)
+    }
+}
+
+private struct AboutPanelView: View {
+    let versionText: String
+
+    var body: some View {
+        VStack(spacing: 14) {
+            if let nsImage = NSImage(named: "logo-rootfont-300x300") {
+                Image(nsImage: nsImage)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 92, height: 92)
+            }
+            Text("RootFont")
+                .font(.title3.weight(.semibold))
+            Text(versionText)
+                .font(.headline)
+                .foregroundStyle(.secondary)
+            Spacer(minLength: 0)
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
