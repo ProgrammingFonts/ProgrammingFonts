@@ -2,26 +2,38 @@
 
 ![RootFont Logo](logo-rootfont-300x300.png)
 
-**🚧 Under Active Development**
-
-> RootFont is currently in development. We're building the first version and welcome you to follow our progress. Stay tuned for the initial release!
-
 The native font manager for designers and programmers on macOS.
 
-## License
+## Status
 
-RootFont is licensed under the Apache License, Version 2.0. See the 
-[LICENSE](LICENSE) file for details.
+**Current build:** `v0.1.0-beta (2)`  
+**Platform:** macOS 14+  
+**Bundle ID:** `com.rootfont.app`
 
-For commercial licensing options or enterprise support, please contact 
-hi@rootfont.com.
+RootFont is currently in active beta development.
+
+## Screenshots (v0.1.0-beta)
+
+<p align="center">
+  <img src="screenshots/v0.1.0-beta/01-main-dark.png" alt="RootFont main window in dark mode" width="46%" />
+  <img src="screenshots/v0.1.0-beta/02-main-light.png" alt="RootFont main window in light mode" width="46%" />
+</p>
+
+## Features
+
+- Browse installed fonts on macOS
+- Search fonts by name
+- Preview fonts with custom text and size
+- Filter by source/style
+- Favorites and recents support
+- Localized UI (English, Simplified Chinese, Traditional Chinese)
 
 ## Quick Start
 
 ### Requirements
 
 - macOS 14+
-- Xcode 15+ (includes Swift toolchain)
+- Xcode 15+ (Swift toolchain included)
 
 ### Run
 
@@ -29,32 +41,26 @@ hi@rootfont.com.
 swift run RootFontApp
 ```
 
-### Test
+### Run Tests
 
 ```bash
 swift test
 ```
 
-## Demo Script (1 minute)
-
-1. Run `swift run RootFontApp` and wait for the font catalog to load.
-2. In the center panel, switch display to `Grid` and density to `Compact`.
-3. Enter a keyword (for example `Noto` or `Arial`) to show search filtering.
-4. Toggle source/style filters and show the active filter summary text.
-5. Click a font card, then in the preview panel switch quick presets (`Mixed/English/Chinese/Numeric`).
-6. Adjust preview size slider, star the current font, and click `Favorites` / `Recents` quick jump in the top bar.
-
 ## Contributing
 
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) 
-for guidelines.
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+
+## License
+
+RootFont is licensed under Apache License 2.0. See [LICENSE](LICENSE).
+
+For commercial licensing options or enterprise support, contact [hi@rootfont.com](mailto:hi@rootfont.com).
 
 ## Third-Party Notices
 
-This software includes third-party components. See [NOTICE](NOTICE) for 
-attribution requirements.
+See [NOTICE](NOTICE) for third-party attribution requirements.
 
 ## Code of Conduct
 
-This project adheres to the Contributor Covenant Code of Conduct. See 
-[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for details.
+This project follows the Contributor Covenant. See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
