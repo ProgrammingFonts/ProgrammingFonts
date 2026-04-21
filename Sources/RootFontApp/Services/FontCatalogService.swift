@@ -2,7 +2,7 @@ import AppKit
 import CoreText
 import Foundation
 
-protocol FontCatalogServiceProtocol {
+protocol FontCatalogServiceProtocol: Sendable {
     func loadFonts() throws -> [FontItem]
 }
 

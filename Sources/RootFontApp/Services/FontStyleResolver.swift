@@ -1,7 +1,7 @@
 import AppKit
 import Foundation
 
-protocol FontStyleResolverProtocol {
+protocol FontStyleResolverProtocol: Sendable {
     func resolveStyleTags(for font: NSFont) -> Set<FontStyleTag>
 }
 

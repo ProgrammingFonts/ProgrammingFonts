@@ -3,7 +3,12 @@ import Foundation
 
 struct MockCatalogService: FontCatalogServiceProtocol {
     let fonts: [FontItem]
-    var error: Error? = nil
+    let error: (any Error & Sendable)?
+
+    init(fonts: [FontItem], error: (any Error & Sendable)? = nil) {
+        self.fonts = fonts
+        self.error = error
+    }
 
     func loadFonts() throws -> [FontItem] {
         if let error {

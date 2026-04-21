@@ -118,19 +118,39 @@ final class FontBrowserViewModel: ObservableObject {
     }
 
     func load() {
+        guard !isLoading else { return }
         isLoading = true
         loadErrorMessage = nil
-        do {
-            allFonts = try catalogService.loadFonts()
-            applyFilters()
-            if selectedFont == nil {
-                selectedFont = filteredFonts.first
+        let catalogService = self.catalogService
+        Task.detached(priority: .userInitiated) { [weak self] in
+            let loadedFonts: [FontItem]?
+            let loadFailed: Bool
+            do {
+                loadedFonts = try catalogService.loadFonts()
+                loadFailed = false
+            } catch {
+                loadedFonts = nil
+                loadFailed = true
             }
-        } catch {
+
+            await MainActor.run {
+                self?.applyLoadResult(fonts: loadedFonts, failed: loadFailed)
+            }
+        }
+    }
+
+    private func applyLoadResult(fonts: [FontItem]?, failed: Bool) {
+        if failed {
             allFonts = []
             filteredFonts = []
             selectedFont = nil
             loadErrorMessage = tr(.catalogReadFailed)
+        } else if let fonts {
+            allFonts = fonts
+            applyFilters()
+            if selectedFont == nil {
+                selectedFont = filteredFonts.first
+            }
         }
         isLoading = false
     }

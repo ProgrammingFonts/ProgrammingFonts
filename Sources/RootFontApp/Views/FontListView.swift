@@ -31,6 +31,7 @@ struct FontListView: View {
                 if viewModel.isLoading {
                     Spacer()
                     ProgressView(viewModel.tr(.loadingFonts))
+                        .controlSize(.small)
                     Spacer()
                 } else if let errorMessage = viewModel.loadErrorMessage {
                     ContentUnavailableView(
@@ -271,47 +272,84 @@ private struct FontGridCard: View {
     let onSelect: () -> Void
     let onToggleFavorite: () -> Void
 
+    @State private var isHovering = false
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
+            HStack(alignment: .top, spacing: 8) {
                 Text(item.familyName)
                     .font(.headline)
                     .lineLimit(1)
-                Spacer()
+                    .truncationMode(.tail)
+                Spacer(minLength: 6)
                 Button(action: onToggleFavorite) {
                     Image(systemName: isFavorite ? "star.fill" : "star")
                         .foregroundStyle(isFavorite ? .yellow : .secondary)
+                        .imageScale(.small)
                 }
                 .buttonStyle(.plain)
+                .help(isFavorite ? "Remove favorite" : "Add favorite")
             }
 
             Text(item.displayName)
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
+                .truncationMode(.tail)
 
             Text(sampleText)
                 .font(previewFont)
                 .lineLimit(densityMode == .compact ? 1 : 2)
+                .minimumScaleFactor(0.88)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            HStack {
-                Text(item.source == .system ? L10n.tr(.system, language: language) : L10n.tr(.user, language: language))
-                Spacer()
-                Text(styleLabel)
+            HStack(spacing: 6) {
+                tag(text: item.source == .system ? L10n.tr(.system, language: language) : L10n.tr(.user, language: language))
+                Spacer(minLength: 0)
+                tag(text: styleLabel)
             }
-            .font(.caption2)
-            .foregroundStyle(.secondary)
         }
         .padding(densityMode == .compact ? 10 : 12)
-        .frame(maxWidth: .infinity, minHeight: densityMode == .compact ? 108 : 140, alignment: .topLeading)
-        .background(isSelected ? Color.accentColor.opacity(0.16) : Color.secondary.opacity(0.10))
+        .frame(maxWidth: .infinity, minHeight: densityMode == .compact ? 112 : 146, alignment: .topLeading)
+        .background(cardBackground)
         .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(isSelected ? Color.accentColor.opacity(0.8) : Color.secondary.opacity(0.12), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(cardBorder, lineWidth: isSelected ? 1.4 : 1)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .scaleEffect(isHovering ? 1.01 : 1)
+        .shadow(color: .black.opacity(isHovering ? 0.12 : 0), radius: isHovering ? 5 : 0, x: 0, y: 2)
+        .contentShape(RoundedRectangle(cornerRadius: 12))
+        .onHover { hovering in
+            withAnimation(.easeOut(duration: 0.12)) {
+                isHovering = hovering
+            }
+        }
         .onTapGesture(perform: onSelect)
+    }
+
+    private func tag(text: String) -> some View {
+        Text(text)
+            .font(.caption2.weight(.medium))
+            .lineLimit(1)
+            .padding(.horizontal, 7)
+            .padding(.vertical, 3)
+            .background(Color.secondary.opacity(0.14), in: Capsule())
+            .foregroundStyle(.secondary)
+    }
+
+    private var cardBackground: Color {
+        if isSelected {
+            return Color.accentColor.opacity(0.17)
+        }
+        return Color.secondary.opacity(isHovering ? 0.14 : 0.10)
+    }
+
+    private var cardBorder: Color {
+        if isSelected {
+            return Color.accentColor.opacity(0.82)
+        }
+        return Color.secondary.opacity(isHovering ? 0.24 : 0.14)
     }
 
     private var sampleText: String {
