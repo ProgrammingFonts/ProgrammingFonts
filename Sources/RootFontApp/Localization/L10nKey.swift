@@ -58,6 +58,7 @@ enum L10nKey {
     case quickSample
     case previewText
     case previewSize
+    case previewWrapMode
     case fallbackPreviewInfo
     case selectFontTitle
     case selectFontHint

@@ -59,6 +59,7 @@ enum L10nEN {
         .quickSample: "Quick Sample",
         .previewText: "Preview Text",
         .previewSize: "Size",
+        .previewWrapMode: "Single-line scroll preview",
         .fallbackPreviewInfo: "This font cannot render directly. Fallback to system font.",
         .selectFontTitle: "RootFont",
         .selectFontHint: "Select a font from the list to start preview.",

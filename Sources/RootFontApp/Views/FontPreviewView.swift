@@ -4,76 +4,29 @@ import SwiftUI
 struct FontPreviewView: View {
     @ObservedObject var viewModel: FontBrowserViewModel
     @State private var previewPreset: FontBrowserViewModel.PreviewPreset = .mixed
+    @State private var useSingleLinePreview = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        Group {
             if let selected = viewModel.selectedFont {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(selected.familyName).font(.title2).bold()
-                    Text(selected.displayName).foregroundStyle(.secondary)
-                    HStack(spacing: 8) {
-                        Text("\(viewModel.tr(.sourcePrefix))\(viewModel.sourceLabel(for: selected))")
-                        Text("\(viewModel.tr(.stylePrefix))\(viewModel.styleLabel(for: selected))")
-                    }
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                    HStack(spacing: 12) {
-                        Button(viewModel.tr(.copyFontName)) {
-                            NSPasteboard.general.clearContents()
-                            NSPasteboard.general.setString(selected.postScriptName, forType: .string)
-                        }
-                        .buttonStyle(.link)
-                        Text(selected.postScriptName)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                            .textSelection(.enabled)
-                    }
-                }
-
-                HStack(spacing: 8) {
-                    Text(viewModel.tr(.quickSample))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Picker(viewModel.tr(.quickSample), selection: $previewPreset) {
-                        ForEach(FontBrowserViewModel.PreviewPreset.allCases) { preset in
-                            Text(preset.title(language: viewModel.language)).tag(preset)
+                ScrollView(.vertical, showsIndicators: true) {
+                    VStack(alignment: .leading, spacing: 16) {
+                        headerSection(for: selected)
+                        quickSampleSection
+                        previewTextField
+                        previewSizeSection
+                        previewModeSection
+                        previewBlocksSection(for: selected)
+                        if !viewModel.hasRenderablePreviewFont() {
+                            Label(viewModel.tr(.fallbackPreviewInfo), systemImage: "info.circle")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
                         }
                     }
-                    .pickerStyle(.segmented)
-                    .onChange(of: previewPreset) { _, newPreset in
-                        viewModel.applyPreviewPreset(newPreset)
-                    }
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-
-                TextField(viewModel.tr(.previewText), text: $viewModel.previewText, axis: .vertical)
-                    .textFieldStyle(.roundedBorder)
-                    .onChange(of: viewModel.previewText) { _, _ in
-                        viewModel.updatePreviewText(viewModel.previewText)
-                    }
-
-                VStack(alignment: .leading) {
-                    Text("\(viewModel.tr(.previewSize)): \(Int(viewModel.previewSize)) px")
-                    Slider(value: $viewModel.previewSize, in: 12...96, step: 1)
-                        .onChange(of: viewModel.previewSize) { _, _ in
-                            viewModel.updatePreviewSize(viewModel.previewSize)
-                        }
-                }
-
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 12) {
-                        previewBlock(text: viewModel.previewText, size: viewModel.previewSize, item: selected)
-                        previewBlock(text: "ABCDEFGHIJKLMNOPQRSTUVWXYZ", size: max(14, viewModel.previewSize * 0.72), item: selected)
-                        previewBlock(text: "abcdefghijklmnopqrstuvwxyz 0123456789", size: max(12, viewModel.previewSize * 0.58), item: selected)
-                    }
-                }
-                if !viewModel.hasRenderablePreviewFont() {
-                    Label(viewModel.tr(.fallbackPreviewInfo), systemImage: "info.circle")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
             } else {
                 VStack(spacing: 16) {
                     Image(systemName: "textformat.alt")
@@ -81,27 +34,163 @@ struct FontPreviewView: View {
                         .foregroundStyle(.secondary)
                     Text(viewModel.tr(.selectFontTitle))
                         .font(.title2.weight(.semibold))
+                        .multilineTextAlignment(.center)
                     Text(viewModel.tr(.selectFontHint))
                         .font(.callout)
                         .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
                     Text(viewModel.tr(.selectFontTip))
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
                 }
+                .padding(16)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
-        .padding(16)
+    }
+
+    @ViewBuilder
+    private func headerSection(for selected: FontItem) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(selected.familyName)
+                .font(.title2).bold()
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Text(selected.displayName)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            FlowLayout(hSpacing: 10, vSpacing: 4) {
+                Text("\(viewModel.tr(.sourcePrefix))\(viewModel.sourceLabel(for: selected))")
+                    .lineLimit(1)
+                Text("\(viewModel.tr(.stylePrefix))\(viewModel.styleLabel(for: selected))")
+                    .lineLimit(1)
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+
+            HStack(spacing: 10) {
+                Button(viewModel.tr(.copyFontName)) {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(selected.postScriptName, forType: .string)
+                }
+                .buttonStyle(.link)
+                .fixedSize()
+                Text(selected.postScriptName)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+    }
+
+    private var quickSampleSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(viewModel.tr(.quickSample))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            ViewThatFits(in: .horizontal) {
+                Picker(viewModel.tr(.quickSample), selection: $previewPreset) {
+                    ForEach(FontBrowserViewModel.PreviewPreset.allCases) { preset in
+                        Text(preset.title(language: viewModel.language)).tag(preset)
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(.segmented)
+
+                Picker(viewModel.tr(.quickSample), selection: $previewPreset) {
+                    ForEach(FontBrowserViewModel.PreviewPreset.allCases) { preset in
+                        Text(preset.title(language: viewModel.language)).tag(preset)
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(.menu)
+            }
+            .onChange(of: previewPreset) { _, newPreset in
+                viewModel.applyPreviewPreset(newPreset)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var previewTextField: some View {
+        TextField(viewModel.tr(.previewText), text: $viewModel.previewText, axis: .vertical)
+            .textFieldStyle(.roundedBorder)
+            .lineLimit(1...4)
+            .onChange(of: viewModel.previewText) { _, _ in
+                viewModel.updatePreviewText(viewModel.previewText)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var previewSizeSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("\(viewModel.tr(.previewSize)): \(Int(viewModel.previewSize)) px")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Slider(value: $viewModel.previewSize, in: 12...96, step: 1)
+                .onChange(of: viewModel.previewSize) { _, _ in
+                    viewModel.updatePreviewSize(viewModel.previewSize)
+                }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var previewModeSection: some View {
+        HStack(spacing: 10) {
+            Toggle(isOn: $useSingleLinePreview) {
+                Text(viewModel.tr(.previewWrapMode))
+            }
+            .toggleStyle(.switch)
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 2)
+    }
+
+    @ViewBuilder
+    private func previewBlocksSection(for selected: FontItem) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            previewBlock(text: viewModel.previewText, size: viewModel.previewSize, item: selected)
+            previewBlock(text: "ABCDEFGHIJKLMNOPQRSTUVWXYZ", size: max(14, viewModel.previewSize * 0.72), item: selected)
+            previewBlock(text: "abcdefghijklmnopqrstuvwxyz 0123456789", size: max(12, viewModel.previewSize * 0.58), item: selected)
+        }
     }
 
     @ViewBuilder
     private func previewBlock(text: String, size: Double, item: FontItem) -> some View {
-        Text(text)
-            .font(previewFont(for: item, size: size))
+        if useSingleLinePreview {
+            ScrollView(.horizontal, showsIndicators: false) {
+                Text(text)
+                    .font(previewFont(for: item, size: size))
+                    .lineLimit(1)
+                    .padding()
+            }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding()
             .background(.quaternary.opacity(0.3))
             .cornerRadius(10)
+        } else {
+            Text(softWrappedText(text))
+                .font(previewFont(for: item, size: size))
+                .lineLimit(nil)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
+                .background(.quaternary.opacity(0.3))
+                .cornerRadius(10)
+        }
+    }
+
+    private func softWrappedText(_ text: String) -> String {
+        text.map { String($0) }.joined(separator: "\u{200B}")
     }
 
     private func previewFont(for item: FontItem, size: Double) -> Font {

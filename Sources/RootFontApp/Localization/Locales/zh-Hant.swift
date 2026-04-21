@@ -59,6 +59,7 @@ enum L10nZHHant {
         .quickSample: "快速文案",
         .previewText: "預覽文字",
         .previewSize: "字號",
+        .previewWrapMode: "單行滾動預覽",
         .fallbackPreviewInfo: "此字體無法直接渲染，已回退為系統字體。",
         .selectFontTitle: "RootFont",
         .selectFontHint: "從中間清單選擇字體即可開始預覽",

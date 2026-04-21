@@ -23,9 +23,9 @@ struct FontListView: View {
     var body: some View {
         VStack(spacing: 0) {
             headerView
-                .background(.ultraThinMaterial)
 
             Divider()
+                .opacity(0.35)
 
             VStack(spacing: 0) {
                 if viewModel.isLoading {
@@ -110,11 +110,12 @@ struct FontListView: View {
     }
 
     private var headerView: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            FlowLayout(hSpacing: 12, vSpacing: 8) {
+        VStack(alignment: .leading, spacing: 8) {
+            FlowLayout(hSpacing: 10, vSpacing: 10) {
                 TextField(viewModel.tr(.searchPlaceholder), text: $viewModel.searchQuery)
                     .textFieldStyle(.roundedBorder)
                     .frame(minWidth: 260, idealWidth: 360, maxWidth: 480)
+                    .controlSize(.regular)
                     .onChange(of: viewModel.searchQuery) { _, _ in
                         viewModel.applyFilters()
                     }
@@ -130,6 +131,8 @@ struct FontListView: View {
                     Text(viewModel.tr(.system)).tag(FontSource?.some(.system))
                     Text(viewModel.tr(.user)).tag(FontSource?.some(.user))
                 }
+                .controlSize(.regular)
+                .frame(minWidth: pickerMinWidth)
                 .fixedSize()
 
                 Picker(viewModel.tr(.style), selection: Binding(
@@ -144,6 +147,8 @@ struct FontListView: View {
                     Text(viewModel.tr(.bold)).tag(FontStyleTag?.some(.bold))
                     Text(viewModel.tr(.italic)).tag(FontStyleTag?.some(.italic))
                 }
+                .controlSize(.regular)
+                .frame(minWidth: pickerMinWidth)
                 .fixedSize()
 
                 Picker(viewModel.tr(.sort), selection: Binding(
@@ -157,6 +162,8 @@ struct FontListView: View {
                         Text(viewModel.title(for: option)).tag(option)
                     }
                 }
+                .controlSize(.regular)
+                .frame(minWidth: sortPickerMinWidth)
                 .fixedSize()
 
                 Picker(viewModel.tr(.display), selection: $displayMode) {
@@ -165,7 +172,8 @@ struct FontListView: View {
                     }
                 }
                 .pickerStyle(.segmented)
-                .fixedSize()
+                .controlSize(.regular)
+                .frame(width: segmentedDisplayWidth)
 
                 if displayMode == .grid {
                     Picker(viewModel.tr(.density), selection: $densityMode) {
@@ -174,17 +182,20 @@ struct FontListView: View {
                         }
                     }
                     .pickerStyle(.segmented)
-                    .fixedSize()
+                    .controlSize(.regular)
+                    .frame(width: segmentedDensityWidth)
                 }
             }
 
-            FlowLayout(hSpacing: 12, vSpacing: 6) {
+            FlowLayout(hSpacing: 14, vSpacing: 6) {
                 Text("\(viewModel.filteredFonts.count) \(viewModel.tr(.totalFonts))")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.primary)
                 Text(viewModel.activeFilterSummary)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
                 Button(viewModel.tr(.jumpAll)) {
                     viewModel.jumpToAllFonts()
                 }
@@ -203,10 +214,38 @@ struct FontListView: View {
                 .buttonStyle(.link)
             }
         }
-        .padding(.horizontal)
-        .padding(.top, 6)
-        .padding(.bottom, 6)
+        .padding(.horizontal, 16)
+        .padding(.top, 10)
+        .padding(.bottom, 10)
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var pickerMinWidth: CGFloat {
+        switch viewModel.language {
+        case .english: return 150
+        case .simplifiedChinese, .traditionalChinese: return 140
+        }
+    }
+
+    private var sortPickerMinWidth: CGFloat {
+        switch viewModel.language {
+        case .english: return 180
+        case .simplifiedChinese, .traditionalChinese: return 170
+        }
+    }
+
+    private var segmentedDisplayWidth: CGFloat {
+        switch viewModel.language {
+        case .english: return 160
+        case .simplifiedChinese, .traditionalChinese: return 140
+        }
+    }
+
+    private var segmentedDensityWidth: CGFloat {
+        switch viewModel.language {
+        case .english: return 200
+        case .simplifiedChinese, .traditionalChinese: return 160
+        }
     }
 
     private var gridMinimumWidth: CGFloat {

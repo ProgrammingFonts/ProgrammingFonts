@@ -59,6 +59,7 @@ enum L10nZHHans {
         .quickSample: "快速文案",
         .previewText: "预览文本",
         .previewSize: "字号",
+        .previewWrapMode: "单行滚动预览",
         .fallbackPreviewInfo: "该字体无法直接渲染，已回退为系统字体。",
         .selectFontTitle: "RootFont",
         .selectFontHint: "从中间列表选择一个字体即可开始预览",
