@@ -5,6 +5,10 @@ struct FontListView: View {
     @ObservedObject var viewModel: FontBrowserViewModel
     @State private var displayMode: DisplayMode = .grid
     @State private var densityMode: DensityMode = .compact
+    @State private var searchInput: String = ""
+    @State private var searchDebounceTask: Task<Void, Never>?
+    @FocusState private var isSearchFieldFocused: Bool
+    @State private var didAutofocusSearch = false
 
     enum DisplayMode: String, CaseIterable, Identifiable {
         case grid
@@ -111,6 +115,13 @@ struct FontListView: View {
         .onAppear {
             displayMode = DisplayMode(rawValue: UserDefaults.standard.string(forKey: "rootfont.displayMode") ?? "grid") ?? .grid
             densityMode = DensityMode(rawValue: UserDefaults.standard.string(forKey: "rootfont.densityMode") ?? "compact") ?? .compact
+            searchInput = viewModel.searchQuery
+            if !didAutofocusSearch {
+                didAutofocusSearch = true
+                DispatchQueue.main.async {
+                    isSearchFieldFocused = true
+                }
+            }
         }
         .onChange(of: displayMode) { _, newValue in
             UserDefaults.standard.set(newValue.rawValue, forKey: "rootfont.displayMode")
@@ -118,18 +129,39 @@ struct FontListView: View {
         .onChange(of: densityMode) { _, newValue in
             UserDefaults.standard.set(newValue.rawValue, forKey: "rootfont.densityMode")
         }
+        .onChange(of: searchInput) { _, newValue in
+            searchDebounceTask?.cancel()
+            searchDebounceTask = Task {
+                try? await Task.sleep(nanoseconds: 220_000_000)
+                guard !Task.isCancelled else { return }
+                await MainActor.run {
+                    if viewModel.searchQuery != newValue {
+                        viewModel.updateSearchQuery(newValue)
+                    }
+                }
+            }
+        }
+        .onChange(of: viewModel.searchQuery) { _, newValue in
+            if searchInput != newValue {
+                searchInput = newValue
+            }
+        }
+        .onDisappear {
+            searchDebounceTask?.cancel()
+        }
     }
 
     private var headerView: some View {
         VStack(alignment: .leading, spacing: 8) {
             FlowLayout(hSpacing: 10, vSpacing: 10) {
                 TextField(viewModel.tr(.searchPlaceholder), text: Binding(
-                    get: { viewModel.searchQuery },
-                    set: { viewModel.updateSearchQuery($0) }
+                    get: { searchInput },
+                    set: { searchInput = $0 }
                 ))
                     .textFieldStyle(.roundedBorder)
                     .frame(minWidth: 260, idealWidth: 360, maxWidth: 480)
                     .controlSize(.regular)
+                    .focused($isSearchFieldFocused)
 
                 Picker(viewModel.tr(.source), selection: Binding(
                     get: { viewModel.selectedSource },
