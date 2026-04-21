@@ -11,6 +11,6 @@ enum L10n {
         case .traditionalChinese:
             table = L10nZHHant.entries
         }
-        return table[key] ?? L10nEN.entries[key] ?? ""
+        return table[key] ?? L10nEN.entries[key] ?? String(describing: key)
     }
 }

@@ -12,11 +12,14 @@ enum L10nKey {
     case clearRecents
     case settings
     case language
+    case languageDescription
     case appearance
+    case appearanceDescription
     case appearanceSystem
     case appearanceLight
     case appearanceDark
     case showSystemAliasFonts
+    case showSystemAliasFontsDescription
     case searchPlaceholder
     case source
     case allSources

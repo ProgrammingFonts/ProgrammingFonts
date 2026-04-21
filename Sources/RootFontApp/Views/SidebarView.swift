@@ -23,25 +23,37 @@ struct SidebarView: View {
 
             // Keep language control visible in the main UI.
             Section(viewModel.tr(.settings)) {
-                Picker(viewModel.tr(.language), selection: Binding(
-                    get: { viewModel.language },
-                    set: { viewModel.updateLanguage($0) }
-                )) {
-                    ForEach(AppLanguage.allCases) { language in
-                        Text(language.displayName).tag(language)
+                VStack(alignment: .leading, spacing: 4) {
+                    Picker(viewModel.tr(.language), selection: Binding(
+                        get: { viewModel.language },
+                        set: { viewModel.updateLanguage($0) }
+                    )) {
+                        ForEach(AppLanguage.allCases) { language in
+                            Text(language.displayName).tag(language)
+                        }
                     }
-                }
-                .pickerStyle(.menu)
+                    .pickerStyle(.menu)
 
-                Picker(viewModel.tr(.appearance), selection: Binding(
-                    get: { viewModel.appearanceMode },
-                    set: { viewModel.updateAppearanceMode($0) }
-                )) {
-                    Text(viewModel.tr(.appearanceSystem)).tag(AppAppearanceMode.system)
-                    Text(viewModel.tr(.appearanceLight)).tag(AppAppearanceMode.light)
-                    Text(viewModel.tr(.appearanceDark)).tag(AppAppearanceMode.dark)
+                    Text(viewModel.tr(.languageDescription))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                 }
-                .pickerStyle(.menu)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Picker(viewModel.tr(.appearance), selection: Binding(
+                        get: { viewModel.appearanceMode },
+                        set: { viewModel.updateAppearanceMode($0) }
+                    )) {
+                        Text(viewModel.tr(.appearanceSystem)).tag(AppAppearanceMode.system)
+                        Text(viewModel.tr(.appearanceLight)).tag(AppAppearanceMode.light)
+                        Text(viewModel.tr(.appearanceDark)).tag(AppAppearanceMode.dark)
+                    }
+                    .pickerStyle(.menu)
+
+                    Text(viewModel.tr(.appearanceDescription))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
 
                 HStack(alignment: .center, spacing: 8) {
                     Text(viewModel.tr(.showSystemAliasFonts))
@@ -55,6 +67,10 @@ struct SidebarView: View {
                     .labelsHidden()
                     .toggleStyle(.switch)
                 }
+
+                Text(viewModel.tr(.showSystemAliasFontsDescription))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
             }
         }
         .navigationTitle("RootFont")
