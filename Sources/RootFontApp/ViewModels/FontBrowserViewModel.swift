@@ -4,6 +4,11 @@ import Foundation
 
 @MainActor
 final class FontBrowserViewModel: ObservableObject {
+    private struct SearchIndexEntry {
+        let normalizedNames: [String]
+        let choseongNames: [String]
+    }
+
     enum SidebarFilter: String, CaseIterable {
         case all
         case system
@@ -98,8 +103,13 @@ final class FontBrowserViewModel: ObservableObject {
     }
 
     private let catalogService: FontCatalogServiceProtocol
+    private let fontImportService: FontImportServiceProtocol
     private let preferencesStore: PreferencesStoreProtocol
     private let maxRecents = 30
+    private let maxCoverageCacheEntries = 2048
+    private var searchIndexByFontID: [String: SearchIndexEntry] = [:]
+    private var coverageSupportCache: [String: Bool] = [:]
+    private var coverageCacheOrder: [String] = []
 
     @Published private(set) var allFonts: [FontItem] = []
     @Published private(set) var filteredFonts: [FontItem] = []
@@ -119,9 +129,15 @@ final class FontBrowserViewModel: ObservableObject {
     @Published private(set) var language: AppLanguage
     @Published private(set) var appearanceMode: AppAppearanceMode
     @Published private(set) var showSystemAliasFonts: Bool
+    @Published private(set) var smartCollections: [SmartCollection] = []
 
-    init(catalogService: FontCatalogServiceProtocol, preferencesStore: PreferencesStoreProtocol) {
+    init(
+        catalogService: FontCatalogServiceProtocol,
+        fontImportService: FontImportServiceProtocol = FontImportService(),
+        preferencesStore: PreferencesStoreProtocol
+    ) {
         self.catalogService = catalogService
+        self.fontImportService = fontImportService
         self.preferencesStore = preferencesStore
         self.favoriteIDs = preferencesStore.favoriteIDs
         self.recentFontIDs = preferencesStore.recentFontIDs
@@ -133,6 +149,7 @@ final class FontBrowserViewModel: ObservableObject {
         self.searchQuery = preferencesStore.searchQuery
         self.sidebarFilter = SidebarFilter(rawValue: preferencesStore.sidebarFilter) ?? .all
         self.sortOption = SortOption(rawValue: preferencesStore.sortOption) ?? .familyName
+        self.smartCollections = Self.decodeSmartCollections(preferencesStore.smartCollectionsData)
     }
 
     func tr(_ key: L10nKey) -> String {
@@ -167,6 +184,37 @@ final class FontBrowserViewModel: ObservableObject {
         applyFilters()
     }
 
+    func saveCurrentFiltersAsSmartCollection(named name: String) {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        let item = SmartCollection(
+            name: trimmed,
+            searchQuery: searchQuery,
+            glyphCoverageQuery: glyphCoverageQuery,
+            selectedSource: selectedSource,
+            selectedStyle: selectedStyle,
+            sidebarFilter: sidebarFilter
+        )
+        smartCollections.insert(item, at: 0)
+        persistSmartCollections()
+    }
+
+    func applySmartCollection(_ collection: SmartCollection) {
+        searchQuery = collection.searchQuery
+        glyphCoverageQuery = collection.glyphCoverageQuery
+        selectedSource = collection.selectedSource
+        selectedStyle = collection.selectedStyle
+        sidebarFilter = collection.sidebarFilter
+        preferencesStore.searchQuery = searchQuery
+        preferencesStore.sidebarFilter = sidebarFilter.rawValue
+        applyFilters()
+    }
+
+    func removeSmartCollection(_ collection: SmartCollection) {
+        smartCollections.removeAll(where: { $0.id == collection.id })
+        persistSmartCollections()
+    }
+
     func updateSortOption(_ value: SortOption) {
         sortOption = value
         preferencesStore.sortOption = value.rawValue
@@ -177,6 +225,17 @@ final class FontBrowserViewModel: ObservableObject {
         sidebarFilter = value
         preferencesStore.sidebarFilter = value.rawValue
         applyFilters()
+    }
+
+    @discardableResult
+    func importFonts(from urls: [URL]) -> Bool {
+        guard !urls.isEmpty else { return false }
+        let count = fontImportService.registerFonts(at: urls)
+        if count > 0 {
+            load()
+            return true
+        }
+        return false
     }
 
     func title(for sortOption: SortOption) -> String {
@@ -215,9 +274,13 @@ final class FontBrowserViewModel: ObservableObject {
             allFonts = []
             filteredFonts = []
             selectedFont = nil
+            rebuildSearchIndex()
+            clearCoverageCache()
             loadErrorMessage = tr(.catalogReadFailed)
         } else if let fonts {
             allFonts = fonts
+            rebuildSearchIndex()
+            clearCoverageCache()
             applyFilters()
             if selectedFont == nil {
                 selectedFont = filteredFonts.first
@@ -380,13 +443,11 @@ final class FontBrowserViewModel: ObservableObject {
     }
 
     func applyFilters() {
-        let query = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        let preparedQuery = SearchMatcher.prepare(query: searchQuery)
         let coverageQuery = glyphCoverageQuery.trimmingCharacters(in: .whitespacesAndNewlines)
         let result = allFonts.filter { item in
-            if !query.isEmpty {
-                let matched = item.searchableNames.contains { name in
-                    SearchMatcher.matches(haystack: name, query: query)
-                }
+            if !preparedQuery.isEmpty {
+                let matched = matchesSearchQuery(item: item, preparedQuery: preparedQuery)
                 if !matched { return false }
             }
 
@@ -424,8 +485,82 @@ final class FontBrowserViewModel: ObservableObject {
     /// `postScriptName` has glyphs for every non-whitespace character in
     /// `text`. Returns false if the font cannot be instantiated.
     func fontSupportsAllCharacters(postScriptName: String, text: String) -> Bool {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty { return true }
+        let cacheKey = "\(postScriptName)|\(trimmed)"
+        if let cached = coverageSupportCache[cacheKey] {
+            return cached
+        }
         guard let font = NSFont(name: postScriptName, size: 16) else { return false }
-        return supportsAllCharacters(font: font, text: text)
+        let supported = supportsAllCharacters(font: font, text: trimmed)
+        coverageSupportCache[cacheKey] = supported
+        coverageCacheOrder.append(cacheKey)
+        trimCoverageCacheIfNeeded()
+        return supported
+    }
+
+    private func matchesSearchQuery(item: FontItem, preparedQuery: SearchMatcher.PreparedQuery) -> Bool {
+        guard let entry = searchIndexByFontID[item.id] else {
+            return item.searchableNames.contains { SearchMatcher.matches(haystack: $0, query: preparedQuery.trimmed) }
+        }
+        if entry.normalizedNames.contains(where: { $0.contains(preparedQuery.normalized) }) {
+            return true
+        }
+        if preparedQuery.isChoseongOnly {
+            return entry.choseongNames.contains(where: { $0.contains(preparedQuery.choseong) })
+        }
+        return false
+    }
+
+    private func rebuildSearchIndex() {
+        searchIndexByFontID = Dictionary(uniqueKeysWithValues: allFonts.map { item in
+            let names = item.searchableNames
+            let normalized = names.map(SearchMatcher.normalize)
+            let choseong = names.map(SearchMatcher.choseongProjection)
+            return (item.id, SearchIndexEntry(normalizedNames: normalized, choseongNames: choseong))
+        })
+    }
+
+    private func clearCoverageCache() {
+        coverageSupportCache.removeAll(keepingCapacity: true)
+        coverageCacheOrder.removeAll(keepingCapacity: true)
+    }
+
+    private func trimCoverageCacheIfNeeded() {
+        guard coverageCacheOrder.count > maxCoverageCacheEntries else { return }
+        let overflow = coverageCacheOrder.count - maxCoverageCacheEntries
+        guard overflow > 0 else { return }
+        let staleKeys = coverageCacheOrder.prefix(overflow)
+        for key in staleKeys {
+            coverageSupportCache.removeValue(forKey: key)
+        }
+        coverageCacheOrder.removeFirst(overflow)
+    }
+
+    private func persistSmartCollections() {
+        preferencesStore.smartCollectionsData = try? JSONEncoder().encode(smartCollections)
+    }
+
+    private static func decodeSmartCollections(_ data: Data?) -> [SmartCollection] {
+        guard let data else { return [] }
+        return (try? JSONDecoder().decode([SmartCollection].self, from: data)) ?? []
+    }
+
+    func preferredSearchDisplay(for item: FontItem) -> (primary: String, secondary: String) {
+        let primaryDefault = item.familyName(for: language)
+        let secondaryDefault = item.displayName(for: language)
+        let prepared = SearchMatcher.prepare(query: searchQuery)
+        guard !prepared.isEmpty else { return (primaryDefault, secondaryDefault) }
+        if SearchMatcher.matches(haystack: primaryDefault, query: prepared.trimmed) {
+            return (primaryDefault, secondaryDefault)
+        }
+        if SearchMatcher.matches(haystack: secondaryDefault, query: prepared.trimmed) {
+            return (secondaryDefault, primaryDefault)
+        }
+        if let alias = item.searchableNames.first(where: { SearchMatcher.matches(haystack: $0, query: prepared.trimmed) }) {
+            return (alias, secondaryDefault)
+        }
+        return (primaryDefault, secondaryDefault)
     }
 
     private func collapseSystemAliasFonts(in fonts: [FontItem]) -> [FontItem] {

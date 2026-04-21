@@ -5,6 +5,8 @@ struct FontPreviewView: View {
     @ObservedObject var viewModel: FontBrowserViewModel
     @State private var previewPreset: FontBrowserViewModel.PreviewPreset = .mixed
     @State private var useSingleLinePreview = false
+    @State private var useMonospacedDigits = false
+    @State private var expandedLetterSpacing = false
 
     var body: some View {
         Group {
@@ -16,6 +18,7 @@ struct FontPreviewView: View {
                         previewTextField
                         previewSizeSection
                         previewModeSection
+                        typographyOptionsSection
                         previewBlocksSection(for: selected)
                         if !viewModel.hasRenderablePreviewFont() {
                             Label(viewModel.tr(.fallbackPreviewInfo), systemImage: "info.circle")
@@ -160,6 +163,15 @@ struct FontPreviewView: View {
         .padding(.vertical, 2)
     }
 
+    private var typographyOptionsSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Toggle(viewModel.tr(.previewMonospacedNumeralsStyle), isOn: $useMonospacedDigits)
+                .toggleStyle(.switch)
+            Toggle(viewModel.tr(.previewExpandedLetterSpacing), isOn: $expandedLetterSpacing)
+                .toggleStyle(.switch)
+        }
+    }
+
     @ViewBuilder
     private func previewBlocksSection(for selected: FontItem) -> some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -174,7 +186,8 @@ struct FontPreviewView: View {
         if useSingleLinePreview {
             ScrollView(.horizontal, showsIndicators: false) {
                 Text(text)
-                    .font(previewFont(for: item, size: size))
+                    .font(previewFont(for: item, size: size, monospacedNumerals: useMonospacedDigits))
+                    .tracking(expandedLetterSpacing ? 0.5 : 0)
                     .lineLimit(1)
                     .padding()
             }
@@ -183,7 +196,8 @@ struct FontPreviewView: View {
             .cornerRadius(10)
         } else {
             Text(softWrappedText(text))
-                .font(previewFont(for: item, size: size))
+                .font(previewFont(for: item, size: size, monospacedNumerals: useMonospacedDigits))
+                .tracking(expandedLetterSpacing ? 0.5 : 0)
                 .lineLimit(nil)
                 .multilineTextAlignment(.leading)
                 .fixedSize(horizontal: false, vertical: true)
@@ -198,7 +212,10 @@ struct FontPreviewView: View {
         text.map { String($0) }.joined(separator: "\u{200B}")
     }
 
-    private func previewFont(for item: FontItem, size: Double) -> Font {
+    private func previewFont(for item: FontItem, size: Double, monospacedNumerals: Bool) -> Font {
+        if monospacedNumerals {
+            return .system(size: size, design: .monospaced)
+        }
         if let font = NSFont(name: item.postScriptName, size: size) {
             return Font(font)
         }

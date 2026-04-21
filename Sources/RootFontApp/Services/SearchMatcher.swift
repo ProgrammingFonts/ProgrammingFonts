@@ -14,9 +14,29 @@ import Foundation
 /// The matcher can also return the matching *ranges* of the original
 /// haystack for UI highlighting (see `highlight(haystack:query:)`).
 enum SearchMatcher {
+    struct PreparedQuery {
+        let trimmed: String
+        let normalized: String
+        let choseong: String
+        let isChoseongOnly: Bool
+
+        var isEmpty: Bool { trimmed.isEmpty }
+    }
+
     static func matches(haystack: String, query: String) -> Bool {
         !highlight(haystack: haystack, query: query).isEmpty
             || query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    static func prepare(query: String) -> PreparedQuery {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        let choseong = trimmed.filter { !$0.isWhitespace }
+        return PreparedQuery(
+            trimmed: trimmed,
+            normalized: normalize(trimmed),
+            choseong: choseong,
+            isChoseongOnly: isAllChoseong(trimmed)
+        )
     }
 
     /// Returns the ranges (in `haystack`'s native String.Index space) that
@@ -70,6 +90,24 @@ enum SearchMatcher {
     /// Canonical normalization used for comparisons.
     static func normalize(_ input: String) -> String {
         normalizeWithMap(input).normalized
+    }
+
+    /// Projects Hangul syllables to choseong compatibility jamo and drops
+    /// all non-Hangul/non-choseong characters.
+    static func choseongProjection(_ input: String) -> String {
+        var projection = String.UnicodeScalarView()
+        for scalar in input.unicodeScalars {
+            let value = scalar.value
+            if value >= 0xAC00 && value <= 0xD7A3 {
+                let index = Int((value - 0xAC00) / (21 * 28))
+                if index >= 0 && index < indexToCompatChoseong.count {
+                    projection.append(indexToCompatChoseong[index])
+                }
+            } else if compatChoseongIndex[scalar] != nil {
+                projection.append(scalar)
+            }
+        }
+        return String(projection)
     }
 
     private struct NormalizedMapping {

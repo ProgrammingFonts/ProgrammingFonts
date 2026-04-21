@@ -57,8 +57,11 @@ struct FontListView: View {
                                 spacing: gridSpacing
                             ) {
                                 ForEach(viewModel.filteredFonts) { item in
+                                    let display = viewModel.preferredSearchDisplay(for: item)
                                     FontGridCard(
                                         item: item,
+                                        primaryTitle: display.primary,
+                                        secondaryTitle: display.secondary,
                                         isSelected: viewModel.selectedFont?.id == item.id,
                                         isFavorite: viewModel.isFavorite(item),
                                         previewText: viewModel.previewText,
@@ -85,14 +88,15 @@ struct FontListView: View {
                                 viewModel.selectFont(item)
                             }
                         )) { item in
+                            let display = viewModel.preferredSearchDisplay(for: item)
                             HStack(spacing: 10) {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text.highlighted(
-                                        item.familyName(for: viewModel.language),
+                                        display.primary,
                                         query: viewModel.searchQuery
                                     ).font(.headline)
                                     Text.highlighted(
-                                        item.displayName(for: viewModel.language),
+                                        display.secondary,
                                         query: viewModel.searchQuery
                                     ).font(.subheadline).foregroundStyle(.secondary)
                                 }
@@ -334,6 +338,8 @@ struct FontListView: View {
 
 private struct FontGridCard: View {
     let item: FontItem
+    let primaryTitle: String
+    let secondaryTitle: String
     let isSelected: Bool
     let isFavorite: Bool
     let previewText: String
@@ -348,7 +354,7 @@ private struct FontGridCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top, spacing: 8) {
-                Text.highlighted(item.familyName(for: language), query: searchQuery)
+                Text.highlighted(primaryTitle, query: searchQuery)
                     .font(.headline)
                     .lineLimit(1)
                     .truncationMode(.tail)
@@ -362,7 +368,7 @@ private struct FontGridCard: View {
                 .help(isFavorite ? "Remove favorite" : "Add favorite")
             }
 
-            Text.highlighted(item.displayName(for: language), query: searchQuery)
+            Text.highlighted(secondaryTitle, query: searchQuery)
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)

@@ -77,4 +77,10 @@ enum L10nKey {
     case glyphCoverageDescription
     case glyphCoveragePlaceholder
     case filterGlyphCoverage
+    case smartCollections
+    case smartCollectionNamePlaceholder
+    case save
+    case previewMonospacedNumeralsStyle
+    case previewExpandedLetterSpacing
+    case dropFontsToImport
 }

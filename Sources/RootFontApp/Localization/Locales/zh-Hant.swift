@@ -77,6 +77,12 @@ enum L10nZHHant {
         .glyphCoverage: "支援以下文字",
         .glyphCoverageDescription: "僅顯示能完整呈現以下文字的字型。",
         .glyphCoveragePlaceholder: "例如 你好 / ひらがな / 한국어",
-        .filterGlyphCoverage: "涵蓋"
+        .filterGlyphCoverage: "涵蓋",
+        .smartCollections: "智慧集合",
+        .smartCollectionNamePlaceholder: "集合名稱",
+        .save: "儲存",
+        .previewMonospacedNumeralsStyle: "等寬數字樣式",
+        .previewExpandedLetterSpacing: "加大字距",
+        .dropFontsToImport: "將字型檔拖曳到此處匯入"
     ]
 }

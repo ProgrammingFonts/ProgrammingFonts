@@ -2,6 +2,9 @@ import SwiftUI
 
 struct SidebarView: View {
     @ObservedObject var viewModel: FontBrowserViewModel
+    @State private var smartCollectionName = ""
+    @State private var coverageInput = ""
+    @State private var coverageDebounceTask: Task<Void, Never>?
 
     var body: some View {
         List(selection: Binding(
@@ -27,10 +30,7 @@ struct SidebarView: View {
                         .font(.subheadline)
                     TextField(
                         viewModel.tr(.glyphCoveragePlaceholder),
-                        text: Binding(
-                            get: { viewModel.glyphCoverageQuery },
-                            set: { viewModel.updateGlyphCoverageQuery($0) }
-                        )
+                        text: $coverageInput
                     )
                     .textFieldStyle(.roundedBorder)
 
@@ -40,6 +40,33 @@ struct SidebarView: View {
                         .lineLimit(nil)
                         .fixedSize(horizontal: false, vertical: true)
                         .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+
+            Section(viewModel.tr(.smartCollections)) {
+                HStack(spacing: 6) {
+                    TextField(viewModel.tr(.smartCollectionNamePlaceholder), text: $smartCollectionName)
+                    Button(viewModel.tr(.save)) {
+                        viewModel.saveCurrentFiltersAsSmartCollection(named: smartCollectionName)
+                        smartCollectionName = ""
+                    }
+                    .disabled(smartCollectionName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+                ForEach(viewModel.smartCollections) { collection in
+                    HStack {
+                        Button(collection.name) {
+                            viewModel.applySmartCollection(collection)
+                            coverageInput = collection.glyphCoverageQuery
+                        }
+                        .buttonStyle(.plain)
+                        Spacer(minLength: 8)
+                        Button(role: .destructive) {
+                            viewModel.removeSmartCollection(collection)
+                        } label: {
+                            Image(systemName: "trash")
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
             }
 
@@ -105,6 +132,29 @@ struct SidebarView: View {
             }
         }
         .navigationTitle("RootFont")
+        .onAppear {
+            coverageInput = viewModel.glyphCoverageQuery
+        }
+        .onChange(of: coverageInput) { _, newValue in
+            coverageDebounceTask?.cancel()
+            coverageDebounceTask = Task {
+                try? await Task.sleep(nanoseconds: 220_000_000)
+                guard !Task.isCancelled else { return }
+                await MainActor.run {
+                    if viewModel.glyphCoverageQuery != newValue {
+                        viewModel.updateGlyphCoverageQuery(newValue)
+                    }
+                }
+            }
+        }
+        .onChange(of: viewModel.glyphCoverageQuery) { _, newValue in
+            if coverageInput != newValue {
+                coverageInput = newValue
+            }
+        }
+        .onDisappear {
+            coverageDebounceTask?.cancel()
+        }
         .toolbar {
             ToolbarItemGroup {
                 if viewModel.sidebarFilter == .favorites, viewModel.favoriteCount > 0 {

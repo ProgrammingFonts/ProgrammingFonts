@@ -77,6 +77,12 @@ enum L10nKO {
         .glyphCoverage: "지원 문자",
         .glyphCoverageDescription: "아래 문자를 모두 표시할 수 있는 글꼴만 보여줍니다.",
         .glyphCoveragePlaceholder: "예: 你好 / ひらがな / 한국어",
-        .filterGlyphCoverage: "커버리지"
+        .filterGlyphCoverage: "커버리지",
+        .smartCollections: "스마트 컬렉션",
+        .smartCollectionNamePlaceholder: "컬렉션 이름",
+        .save: "저장",
+        .previewMonospacedNumeralsStyle: "고정폭 숫자 스타일",
+        .previewExpandedLetterSpacing: "자간 넓히기",
+        .dropFontsToImport: "글꼴 파일을 드래그해 가져오기"
     ]
 }

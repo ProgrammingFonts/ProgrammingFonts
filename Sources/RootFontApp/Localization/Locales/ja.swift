@@ -77,6 +77,12 @@ enum L10nJA {
         .glyphCoverage: "対応文字",
         .glyphCoverageDescription: "以下の文字をすべて表示できるフォントだけを表示します。",
         .glyphCoveragePlaceholder: "例: 你好 / ひらがな / 한국어",
-        .filterGlyphCoverage: "対応"
+        .filterGlyphCoverage: "対応",
+        .smartCollections: "スマートコレクション",
+        .smartCollectionNamePlaceholder: "コレクション名",
+        .save: "保存",
+        .previewMonospacedNumeralsStyle: "等幅数字スタイル",
+        .previewExpandedLetterSpacing: "文字間隔を広げる",
+        .dropFontsToImport: "フォントファイルをドラッグして読み込む"
     ]
 }

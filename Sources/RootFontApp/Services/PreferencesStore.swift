@@ -14,6 +14,7 @@ protocol PreferencesStoreProtocol: AnyObject {
     var sortOption: String { get set }
     var displayMode: String { get set }
     var densityMode: String { get set }
+    var smartCollectionsData: Data? { get set }
 }
 
 final class PreferencesStore: PreferencesStoreProtocol {
@@ -33,6 +34,7 @@ final class PreferencesStore: PreferencesStoreProtocol {
         static let sortOption = "rootfont.sortOption"
         static let displayMode = "rootfont.displayMode"
         static let densityMode = "rootfont.densityMode"
+        static let smartCollectionsData = "rootfont.smartCollectionsData"
     }
 
     init(defaults: UserDefaults = .standard) {
@@ -120,5 +122,10 @@ final class PreferencesStore: PreferencesStoreProtocol {
     var densityMode: String {
         get { defaults.string(forKey: Keys.densityMode) ?? "compact" }
         set { defaults.set(newValue, forKey: Keys.densityMode) }
+    }
+
+    var smartCollectionsData: Data? {
+        get { defaults.data(forKey: Keys.smartCollectionsData) }
+        set { defaults.set(newValue, forKey: Keys.smartCollectionsData) }
     }
 }

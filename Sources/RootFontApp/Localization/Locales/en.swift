@@ -77,6 +77,12 @@ enum L10nEN {
         .glyphCoverage: "Supports characters",
         .glyphCoverageDescription: "Show only fonts that can render every character in the text below.",
         .glyphCoveragePlaceholder: "e.g. 你好 / ひらがな / 한국어",
-        .filterGlyphCoverage: "Coverage"
+        .filterGlyphCoverage: "Coverage",
+        .smartCollections: "Smart Collections",
+        .smartCollectionNamePlaceholder: "Collection name",
+        .save: "Save",
+        .previewMonospacedNumeralsStyle: "Monospaced numerals style",
+        .previewExpandedLetterSpacing: "Expanded letter spacing",
+        .dropFontsToImport: "Drop font files to import"
     ]
 }

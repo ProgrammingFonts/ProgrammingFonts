@@ -77,6 +77,12 @@ enum L10nZHHans {
         .glyphCoverage: "支持以下文字",
         .glyphCoverageDescription: "仅显示可以完整渲染以下文字的字体。",
         .glyphCoveragePlaceholder: "例如 你好 / ひらがな / 한국어",
-        .filterGlyphCoverage: "覆盖"
+        .filterGlyphCoverage: "覆盖",
+        .smartCollections: "智能集合",
+        .smartCollectionNamePlaceholder: "集合名称",
+        .save: "保存",
+        .previewMonospacedNumeralsStyle: "等宽数字样式",
+        .previewExpandedLetterSpacing: "加大字距",
+        .dropFontsToImport: "拖拽字体文件到此处导入"
     ]
 }

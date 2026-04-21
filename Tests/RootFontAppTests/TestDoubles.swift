@@ -33,6 +33,7 @@ final class InMemoryPreferencesStore: PreferencesStoreProtocol {
     var sortOption: String = "familyName"
     var displayMode: String = "grid"
     var densityMode: String = "compact"
+    var smartCollectionsData: Data?
 
     var appLanguage: AppLanguage {
         get { didChooseAppLanguage ? storedLanguage : .english }
