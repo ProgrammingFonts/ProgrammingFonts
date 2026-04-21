@@ -64,6 +64,7 @@ enum L10nEN {
         .previewSize: "Size",
         .previewWrapMode: "Single-line scroll preview",
         .fallbackPreviewInfo: "This font cannot render directly. Fallback to system font.",
+        .fallbackPartialGlyphInfo: "Some characters are not supported by this font and are rendered using fallback fonts.",
         .selectFontTitle: "RootFont",
         .selectFontHint: "Select a font from the list to start preview.",
         .selectFontTip: "Tip: Compact grid mode is closer to a font-wall view.",

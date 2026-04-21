@@ -1,4 +1,5 @@
 import AppKit
+import CoreText
 import Foundation
 
 @MainActor
@@ -81,15 +82,15 @@ final class FontBrowserViewModel: ObservableObject {
         var text: String {
             switch self {
             case .mixed:
-                return "The quick brown fox jumps over the lazy dog 你好，RootFont 123456"
+                return "The quick brown fox 你好 こんにちは 안녕하세요 RootFont 123456"
             case .english:
                 return "Sphinx of black quartz, judge my vow."
             case .chinese:
-                return "你好，歡迎使用 RootFont 字體預覽。"
+                return "你好，欢迎使用 RootFont。字重：常规/粗体，数字：2026。"
             case .japanese:
-                return "こんにちは。RootFont でフォントプレビューを始めましょう。"
+                return "こんにちは。RootFontで文字組みを確認しましょう。ひらがな・カタカナ・漢字 2026"
             case .korean:
-                return "안녕하세요. RootFont에서 글꼴 미리보기를 시작하세요."
+                return "안녕하세요. RootFont에서 타이포그래피를 점검하세요. 한글·영문·숫자 2026"
             case .numeric:
                 return "0123456789 +-*/ () [] {}"
             }
@@ -270,6 +271,14 @@ final class FontBrowserViewModel: ObservableObject {
         return NSFont(name: postScript, size: previewSize) != nil
     }
 
+    func hasPartialGlyphFallback(for text: String) -> Bool {
+        guard let postScript = selectedFont?.postScriptName,
+              let font = NSFont(name: postScript, size: previewSize) else {
+            return false
+        }
+        return !supportsAllCharacters(font: font, text: text)
+    }
+
     func styleLabel(for item: FontItem) -> String {
         if item.styleTags.contains(.bold) { return tr(.bold) }
         if item.styleTags.contains(.italic) { return tr(.italic) }
@@ -426,6 +435,17 @@ final class FontBrowserViewModel: ObservableObject {
         if item.styleTags.contains(.italic) { return .italic }
         if item.styleTags.contains(.regular) { return .regular }
         return .other
+    }
+
+    private func supportsAllCharacters(font: NSFont, text: String) -> Bool {
+        let filteredScalars = text.unicodeScalars.filter {
+            !$0.properties.isWhitespace && !CharacterSet.controlCharacters.contains($0)
+        }
+        if filteredScalars.isEmpty { return true }
+
+        let utf16Chars = Array(String(String.UnicodeScalarView(filteredScalars)).utf16)
+        var glyphs = Array(repeating: CGGlyph(), count: utf16Chars.count)
+        return CTFontGetGlyphsForCharacters(font as CTFont, utf16Chars, &glyphs, utf16Chars.count)
     }
 
     func selectFont(_ item: FontItem) {

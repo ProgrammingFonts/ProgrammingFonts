@@ -26,7 +26,13 @@ RootFont is currently in active beta development.
 - Preview fonts with custom text and size
 - Filter by source/style
 - Favorites and recents support
-- Localized UI (English, Simplified Chinese, Traditional Chinese)
+- Localized UI (English, Simplified Chinese, Traditional Chinese, Japanese, Korean)
+
+## Localization
+
+- Supported languages: `en`, `zh-Hans`, `zh-Hant`, `ja`, `ko`
+- Quick Sample presets include dedicated Japanese and Korean text
+- When a selected font does not fully support current preview text, RootFont shows a fallback warning
 
 ## Quick Start
 

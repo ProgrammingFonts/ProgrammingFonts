@@ -63,6 +63,7 @@ enum L10nKey {
     case previewSize
     case previewWrapMode
     case fallbackPreviewInfo
+    case fallbackPartialGlyphInfo
     case selectFontTitle
     case selectFontHint
     case selectFontTip

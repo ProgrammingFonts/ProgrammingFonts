@@ -64,6 +64,7 @@ enum L10nZHHant {
         .previewSize: "字號",
         .previewWrapMode: "單行滾動預覽",
         .fallbackPreviewInfo: "此字體無法直接渲染，已回退為系統字體。",
+        .fallbackPartialGlyphInfo: "此字體不支援部分字元，已使用系統回退字體顯示。",
         .selectFontTitle: "RootFont",
         .selectFontHint: "從中間清單選擇字體即可開始預覽",
         .selectFontTip: "建議先切到「緊湊網格」，更接近真實字體牆體驗。",

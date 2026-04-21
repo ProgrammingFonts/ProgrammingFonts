@@ -64,6 +64,7 @@ enum L10nZHHans {
         .previewSize: "字号",
         .previewWrapMode: "单行滚动预览",
         .fallbackPreviewInfo: "该字体无法直接渲染，已回退为系统字体。",
+        .fallbackPartialGlyphInfo: "该字体不支持部分字符，已使用系统回退字体显示。",
         .selectFontTitle: "RootFont",
         .selectFontHint: "从中间列表选择一个字体即可开始预览",
         .selectFontTip: "建议先切到“紧凑网格”，更接近真实字体墙体验。",

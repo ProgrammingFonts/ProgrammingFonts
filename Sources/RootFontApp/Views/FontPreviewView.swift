@@ -22,6 +22,11 @@ struct FontPreviewView: View {
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                                 .frame(maxWidth: .infinity, alignment: .leading)
+                        } else if viewModel.hasPartialGlyphFallback(for: viewModel.previewText) {
+                            Label(viewModel.tr(.fallbackPartialGlyphInfo), systemImage: "exclamationmark.circle")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
                         }
                     }
                     .padding(16)
