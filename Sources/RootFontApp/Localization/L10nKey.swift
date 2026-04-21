@@ -67,4 +67,9 @@ enum L10nKey {
     case selectFontHint
     case selectFontTip
     case catalogReadFailed
+    case aboutWebsite
+    case aboutGitHub
+    case aboutSlogan
+    case aboutCopyVersion
+    case aboutVersionCopied
 }

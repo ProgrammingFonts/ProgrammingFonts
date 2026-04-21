@@ -67,6 +67,11 @@ enum L10nZHHans {
         .selectFontTitle: "RootFont",
         .selectFontHint: "从中间列表选择一个字体即可开始预览",
         .selectFontTip: "建议先切到“紧凑网格”，更接近真实字体墙体验。",
-        .catalogReadFailed: "字体目录读取失败，请重试。"
+        .catalogReadFailed: "字体目录读取失败，请重试。",
+        .aboutWebsite: "官网",
+        .aboutGitHub: "GitHub",
+        .aboutSlogan: "设计师与开发者的原生字体管家",
+        .aboutCopyVersion: "复制版本号",
+        .aboutVersionCopied: "版本号已复制"
     ]
 }

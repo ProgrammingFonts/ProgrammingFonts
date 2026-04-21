@@ -2,8 +2,8 @@ import Foundation
 
 enum AppMetadata {
     static let appName = "RootFont"
-    static let slogan = "The native font manager for designers and programmers"
-    static let websiteURL = "https://github.com/rootfont/rootfont"
+    static let websiteURL = "https://rootfont.com"
+    static let githubURL = "https://github.com/rootfont/rootfont"
     static let fallbackVersion = "0.1.0"
     static let fallbackBuild = "1"
 
@@ -16,7 +16,7 @@ enum AppMetadata {
     }
 
     static var semanticVersionDisplay: String {
-        "v\(shortVersion)(\(buildNumber))"
+        "v\(shortVersion) (\(buildNumber))"
     }
 
     static var copyrightText: String {

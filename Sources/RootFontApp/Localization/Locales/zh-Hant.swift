@@ -67,6 +67,11 @@ enum L10nZHHant {
         .selectFontTitle: "RootFont",
         .selectFontHint: "從中間清單選擇字體即可開始預覽",
         .selectFontTip: "建議先切到「緊湊網格」，更接近真實字體牆體驗。",
-        .catalogReadFailed: "字體目錄讀取失敗，請重試。"
+        .catalogReadFailed: "字體目錄讀取失敗，請重試。",
+        .aboutWebsite: "官網",
+        .aboutGitHub: "GitHub",
+        .aboutSlogan: "設計師與開發者的原生字體管家",
+        .aboutCopyVersion: "複製版本號",
+        .aboutVersionCopied: "版本號已複製"
     ]
 }

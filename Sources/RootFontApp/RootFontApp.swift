@@ -52,8 +52,13 @@ struct RootFontApp: App {
         let aboutView = AboutPanelView(
             appName: AppMetadata.appName,
             versionText: AppMetadata.semanticVersionDisplay,
-            slogan: AppMetadata.slogan,
+            slogan: viewModel.tr(.aboutSlogan),
             websiteURL: AppMetadata.websiteURL,
+            githubURL: AppMetadata.githubURL,
+            websiteLabel: viewModel.tr(.aboutWebsite),
+            githubLabel: viewModel.tr(.aboutGitHub),
+            copyVersionLabel: viewModel.tr(.aboutCopyVersion),
+            versionCopiedLabel: viewModel.tr(.aboutVersionCopied),
             copyrightText: AppMetadata.copyrightText
         )
         let window = RootFontApp.aboutWindow ?? NSWindow(
@@ -77,7 +82,13 @@ private struct AboutPanelView: View {
     let versionText: String
     let slogan: String
     let websiteURL: String
+    let githubURL: String
+    let websiteLabel: String
+    let githubLabel: String
+    let copyVersionLabel: String
+    let versionCopiedLabel: String
     let copyrightText: String
+    @State private var didCopyVersion = false
 
     var body: some View {
         VStack(spacing: 14) {
@@ -96,9 +107,25 @@ private struct AboutPanelView: View {
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
-            if let url = URL(string: websiteURL) {
-                Link(websiteURL, destination: url)
-                    .font(.caption)
+
+            HStack(spacing: 14) {
+                if let url = URL(string: websiteURL) {
+                    Link(websiteLabel, destination: url)
+                        .font(.caption)
+                }
+                if let url = URL(string: githubURL) {
+                    Link(githubLabel, destination: url)
+                        .font(.caption)
+                }
+                Button(didCopyVersion ? versionCopiedLabel : copyVersionLabel) {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(versionText, forType: .string)
+                    didCopyVersion = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                        didCopyVersion = false
+                    }
+                }
+                .font(.caption)
             }
             Text(copyrightText)
                 .font(.caption2)
