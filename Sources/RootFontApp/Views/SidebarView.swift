@@ -4,7 +4,10 @@ struct SidebarView: View {
     @ObservedObject var viewModel: FontBrowserViewModel
 
     var body: some View {
-        List(selection: $viewModel.sidebarFilter) {
+        List(selection: Binding(
+            get: { viewModel.sidebarFilter },
+            set: { viewModel.updateSidebarFilter($0) }
+        )) {
             Section(viewModel.tr(.browse)) {
                 Label(viewModel.tr(.allFonts), systemImage: "textformat").tag(FontBrowserViewModel.SidebarFilter.all)
                 Label(viewModel.tr(.systemFonts), systemImage: "desktopcomputer").tag(FontBrowserViewModel.SidebarFilter.system)
@@ -40,13 +43,18 @@ struct SidebarView: View {
                 }
                 .pickerStyle(.menu)
 
-                Toggle(
-                    viewModel.tr(.showSystemAliasFonts),
-                    isOn: Binding(
+                HStack(alignment: .center, spacing: 8) {
+                    Text(viewModel.tr(.showSystemAliasFonts))
+                        .lineLimit(nil)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Toggle("", isOn: Binding(
                         get: { viewModel.showSystemAliasFonts },
                         set: { viewModel.updateShowSystemAliasFonts($0) }
-                    )
-                )
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                }
             }
         }
         .navigationTitle("RootFont")
@@ -63,9 +71,6 @@ struct SidebarView: View {
                     }
                 }
             }
-        }
-        .onChange(of: viewModel.sidebarFilter) { _, _ in
-            viewModel.applyFilters()
         }
     }
 }

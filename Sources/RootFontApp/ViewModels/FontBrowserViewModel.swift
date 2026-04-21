@@ -85,6 +85,9 @@ final class FontBrowserViewModel: ObservableObject {
         self.language = preferencesStore.appLanguage
         self.appearanceMode = preferencesStore.appearanceMode
         self.showSystemAliasFonts = preferencesStore.showSystemAliasFonts
+        self.searchQuery = preferencesStore.searchQuery
+        self.sidebarFilter = SidebarFilter(rawValue: preferencesStore.sidebarFilter) ?? .all
+        self.sortOption = SortOption(rawValue: preferencesStore.sortOption) ?? .familyName
     }
 
     func tr(_ key: L10nKey) -> String {
@@ -105,6 +108,24 @@ final class FontBrowserViewModel: ObservableObject {
     func updateShowSystemAliasFonts(_ value: Bool) {
         showSystemAliasFonts = value
         preferencesStore.showSystemAliasFonts = value
+        applyFilters()
+    }
+
+    func updateSearchQuery(_ value: String) {
+        searchQuery = value
+        preferencesStore.searchQuery = value
+        applyFilters()
+    }
+
+    func updateSortOption(_ value: SortOption) {
+        sortOption = value
+        preferencesStore.sortOption = value.rawValue
+        applyFilters()
+    }
+
+    func updateSidebarFilter(_ value: SidebarFilter) {
+        sidebarFilter = value
+        preferencesStore.sidebarFilter = value.rawValue
         applyFilters()
     }
 
@@ -191,6 +212,9 @@ final class FontBrowserViewModel: ObservableObject {
         selectedStyle = nil
         sidebarFilter = .all
         sortOption = .familyName
+        preferencesStore.searchQuery = ""
+        preferencesStore.sidebarFilter = SidebarFilter.all.rawValue
+        preferencesStore.sortOption = SortOption.familyName.rawValue
         applyFilters()
     }
 
@@ -255,18 +279,15 @@ final class FontBrowserViewModel: ObservableObject {
     }
 
     func jumpToFavorites() {
-        sidebarFilter = .favorites
-        applyFilters()
+        updateSidebarFilter(.favorites)
     }
 
     func jumpToRecents() {
-        sidebarFilter = .recents
-        applyFilters()
+        updateSidebarFilter(.recents)
     }
 
     func jumpToAllFonts() {
-        sidebarFilter = .all
-        applyFilters()
+        updateSidebarFilter(.all)
     }
 
     func applyPreviewPreset(_ preset: PreviewPreset) {

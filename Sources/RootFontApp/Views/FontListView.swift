@@ -108,18 +108,28 @@ struct FontListView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .onAppear {
+            displayMode = DisplayMode(rawValue: UserDefaults.standard.string(forKey: "rootfont.displayMode") ?? "grid") ?? .grid
+            densityMode = DensityMode(rawValue: UserDefaults.standard.string(forKey: "rootfont.densityMode") ?? "compact") ?? .compact
+        }
+        .onChange(of: displayMode) { _, newValue in
+            UserDefaults.standard.set(newValue.rawValue, forKey: "rootfont.displayMode")
+        }
+        .onChange(of: densityMode) { _, newValue in
+            UserDefaults.standard.set(newValue.rawValue, forKey: "rootfont.densityMode")
+        }
     }
 
     private var headerView: some View {
         VStack(alignment: .leading, spacing: 8) {
             FlowLayout(hSpacing: 10, vSpacing: 10) {
-                TextField(viewModel.tr(.searchPlaceholder), text: $viewModel.searchQuery)
+                TextField(viewModel.tr(.searchPlaceholder), text: Binding(
+                    get: { viewModel.searchQuery },
+                    set: { viewModel.updateSearchQuery($0) }
+                ))
                     .textFieldStyle(.roundedBorder)
                     .frame(minWidth: 260, idealWidth: 360, maxWidth: 480)
                     .controlSize(.regular)
-                    .onChange(of: viewModel.searchQuery) { _, _ in
-                        viewModel.applyFilters()
-                    }
 
                 Picker(viewModel.tr(.source), selection: Binding(
                     get: { viewModel.selectedSource },
@@ -155,8 +165,7 @@ struct FontListView: View {
                 Picker(viewModel.tr(.sort), selection: Binding(
                     get: { viewModel.sortOption },
                     set: { newValue in
-                        viewModel.sortOption = newValue
-                        viewModel.applyFilters()
+                        viewModel.updateSortOption(newValue)
                     }
                 )) {
                     ForEach(FontBrowserViewModel.SortOption.allCases) { option in
@@ -167,24 +176,38 @@ struct FontListView: View {
                 .frame(minWidth: sortPickerMinWidth)
                 .fixedSize()
 
-                Picker(viewModel.tr(.display), selection: $displayMode) {
-                    ForEach(DisplayMode.allCases) { mode in
-                        Text(mode == .grid ? viewModel.tr(.grid) : viewModel.tr(.list)).tag(mode)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .controlSize(.regular)
-                .frame(width: segmentedDisplayWidth)
-
-                if displayMode == .grid {
-                    Picker(viewModel.tr(.density), selection: $densityMode) {
-                        ForEach(DensityMode.allCases) { mode in
-                            Text(mode == .compact ? viewModel.tr(.compact) : viewModel.tr(.comfortable)).tag(mode)
+                HStack(spacing: 6) {
+                    Text(viewModel.tr(.display))
+                        .foregroundStyle(.secondary)
+                        .fixedSize()
+                    Picker("", selection: $displayMode) {
+                        ForEach(DisplayMode.allCases) { mode in
+                            Text(mode == .grid ? viewModel.tr(.grid) : viewModel.tr(.list)).tag(mode)
                         }
                     }
+                    .labelsHidden()
                     .pickerStyle(.segmented)
                     .controlSize(.regular)
-                    .frame(width: segmentedDensityWidth)
+                    .frame(width: segmentedDisplayWidth)
+                }
+                .fixedSize()
+
+                if displayMode == .grid {
+                    HStack(spacing: 6) {
+                        Text(viewModel.tr(.density))
+                            .foregroundStyle(.secondary)
+                            .fixedSize()
+                        Picker("", selection: $densityMode) {
+                            ForEach(DensityMode.allCases) { mode in
+                                Text(mode == .compact ? viewModel.tr(.compact) : viewModel.tr(.comfortable)).tag(mode)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.segmented)
+                        .controlSize(.regular)
+                        .frame(width: segmentedDensityWidth)
+                    }
+                    .fixedSize()
                 }
             }
 

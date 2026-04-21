@@ -28,6 +28,11 @@ final class InMemoryPreferencesStore: PreferencesStoreProtocol {
     var didChooseAppLanguage: Bool = false
     var appearanceMode: AppAppearanceMode = .system
     var showSystemAliasFonts: Bool = false
+    var searchQuery: String = ""
+    var sidebarFilter: String = "all"
+    var sortOption: String = "familyName"
+    var displayMode: String = "grid"
+    var densityMode: String = "compact"
 
     var appLanguage: AppLanguage {
         get { didChooseAppLanguage ? storedLanguage : .english }

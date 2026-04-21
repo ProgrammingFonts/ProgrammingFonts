@@ -3,6 +3,13 @@ import XCTest
 
 @MainActor
 final class FontBrowserViewModelTests: XCTestCase {
+    private func waitForLoad(_ viewModel: FontBrowserViewModel, timeout: TimeInterval = 1.0) {
+        let deadline = Date().addingTimeInterval(timeout)
+        while viewModel.isLoading && Date() < deadline {
+            RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.01))
+        }
+    }
+
     func testLanguageDefaultsToEnglishWhenNotChosen() {
         let store = InMemoryPreferencesStore()
         store.appLanguage = .traditionalChinese
@@ -32,6 +39,38 @@ final class FontBrowserViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.tr(.settings), "設定")
     }
 
+
+    func testRestoresFilterStateFromStore() {
+        let store = InMemoryPreferencesStore()
+        store.searchQuery = "noto"
+        store.sidebarFilter = FontBrowserViewModel.SidebarFilter.user.rawValue
+        store.sortOption = FontBrowserViewModel.SortOption.displayName.rawValue
+
+        let viewModel = FontBrowserViewModel(
+            catalogService: MockCatalogService(fonts: []),
+            preferencesStore: store
+        )
+
+        XCTAssertEqual(viewModel.searchQuery, "noto")
+        XCTAssertEqual(viewModel.sidebarFilter, .user)
+        XCTAssertEqual(viewModel.sortOption, .displayName)
+    }
+
+    func testUpdateSearchSortSidebarPersistsToStore() {
+        let store = InMemoryPreferencesStore()
+        let viewModel = FontBrowserViewModel(
+            catalogService: MockCatalogService(fonts: []),
+            preferencesStore: store
+        )
+
+        viewModel.updateSearchQuery("sf")
+        viewModel.updateSortOption(.displayName)
+        viewModel.updateSidebarFilter(.favorites)
+
+        XCTAssertEqual(store.searchQuery, "sf")
+        XCTAssertEqual(store.sortOption, FontBrowserViewModel.SortOption.displayName.rawValue)
+        XCTAssertEqual(store.sidebarFilter, FontBrowserViewModel.SidebarFilter.favorites.rawValue)
+    }
     func testUpdateAppearanceModePersistsToStore() {
         let store = InMemoryPreferencesStore()
         let viewModel = FontBrowserViewModel(
@@ -73,6 +112,7 @@ final class FontBrowserViewModelTests: XCTestCase {
         )
 
         viewModel.load()
+        waitForLoad(viewModel)
 
         XCTAssertEqual(viewModel.filteredFonts.count, 2)
         XCTAssertTrue(viewModel.filteredFonts.contains(where: { $0.id == "c" }))
@@ -100,6 +140,7 @@ final class FontBrowserViewModelTests: XCTestCase {
         )
 
         viewModel.load()
+        waitForLoad(viewModel)
 
         XCTAssertNotNil(viewModel.loadErrorMessage)
         XCTAssertTrue(viewModel.filteredFonts.isEmpty)
@@ -117,6 +158,8 @@ final class FontBrowserViewModelTests: XCTestCase {
         )
 
         viewModel.load()
+
+        waitForLoad(viewModel)
         viewModel.searchQuery = "ping"
         viewModel.applyFilters()
 
@@ -135,6 +178,8 @@ final class FontBrowserViewModelTests: XCTestCase {
         )
 
         viewModel.load()
+
+        waitForLoad(viewModel)
         viewModel.selectedSource = .user
         viewModel.selectedStyle = .bold
         viewModel.applyFilters()
@@ -152,6 +197,8 @@ final class FontBrowserViewModelTests: XCTestCase {
         )
 
         viewModel.load()
+
+        waitForLoad(viewModel)
         viewModel.toggleFavorite(item)
 
         XCTAssertTrue(viewModel.favoriteIDs.contains(item.id))
@@ -167,6 +214,8 @@ final class FontBrowserViewModelTests: XCTestCase {
         )
 
         viewModel.load()
+
+        waitForLoad(viewModel)
         viewModel.selectFont(first)
         viewModel.selectFont(second)
         viewModel.selectFont(first)
@@ -184,6 +233,8 @@ final class FontBrowserViewModelTests: XCTestCase {
         )
 
         viewModel.load()
+
+        waitForLoad(viewModel)
         viewModel.selectFont(second)
         viewModel.selectFont(first)
         viewModel.selectFont(third)
@@ -216,6 +267,8 @@ final class FontBrowserViewModelTests: XCTestCase {
         )
 
         viewModel.load()
+
+        waitForLoad(viewModel)
         viewModel.sortOption = .displayName
         viewModel.applyFilters()
 
@@ -230,6 +283,8 @@ final class FontBrowserViewModelTests: XCTestCase {
         )
 
         viewModel.load()
+
+        waitForLoad(viewModel)
         viewModel.searchQuery = "a"
         viewModel.selectedSource = .user
         viewModel.selectedStyle = .bold
@@ -253,6 +308,8 @@ final class FontBrowserViewModelTests: XCTestCase {
         )
 
         viewModel.load()
+
+        waitForLoad(viewModel)
         viewModel.applyPreviewPreset(.numeric)
 
         XCTAssertEqual(viewModel.previewText, FontBrowserViewModel.PreviewPreset.numeric.text)
