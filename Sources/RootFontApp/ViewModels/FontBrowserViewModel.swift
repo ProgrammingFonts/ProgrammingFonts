@@ -369,12 +369,13 @@ final class FontBrowserViewModel: ObservableObject {
     }
 
     func applyFilters() {
-        let query = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let query = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
         let result = allFonts.filter { item in
             if !query.isEmpty {
-                let inFamily = item.familyName.lowercased().contains(query)
-                let inDisplay = item.displayName.lowercased().contains(query)
-                if !inFamily && !inDisplay { return false }
+                let inFamily = SearchMatcher.matches(haystack: item.familyName, query: query)
+                let inDisplay = SearchMatcher.matches(haystack: item.displayName, query: query)
+                let inPostScript = SearchMatcher.matches(haystack: item.postScriptName, query: query)
+                if !inFamily && !inDisplay && !inPostScript { return false }
             }
 
             if let selectedSource, item.source != selectedSource {
