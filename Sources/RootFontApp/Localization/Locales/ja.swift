@@ -73,6 +73,10 @@ enum L10nJA {
         .aboutGitHub: "GitHub",
         .aboutSlogan: "デザイナーと開発者のためのネイティブフォントマネージャー",
         .aboutCopyVersion: "バージョンをコピー",
-        .aboutVersionCopied: "バージョンをコピーしました"
+        .aboutVersionCopied: "バージョンをコピーしました",
+        .glyphCoverage: "対応文字",
+        .glyphCoverageDescription: "以下の文字をすべて表示できるフォントだけを表示します。",
+        .glyphCoveragePlaceholder: "例: 你好 / ひらがな / 한국어",
+        .filterGlyphCoverage: "対応"
     ]
 }

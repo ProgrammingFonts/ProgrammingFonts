@@ -73,6 +73,10 @@ enum L10nEN {
         .aboutGitHub: "GitHub",
         .aboutSlogan: "The native font manager for designers and programmers",
         .aboutCopyVersion: "Copy Version",
-        .aboutVersionCopied: "Version copied"
+        .aboutVersionCopied: "Version copied",
+        .glyphCoverage: "Supports characters",
+        .glyphCoverageDescription: "Show only fonts that can render every character in the text below.",
+        .glyphCoveragePlaceholder: "e.g. 你好 / ひらがな / 한국어",
+        .filterGlyphCoverage: "Coverage"
     ]
 }

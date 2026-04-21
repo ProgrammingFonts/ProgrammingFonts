@@ -182,6 +182,28 @@ final class FontBrowserViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.filteredFonts.map(\.familyName), ["PingFang SC"])
     }
 
+    func testClearAllFiltersAlsoResetsGlyphCoverageQuery() {
+        let viewModel = FontBrowserViewModel(
+            catalogService: MockCatalogService(fonts: []),
+            preferencesStore: InMemoryPreferencesStore()
+        )
+        viewModel.updateGlyphCoverageQuery("你好")
+        XCTAssertEqual(viewModel.glyphCoverageQuery, "你好")
+
+        viewModel.clearAllFilters()
+        XCTAssertEqual(viewModel.glyphCoverageQuery, "")
+    }
+
+    func testGlyphCoverageIncludedInActiveFilterSummary() {
+        let viewModel = FontBrowserViewModel(
+            catalogService: MockCatalogService(fonts: []),
+            preferencesStore: InMemoryPreferencesStore()
+        )
+        XCTAssertEqual(viewModel.activeFilterSummary, viewModel.tr(.noFilters))
+        viewModel.updateGlyphCoverageQuery("你好")
+        XCTAssertTrue(viewModel.activeFilterSummary.contains(viewModel.tr(.filterGlyphCoverage)))
+    }
+
     func testFiltersBySourceAndStyle() {
         let fonts = [
             FontItem.sample(id: "1", familyName: "Arial", source: .system, styleTags: [.bold]),

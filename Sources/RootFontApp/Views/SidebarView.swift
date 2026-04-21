@@ -21,6 +21,28 @@ struct SidebarView: View {
                     .tag(FontBrowserViewModel.SidebarFilter.recents)
             }
 
+            Section {
+                VStack(alignment: .leading, spacing: 6) {
+                    Label(viewModel.tr(.glyphCoverage), systemImage: "character.textbox")
+                        .font(.subheadline)
+                    TextField(
+                        viewModel.tr(.glyphCoveragePlaceholder),
+                        text: Binding(
+                            get: { viewModel.glyphCoverageQuery },
+                            set: { viewModel.updateGlyphCoverageQuery($0) }
+                        )
+                    )
+                    .textFieldStyle(.roundedBorder)
+
+                    Text(viewModel.tr(.glyphCoverageDescription))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(nil)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+
             // Keep language control visible in the main UI.
             Section(viewModel.tr(.settings)) {
                 VStack(alignment: .leading, spacing: 4) {

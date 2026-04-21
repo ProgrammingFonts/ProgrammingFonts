@@ -73,6 +73,10 @@ enum L10nZHHant {
         .aboutGitHub: "GitHub",
         .aboutSlogan: "設計師與開發者的原生字體管家",
         .aboutCopyVersion: "複製版本號",
-        .aboutVersionCopied: "版本號已複製"
+        .aboutVersionCopied: "版本號已複製",
+        .glyphCoverage: "支援以下文字",
+        .glyphCoverageDescription: "僅顯示能完整呈現以下文字的字型。",
+        .glyphCoveragePlaceholder: "例如 你好 / ひらがな / 한국어",
+        .filterGlyphCoverage: "涵蓋"
     ]
 }

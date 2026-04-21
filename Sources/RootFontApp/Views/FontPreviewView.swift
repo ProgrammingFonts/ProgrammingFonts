@@ -58,12 +58,12 @@ struct FontPreviewView: View {
     @ViewBuilder
     private func headerSection(for selected: FontItem) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(selected.familyName)
+            Text(selected.familyName(for: viewModel.language))
                 .font(.title2).bold()
                 .lineLimit(1)
                 .truncationMode(.tail)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            Text(selected.displayName)
+            Text(selected.displayName(for: viewModel.language))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .truncationMode(.tail)

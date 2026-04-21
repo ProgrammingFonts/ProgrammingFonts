@@ -105,6 +105,7 @@ final class FontBrowserViewModel: ObservableObject {
     @Published private(set) var filteredFonts: [FontItem] = []
     @Published var selectedFont: FontItem?
     @Published var searchQuery = ""
+    @Published var glyphCoverageQuery: String = ""
     @Published var selectedSource: FontSource?
     @Published var selectedStyle: FontStyleTag?
     @Published var sidebarFilter: SidebarFilter = .all
@@ -158,6 +159,11 @@ final class FontBrowserViewModel: ObservableObject {
     func updateSearchQuery(_ value: String) {
         searchQuery = value
         preferencesStore.searchQuery = value
+        applyFilters()
+    }
+
+    func updateGlyphCoverageQuery(_ value: String) {
+        glyphCoverageQuery = value
         applyFilters()
     }
 
@@ -247,6 +253,9 @@ final class FontBrowserViewModel: ObservableObject {
         if sidebarFilter != .all {
             parts.append(tr(.filterSidebar))
         }
+        if !glyphCoverageQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            parts.append(tr(.filterGlyphCoverage))
+        }
         return parts.isEmpty ? tr(.noFilters) : "\(tr(.filtersEnabledPrefix)) \(parts.joined(separator: " · "))"
     }
 
@@ -256,6 +265,7 @@ final class FontBrowserViewModel: ObservableObject {
         selectedStyle = nil
         sidebarFilter = .all
         sortOption = .familyName
+        glyphCoverageQuery = ""
         preferencesStore.searchQuery = ""
         preferencesStore.sidebarFilter = SidebarFilter.all.rawValue
         preferencesStore.sortOption = SortOption.familyName.rawValue
@@ -355,14 +365,15 @@ final class FontBrowserViewModel: ObservableObject {
                 return li < ri
             }
         default:
+            let lang = language
             switch sortOption {
             case .familyName:
                 return fonts.sorted {
-                    $0.familyName.localizedCaseInsensitiveCompare($1.familyName) == .orderedAscending
+                    $0.familyName(for: lang).localizedCaseInsensitiveCompare($1.familyName(for: lang)) == .orderedAscending
                 }
             case .displayName:
                 return fonts.sorted {
-                    $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending
+                    $0.displayName(for: lang).localizedCaseInsensitiveCompare($1.displayName(for: lang)) == .orderedAscending
                 }
             }
         }
@@ -370,12 +381,13 @@ final class FontBrowserViewModel: ObservableObject {
 
     func applyFilters() {
         let query = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        let coverageQuery = glyphCoverageQuery.trimmingCharacters(in: .whitespacesAndNewlines)
         let result = allFonts.filter { item in
             if !query.isEmpty {
-                let inFamily = SearchMatcher.matches(haystack: item.familyName, query: query)
-                let inDisplay = SearchMatcher.matches(haystack: item.displayName, query: query)
-                let inPostScript = SearchMatcher.matches(haystack: item.postScriptName, query: query)
-                if !inFamily && !inDisplay && !inPostScript { return false }
+                let matched = item.searchableNames.contains { name in
+                    SearchMatcher.matches(haystack: name, query: query)
+                }
+                if !matched { return false }
             }
 
             if let selectedSource, item.source != selectedSource {
@@ -383,6 +395,10 @@ final class FontBrowserViewModel: ObservableObject {
             }
 
             if let selectedStyle, !item.styleTags.contains(selectedStyle) {
+                return false
+            }
+
+            if !coverageQuery.isEmpty, !fontSupportsAllCharacters(postScriptName: item.postScriptName, text: coverageQuery) {
                 return false
             }
 
@@ -402,6 +418,14 @@ final class FontBrowserViewModel: ObservableObject {
         let presentationResult = showSystemAliasFonts ? result : collapseSystemAliasFonts(in: result)
         filteredFonts = sorted(presentationResult)
         selectFirstIfNeeded()
+    }
+
+    /// Exposed for tests — returns true when the font resolved by
+    /// `postScriptName` has glyphs for every non-whitespace character in
+    /// `text`. Returns false if the font cannot be instantiated.
+    func fontSupportsAllCharacters(postScriptName: String, text: String) -> Bool {
+        guard let font = NSFont(name: postScriptName, size: 16) else { return false }
+        return supportsAllCharacters(font: font, text: text)
     }
 
     private func collapseSystemAliasFonts(in fonts: [FontItem]) -> [FontItem] {

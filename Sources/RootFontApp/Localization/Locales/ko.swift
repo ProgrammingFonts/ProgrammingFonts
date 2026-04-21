@@ -73,6 +73,10 @@ enum L10nKO {
         .aboutGitHub: "GitHub",
         .aboutSlogan: "디자이너와 개발자를 위한 네이티브 폰트 매니저",
         .aboutCopyVersion: "버전 복사",
-        .aboutVersionCopied: "버전을 복사했습니다"
+        .aboutVersionCopied: "버전을 복사했습니다",
+        .glyphCoverage: "지원 문자",
+        .glyphCoverageDescription: "아래 문자를 모두 표시할 수 있는 글꼴만 보여줍니다.",
+        .glyphCoveragePlaceholder: "예: 你好 / ひらがな / 한국어",
+        .filterGlyphCoverage: "커버리지"
     ]
 }

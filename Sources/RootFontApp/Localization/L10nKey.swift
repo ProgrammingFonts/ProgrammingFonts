@@ -73,4 +73,8 @@ enum L10nKey {
     case aboutSlogan
     case aboutCopyVersion
     case aboutVersionCopied
+    case glyphCoverage
+    case glyphCoverageDescription
+    case glyphCoveragePlaceholder
+    case filterGlyphCoverage
 }
