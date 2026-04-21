@@ -17,7 +17,7 @@ struct RootFontApp: App {
     )
 
     var body: some Scene {
-        WindowGroup("RootFont") {
+        WindowGroup(AppMetadata.appName) {
             RootSplitView(viewModel: viewModel)
                 .background(
                     WindowAccessor { window in
@@ -41,31 +41,28 @@ struct RootFontApp: App {
             CommandGroup(replacing: .appSettings) { }
             CommandGroup(replacing: .systemServices) { }
             CommandGroup(replacing: .appInfo) {
-                Button("About RootFont") {
+                Button("About \(AppMetadata.appName)") {
                     showAboutPanel()
                 }
             }
         }
     }
 
-    private var appVersion: String {
-        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.1.0"
-    }
-
-    private var buildNumber: String {
-        Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "1"
-    }
-
     private func showAboutPanel() {
-        let versionDisplay = "\(appVersion)(\(buildNumber))"
-        let aboutView = AboutPanelView(versionText: "v\(versionDisplay)")
+        let aboutView = AboutPanelView(
+            appName: AppMetadata.appName,
+            versionText: AppMetadata.semanticVersionDisplay,
+            slogan: AppMetadata.slogan,
+            websiteURL: AppMetadata.websiteURL,
+            copyrightText: AppMetadata.copyrightText
+        )
         let window = RootFontApp.aboutWindow ?? NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 380, height: 320),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
         )
-        window.title = "About RootFont"
+        window.title = "About \(AppMetadata.appName)"
         window.isReleasedWhenClosed = false
         window.center()
         window.contentView = NSHostingView(rootView: aboutView)
@@ -76,7 +73,11 @@ struct RootFontApp: App {
 }
 
 private struct AboutPanelView: View {
+    let appName: String
     let versionText: String
+    let slogan: String
+    let websiteURL: String
+    let copyrightText: String
 
     var body: some View {
         VStack(spacing: 14) {
@@ -86,11 +87,22 @@ private struct AboutPanelView: View {
                     .scaledToFit()
                     .frame(width: 92, height: 92)
             }
-            Text("RootFont")
+            Text(appName)
                 .font(.title3.weight(.semibold))
             Text(versionText)
                 .font(.headline)
                 .foregroundStyle(.secondary)
+            Text(slogan)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+            if let url = URL(string: websiteURL) {
+                Link(websiteURL, destination: url)
+                    .font(.caption)
+            }
+            Text(copyrightText)
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
             Spacer(minLength: 0)
         }
         .padding(24)
