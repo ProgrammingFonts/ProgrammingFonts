@@ -37,6 +37,9 @@ struct SidebarView: View {
                     Text(viewModel.tr(.languageDescription))
                         .font(.caption2)
                         .foregroundStyle(.secondary)
+                        .lineLimit(nil)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
@@ -53,6 +56,9 @@ struct SidebarView: View {
                     Text(viewModel.tr(.appearanceDescription))
                         .font(.caption2)
                         .foregroundStyle(.secondary)
+                        .lineLimit(nil)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
                 HStack(alignment: .center, spacing: 8) {
@@ -71,6 +77,9 @@ struct SidebarView: View {
                 Text(viewModel.tr(.showSystemAliasFontsDescription))
                     .font(.caption2)
                     .foregroundStyle(.secondary)
+                    .lineLimit(nil)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
         .navigationTitle("RootFont")

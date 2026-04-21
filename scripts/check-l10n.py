@@ -12,6 +12,8 @@ LOCALE_FILES = [
     L10N_DIR / "Locales" / "en.swift",
     L10N_DIR / "Locales" / "zh-Hans.swift",
     L10N_DIR / "Locales" / "zh-Hant.swift",
+    L10N_DIR / "Locales" / "ja.swift",
+    L10N_DIR / "Locales" / "ko.swift",
 ]
 
 

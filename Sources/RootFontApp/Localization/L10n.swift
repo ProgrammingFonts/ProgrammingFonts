@@ -10,6 +10,10 @@ enum L10n {
             table = L10nZHHans.entries
         case .traditionalChinese:
             table = L10nZHHant.entries
+        case .japanese:
+            table = L10nJA.entries
+        case .korean:
+            table = L10nKO.entries
         }
         return table[key] ?? L10nEN.entries[key] ?? String(describing: key)
     }

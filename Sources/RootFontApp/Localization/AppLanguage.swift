@@ -4,6 +4,8 @@ enum AppLanguage: String, CaseIterable, Codable, Identifiable {
     case english = "en"
     case simplifiedChinese = "zh-Hans"
     case traditionalChinese = "zh-Hant"
+    case japanese = "ja"
+    case korean = "ko"
 
     var id: Self { self }
 
@@ -17,6 +19,10 @@ enum AppLanguage: String, CaseIterable, Codable, Identifiable {
             return "简体中文"
         case .traditionalChinese:
             return "繁體中文"
+        case .japanese:
+            return "日本語"
+        case .korean:
+            return "한국어"
         }
     }
 
@@ -28,6 +34,10 @@ enum AppLanguage: String, CaseIterable, Codable, Identifiable {
             return "zh-Hans.swift"
         case .traditionalChinese:
             return "zh-Hant.swift"
+        case .japanese:
+            return "ja.swift"
+        case .korean:
+            return "ko.swift"
         }
     }
 }

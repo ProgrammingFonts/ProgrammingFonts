@@ -22,6 +22,8 @@ final class FontBrowserViewModel: ObservableObject {
         case mixed
         case english
         case chinese
+        case japanese
+        case korean
         case numeric
 
         var id: Self { self }
@@ -29,13 +31,50 @@ final class FontBrowserViewModel: ObservableObject {
         func title(language: AppLanguage) -> String {
             switch self {
             case .mixed:
-                return language == .traditionalChinese ? "混合" : (language == .simplifiedChinese ? "混合" : "Mixed")
+                switch language {
+                case .simplifiedChinese, .traditionalChinese: return "混合"
+                case .japanese: return "混合"
+                case .korean: return "혼합"
+                case .english: return "Mixed"
+                }
             case .english:
-                return language == .traditionalChinese ? "英文" : (language == .simplifiedChinese ? "英文" : "English")
+                switch language {
+                case .simplifiedChinese, .traditionalChinese: return "英文"
+                case .japanese: return "英語"
+                case .korean: return "영문"
+                case .english: return "English"
+                }
             case .chinese:
-                return language == .traditionalChinese ? "中文" : (language == .simplifiedChinese ? "中文" : "Chinese")
+                switch language {
+                case .simplifiedChinese, .traditionalChinese: return "中文"
+                case .japanese: return "中国語"
+                case .korean: return "중문"
+                case .english: return "Chinese"
+                }
+            case .japanese:
+                switch language {
+                case .simplifiedChinese: return "日语"
+                case .traditionalChinese: return "日語"
+                case .japanese: return "日本語"
+                case .korean: return "일본어"
+                case .english: return "Japanese"
+                }
+            case .korean:
+                switch language {
+                case .simplifiedChinese: return "韩语"
+                case .traditionalChinese: return "韓語"
+                case .japanese: return "韓国語"
+                case .korean: return "한국어"
+                case .english: return "Korean"
+                }
             case .numeric:
-                return language == .traditionalChinese ? "數字" : (language == .simplifiedChinese ? "数字" : "Numeric")
+                switch language {
+                case .traditionalChinese: return "數字"
+                case .simplifiedChinese: return "数字"
+                case .japanese: return "数字"
+                case .korean: return "숫자"
+                case .english: return "Numeric"
+                }
             }
         }
 
@@ -47,6 +86,10 @@ final class FontBrowserViewModel: ObservableObject {
                 return "Sphinx of black quartz, judge my vow."
             case .chinese:
                 return "你好，歡迎使用 RootFont 字體預覽。"
+            case .japanese:
+                return "こんにちは。RootFont でフォントプレビューを始めましょう。"
+            case .korean:
+                return "안녕하세요. RootFont에서 글꼴 미리보기를 시작하세요."
             case .numeric:
                 return "0123456789 +-*/ () [] {}"
             }

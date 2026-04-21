@@ -280,6 +280,8 @@ struct FontListView: View {
         switch viewModel.language {
         case .english: return 150
         case .simplifiedChinese, .traditionalChinese: return 140
+        case .japanese: return 150
+        case .korean: return 155
         }
     }
 
@@ -287,6 +289,8 @@ struct FontListView: View {
         switch viewModel.language {
         case .english: return 180
         case .simplifiedChinese, .traditionalChinese: return 170
+        case .japanese: return 190
+        case .korean: return 195
         }
     }
 
@@ -294,6 +298,8 @@ struct FontListView: View {
         switch viewModel.language {
         case .english: return 160
         case .simplifiedChinese, .traditionalChinese: return 140
+        case .japanese: return 150
+        case .korean: return 150
         }
     }
 
@@ -301,6 +307,8 @@ struct FontListView: View {
         switch viewModel.language {
         case .english: return 200
         case .simplifiedChinese, .traditionalChinese: return 160
+        case .japanese: return 190
+        case .korean: return 190
         }
     }
 

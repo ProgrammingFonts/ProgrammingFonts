@@ -39,6 +39,22 @@ final class FontBrowserViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.tr(.settings), "設定")
     }
 
+    func testJapaneseAndKoreanLocalizationCanBeSelected() {
+        let store = InMemoryPreferencesStore()
+        let viewModel = FontBrowserViewModel(
+            catalogService: MockCatalogService(fonts: []),
+            preferencesStore: store
+        )
+
+        viewModel.updateLanguage(.japanese)
+        XCTAssertEqual(viewModel.tr(.settings), "設定")
+        XCTAssertEqual(store.appLanguage, .japanese)
+
+        viewModel.updateLanguage(.korean)
+        XCTAssertEqual(viewModel.tr(.settings), "설정")
+        XCTAssertEqual(store.appLanguage, .korean)
+    }
+
 
     func testRestoresFilterStateFromStore() {
         let store = InMemoryPreferencesStore()
@@ -314,5 +330,11 @@ final class FontBrowserViewModelTests: XCTestCase {
 
         XCTAssertEqual(viewModel.previewText, FontBrowserViewModel.PreviewPreset.numeric.text)
         XCTAssertEqual(store.previewText, FontBrowserViewModel.PreviewPreset.numeric.text)
+    }
+
+    func testJapaneseAndKoreanPreviewPresetsProvideLocalizedText() {
+        XCTAssertTrue(FontBrowserViewModel.PreviewPreset.japanese.text.contains("RootFont"))
+        XCTAssertEqual(FontBrowserViewModel.PreviewPreset.japanese.title(language: .english), "Japanese")
+        XCTAssertEqual(FontBrowserViewModel.PreviewPreset.korean.title(language: .korean), "한국어")
     }
 }
