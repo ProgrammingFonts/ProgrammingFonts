@@ -55,8 +55,6 @@ Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 RootFont is licensed under Apache License 2.0. See [LICENSE](LICENSE).
 
-For commercial licensing options or enterprise support, contact [hi@rootfont.com](mailto:hi@rootfont.com).
-
 ## Third-Party Notices
 
 See [NOTICE](NOTICE) for third-party attribution requirements.
