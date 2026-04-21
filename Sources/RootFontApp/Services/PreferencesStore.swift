@@ -8,6 +8,7 @@ protocol PreferencesStoreProtocol: AnyObject {
     var appLanguage: AppLanguage { get set }
     var didChooseAppLanguage: Bool { get set }
     var appearanceMode: AppAppearanceMode { get set }
+    var showSystemAliasFonts: Bool { get set }
 }
 
 final class PreferencesStore: PreferencesStoreProtocol {
@@ -21,6 +22,7 @@ final class PreferencesStore: PreferencesStoreProtocol {
         static let appLanguage = "rootfont.appLanguage"
         static let didChooseAppLanguage = "rootfont.didChooseAppLanguage"
         static let appearanceMode = "rootfont.appearanceMode"
+        static let showSystemAliasFonts = "rootfont.showSystemAliasFonts"
     }
 
     init(defaults: UserDefaults = .standard) {
@@ -78,5 +80,10 @@ final class PreferencesStore: PreferencesStoreProtocol {
             return mode
         }
         set { defaults.set(newValue.rawValue, forKey: Keys.appearanceMode) }
+    }
+
+    var showSystemAliasFonts: Bool {
+        get { defaults.object(forKey: Keys.showSystemAliasFonts) as? Bool ?? false }
+        set { defaults.set(newValue, forKey: Keys.showSystemAliasFonts) }
     }
 }

@@ -17,6 +17,7 @@ enum L10nZHHant {
         .appearanceSystem: "跟隨系統",
         .appearanceLight: "明亮模式",
         .appearanceDark: "暗黑模式",
+        .showSystemAliasFonts: "顯示系統別名字體",
         .searchPlaceholder: "搜尋字體（家族名/顯示名）",
         .source: "來源",
         .allSources: "全部來源",

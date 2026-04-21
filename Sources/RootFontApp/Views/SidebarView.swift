@@ -39,6 +39,14 @@ struct SidebarView: View {
                     Text(viewModel.tr(.appearanceDark)).tag(AppAppearanceMode.dark)
                 }
                 .pickerStyle(.menu)
+
+                Toggle(
+                    viewModel.tr(.showSystemAliasFonts),
+                    isOn: Binding(
+                        get: { viewModel.showSystemAliasFonts },
+                        set: { viewModel.updateShowSystemAliasFonts($0) }
+                    )
+                )
             }
         }
         .navigationTitle("RootFont")

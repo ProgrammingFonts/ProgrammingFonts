@@ -73,6 +73,7 @@ final class FontBrowserViewModel: ObservableObject {
     @Published private(set) var loadErrorMessage: String?
     @Published private(set) var language: AppLanguage
     @Published private(set) var appearanceMode: AppAppearanceMode
+    @Published private(set) var showSystemAliasFonts: Bool
 
     init(catalogService: FontCatalogServiceProtocol, preferencesStore: PreferencesStoreProtocol) {
         self.catalogService = catalogService
@@ -83,6 +84,7 @@ final class FontBrowserViewModel: ObservableObject {
         self.previewSize = preferencesStore.previewSize
         self.language = preferencesStore.appLanguage
         self.appearanceMode = preferencesStore.appearanceMode
+        self.showSystemAliasFonts = preferencesStore.showSystemAliasFonts
     }
 
     func tr(_ key: L10nKey) -> String {
@@ -98,6 +100,12 @@ final class FontBrowserViewModel: ObservableObject {
     func updateAppearanceMode(_ value: AppAppearanceMode) {
         appearanceMode = value
         preferencesStore.appearanceMode = value
+    }
+
+    func updateShowSystemAliasFonts(_ value: Bool) {
+        showSystemAliasFonts = value
+        preferencesStore.showSystemAliasFonts = value
+        applyFilters()
     }
 
     func title(for sortOption: SortOption) -> String {
@@ -297,8 +305,43 @@ final class FontBrowserViewModel: ObservableObject {
                 return recentFontIDs.contains(item.id)
             }
         }
-        filteredFonts = sorted(result)
+        let presentationResult = showSystemAliasFonts ? result : collapseSystemAliasFonts(in: result)
+        filteredFonts = sorted(presentationResult)
         selectFirstIfNeeded()
+    }
+
+    private func collapseSystemAliasFonts(in fonts: [FontItem]) -> [FontItem] {
+        var seen = Set<String>()
+        var collapsed: [FontItem] = []
+
+        for item in fonts {
+            let key = aliasFoldKey(for: item)
+            if seen.insert(key).inserted {
+                collapsed.append(item)
+            }
+        }
+        return collapsed
+    }
+
+    private func aliasFoldKey(for item: FontItem) -> String {
+        guard isSystemAliasFont(item) else {
+            return item.id
+        }
+        return "systemAlias|\(item.familyName.lowercased())|\(primaryStyleTag(for: item).rawValue)"
+    }
+
+    private func isSystemAliasFont(_ item: FontItem) -> Bool {
+        guard item.source == .system else { return false }
+        let family = item.familyName.lowercased()
+        let postScript = item.postScriptName.lowercased()
+        return family.contains("applesystemui") || postScript.contains("applesystemui")
+    }
+
+    private func primaryStyleTag(for item: FontItem) -> FontStyleTag {
+        if item.styleTags.contains(.bold) { return .bold }
+        if item.styleTags.contains(.italic) { return .italic }
+        if item.styleTags.contains(.regular) { return .regular }
+        return .other
     }
 
     func selectFont(_ item: FontItem) {

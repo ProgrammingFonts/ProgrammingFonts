@@ -16,6 +16,7 @@ enum L10nKey {
     case appearanceSystem
     case appearanceLight
     case appearanceDark
+    case showSystemAliasFonts
     case searchPlaceholder
     case source
     case allSources

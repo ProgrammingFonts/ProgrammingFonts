@@ -17,6 +17,7 @@ enum L10nEN {
         .appearanceSystem: "Follow System",
         .appearanceLight: "Light",
         .appearanceDark: "Dark",
+        .showSystemAliasFonts: "Show System Alias Fonts",
         .searchPlaceholder: "Search fonts (family/display name)",
         .source: "Source",
         .allSources: "All Sources",

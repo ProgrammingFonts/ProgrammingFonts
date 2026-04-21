@@ -22,6 +22,7 @@ final class InMemoryPreferencesStore: PreferencesStoreProtocol {
     private var storedLanguage: AppLanguage = .english
     var didChooseAppLanguage: Bool = false
     var appearanceMode: AppAppearanceMode = .system
+    var showSystemAliasFonts: Bool = false
 
     var appLanguage: AppLanguage {
         get { didChooseAppLanguage ? storedLanguage : .english }

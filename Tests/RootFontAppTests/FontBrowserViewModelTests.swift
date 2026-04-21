@@ -45,6 +45,53 @@ final class FontBrowserViewModelTests: XCTestCase {
         XCTAssertEqual(store.appearanceMode, .dark)
     }
 
+    func testSystemAliasFontsCollapsedByDefault() {
+        let fonts = [
+            FontItem(
+                id: "a",
+                familyName: ".AppleSystemUIFont",
+                postScriptName: ".AppleSystemUIFont-Regular",
+                displayName: "AppleSystemUIFont",
+                source: .system,
+                styleTags: [.regular]
+            ),
+            FontItem(
+                id: "b",
+                familyName: ".AppleSystemUIFont",
+                postScriptName: ".AppleSystemUIFontText-Regular",
+                displayName: "AppleSystemUIFont",
+                source: .system,
+                styleTags: [.regular]
+            ),
+            FontItem.sample(id: "c", familyName: "Arial", source: .system, styleTags: [.regular])
+        ]
+        let store = InMemoryPreferencesStore()
+        store.showSystemAliasFonts = false
+        let viewModel = FontBrowserViewModel(
+            catalogService: MockCatalogService(fonts: fonts),
+            preferencesStore: store
+        )
+
+        viewModel.load()
+
+        XCTAssertEqual(viewModel.filteredFonts.count, 2)
+        XCTAssertTrue(viewModel.filteredFonts.contains(where: { $0.id == "c" }))
+        XCTAssertTrue(viewModel.filteredFonts.contains(where: { $0.id == "a" || $0.id == "b" }))
+    }
+
+    func testShowSystemAliasFontsTogglePersistsToStore() {
+        let store = InMemoryPreferencesStore()
+        let viewModel = FontBrowserViewModel(
+            catalogService: MockCatalogService(fonts: []),
+            preferencesStore: store
+        )
+
+        viewModel.updateShowSystemAliasFonts(true)
+
+        XCTAssertTrue(viewModel.showSystemAliasFonts)
+        XCTAssertTrue(store.showSystemAliasFonts)
+    }
+
     func testLoadFailureSetsErrorState() {
         enum TestError: Error { case failed }
         let viewModel = FontBrowserViewModel(
