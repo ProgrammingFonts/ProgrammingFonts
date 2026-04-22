@@ -60,6 +60,7 @@ struct RootFontApp: App {
         let aboutView = AboutPanelView(
             appName: AppMetadata.appName,
             versionText: AppMetadata.semanticVersionDisplay,
+            buildText: AppMetadata.buildDisplay,
             slogan: viewModel.tr(.aboutSlogan),
             websiteURL: AppMetadata.websiteURL,
             githubURL: AppMetadata.githubURL,
@@ -88,6 +89,7 @@ struct RootFontApp: App {
 private struct AboutPanelView: View {
     let appName: String
     let versionText: String
+    let buildText: String
     let slogan: String
     let websiteURL: String
     let githubURL: String
@@ -97,10 +99,12 @@ private struct AboutPanelView: View {
     let versionCopiedLabel: String
     let copyrightText: String
     @State private var didCopyVersion = false
+    private let logoFileName = "logo-rootfont-300x300"
+    private let logoFileExtension = "png"
 
     var body: some View {
         VStack(spacing: 14) {
-            if let nsImage = NSImage(named: "logo-rootfont-300x300") {
+            if let nsImage = aboutLogoImage {
                 Image(nsImage: nsImage)
                     .resizable()
                     .scaledToFit()
@@ -110,6 +114,9 @@ private struct AboutPanelView: View {
                 .font(.title3.weight(.semibold))
             Text(versionText)
                 .font(.headline)
+                .foregroundStyle(.secondary)
+            Text(buildText)
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
             Text(slogan)
                 .font(.subheadline)
@@ -142,5 +149,14 @@ private struct AboutPanelView: View {
         }
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var aboutLogoImage: NSImage? {
+        if let resourceURL = Bundle.module.url(forResource: logoFileName, withExtension: logoFileExtension) {
+            if let image = NSImage(contentsOf: resourceURL) {
+                return image
+            }
+        }
+        return nil
     }
 }

@@ -5,15 +5,19 @@ APP_NAME="RootFont"
 BIN_NAME="RootFontApp"
 BUILD_DIR="$(pwd)/.build/app"
 APP_BUNDLE="$BUILD_DIR/$APP_NAME.app"
+VERSION_CONFIG="Sources/RootFontApp/Resources/AppVersion.json"
 
 rm -rf "$APP_BUNDLE"
 mkdir -p "$APP_BUNDLE/Contents/MacOS"
 mkdir -p "$APP_BUNDLE/Contents/Resources"
 
+SHORT_VERSION="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["shortVersion"])' "$VERSION_CONFIG")"
+BUILD_NUMBER="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["buildNumber"])' "$VERSION_CONFIG")"
+
 swift build -c release --product "$BIN_NAME"
 
 cp ".build/release/$BIN_NAME" "$APP_BUNDLE/Contents/MacOS/$APP_NAME"
-cp "logo-rootfont-300x300.png" "$APP_BUNDLE/Contents/Resources/logo-rootfont-300x300.png"
+cp "Sources/RootFontApp/Resources/logo-rootfont-300x300.png" "$APP_BUNDLE/Contents/Resources/logo-rootfont-300x300.png"
 
 cat > "$APP_BUNDLE/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -27,9 +31,9 @@ cat > "$APP_BUNDLE/Contents/Info.plist" <<PLIST
     <key>CFBundleIdentifier</key>
     <string>com.rootfont.app</string>
     <key>CFBundleVersion</key>
-    <string>2</string>
+    <string>$BUILD_NUMBER</string>
     <key>CFBundleShortVersionString</key>
-    <string>0.1.0-beta</string>
+    <string>$SHORT_VERSION</string>
     <key>CFBundleExecutable</key>
     <string>$APP_NAME</string>
     <key>CFBundlePackageType</key>

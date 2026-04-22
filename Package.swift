@@ -16,6 +16,9 @@ let package = Package(
             exclude: [
                 "Localization/CONTRIBUTING.md",
                 "Localization/Locales/_template.swift"
+            ],
+            resources: [
+                .process("Resources")
             ]
         ),
         .testTarget(
