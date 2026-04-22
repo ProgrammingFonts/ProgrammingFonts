@@ -83,6 +83,8 @@ enum L10nKO {
         .save: "저장",
         .previewMonospacedNumeralsStyle: "고정폭 숫자 스타일",
         .previewExpandedLetterSpacing: "자간 넓히기",
-        .dropFontsToImport: "글꼴 파일을 드래그해 가져오기"
+        .dropFontsToImport: "글꼴 파일을 드래그해 가져오기",
+        .expandPreview: "미리보기 패널 펼치기",
+        .collapsePreview: "미리보기 패널 숨기기"
     ]
 }

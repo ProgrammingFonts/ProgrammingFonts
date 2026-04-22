@@ -83,6 +83,8 @@ enum L10nZHHant {
         .save: "儲存",
         .previewMonospacedNumeralsStyle: "等寬數字樣式",
         .previewExpandedLetterSpacing: "加大字距",
-        .dropFontsToImport: "將字型檔拖曳到此處匯入"
+        .dropFontsToImport: "將字型檔拖曳到此處匯入",
+        .expandPreview: "展開預覽欄",
+        .collapsePreview: "收合預覽欄"
     ]
 }

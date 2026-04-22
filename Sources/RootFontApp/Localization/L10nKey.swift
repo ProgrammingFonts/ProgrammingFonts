@@ -83,4 +83,6 @@ enum L10nKey {
     case previewMonospacedNumeralsStyle
     case previewExpandedLetterSpacing
     case dropFontsToImport
+    case expandPreview
+    case collapsePreview
 }

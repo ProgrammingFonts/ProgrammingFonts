@@ -83,6 +83,8 @@ enum L10nZHHans {
         .save: "保存",
         .previewMonospacedNumeralsStyle: "等宽数字样式",
         .previewExpandedLetterSpacing: "加大字距",
-        .dropFontsToImport: "拖拽字体文件到此处导入"
+        .dropFontsToImport: "拖拽字体文件到此处导入",
+        .expandPreview: "展开预览栏",
+        .collapsePreview: "收起预览栏"
     ]
 }

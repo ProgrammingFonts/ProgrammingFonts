@@ -83,6 +83,8 @@ enum L10nJA {
         .save: "保存",
         .previewMonospacedNumeralsStyle: "等幅数字スタイル",
         .previewExpandedLetterSpacing: "文字間隔を広げる",
-        .dropFontsToImport: "フォントファイルをドラッグして読み込む"
+        .dropFontsToImport: "フォントファイルをドラッグして読み込む",
+        .expandPreview: "プレビューパネルを表示",
+        .collapsePreview: "プレビューパネルを隠す"
     ]
 }

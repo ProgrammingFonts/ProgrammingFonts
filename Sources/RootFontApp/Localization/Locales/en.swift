@@ -83,6 +83,8 @@ enum L10nEN {
         .save: "Save",
         .previewMonospacedNumeralsStyle: "Monospaced numerals style",
         .previewExpandedLetterSpacing: "Expanded letter spacing",
-        .dropFontsToImport: "Drop font files to import"
+        .dropFontsToImport: "Drop font files to import",
+        .expandPreview: "Show Preview Panel",
+        .collapsePreview: "Hide Preview Panel"
     ]
 }
