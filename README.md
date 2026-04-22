@@ -6,17 +6,17 @@ The native font manager for designers and programmers on macOS.
 
 ## Status
 
-**Current build:** `v0.1.0-beta (2)`  
+**Current build:** `v0.2.0-alpha (3)`  
 **Platform:** macOS 14+  
 **Bundle ID:** `com.rootfont.app`
 
 RootFont is currently in active beta development.
 
-## Screenshots (v0.1.0-beta)
+## Screenshots (v0.2.0-alpha)
 
 <p align="center">
-  <img src="screenshots/v0.1.0-beta/01-main-dark.png" alt="RootFont main window in dark mode" width="46%" />
-  <img src="screenshots/v0.1.0-beta/02-main-light.png" alt="RootFont main window in light mode" width="46%" />
+  <img src="screenshots/01-main-dark.png" alt="RootFont main window in dark mode" width="46%" />
+  <img src="screenshots/02-main-light.png" alt="RootFont main window in light mode" width="46%" />
 </p>
 
 ## Features
