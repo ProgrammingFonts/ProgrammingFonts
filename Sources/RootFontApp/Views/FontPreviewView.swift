@@ -143,7 +143,13 @@ struct FontPreviewView: View {
             Text("\(viewModel.tr(.previewSize)): \(Int(viewModel.previewSize)) px")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-            Slider(value: $viewModel.previewSize, in: 12...96, step: 1)
+            Slider(
+                value: Binding(
+                    get: { viewModel.previewSize },
+                    set: { viewModel.previewSize = $0.rounded() }
+                ),
+                in: 12...96
+            )
                 .onChange(of: viewModel.previewSize) { _, _ in
                     viewModel.updatePreviewSize(viewModel.previewSize)
                 }

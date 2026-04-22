@@ -5,6 +5,7 @@ struct FontListView: View {
     @ObservedObject var viewModel: FontBrowserViewModel
     @State private var displayMode: DisplayMode = .grid
     @State private var densityMode: DensityMode = .compact
+    @State private var listPreviewSize: Double = 18
     @State private var searchInput: String = ""
     @State private var searchDebounceTask: Task<Void, Never>?
     @FocusState private var isSearchFieldFocused: Bool
@@ -28,9 +29,6 @@ struct FontListView: View {
         VStack(spacing: 0) {
             headerView
 
-            Divider()
-                .opacity(0.35)
-
             VStack(spacing: 0) {
                 if viewModel.isLoading {
                     Spacer()
@@ -51,33 +49,36 @@ struct FontListView: View {
                     )
                 } else {
                     if displayMode == .grid {
-                        ScrollView {
-                            LazyVGrid(
-                                columns: [GridItem(.adaptive(minimum: gridMinimumWidth, maximum: gridMaximumWidth), spacing: gridSpacing)],
-                                spacing: gridSpacing
-                            ) {
-                                ForEach(viewModel.filteredFonts) { item in
-                                    let display = viewModel.preferredSearchDisplay(for: item)
-                                    FontGridCard(
-                                        item: item,
-                                        primaryTitle: display.primary,
-                                        secondaryTitle: display.secondary,
-                                        isSelected: viewModel.selectedFont?.id == item.id,
-                                        isFavorite: viewModel.isFavorite(item),
-                                        previewText: viewModel.previewText,
-                                        densityMode: densityMode,
-                                        language: viewModel.language,
-                                        searchQuery: viewModel.searchQuery
-                                    ) {
-                                        viewModel.selectFont(item)
-                                    } onToggleFavorite: {
-                                        viewModel.toggleFavorite(item)
+                        GeometryReader { proxy in
+                            ScrollView {
+                                LazyVGrid(
+                                    columns: gridColumns(for: proxy.size.width),
+                                    spacing: gridSpacing
+                                ) {
+                                    ForEach(viewModel.filteredFonts) { item in
+                                        let display = viewModel.preferredSearchDisplay(for: item)
+                                        FontGridCard(
+                                            item: item,
+                                            primaryTitle: display.primary,
+                                            secondaryTitle: display.secondary,
+                                            isSelected: viewModel.selectedFont?.id == item.id,
+                                            isFavorite: viewModel.isFavorite(item),
+                                            previewText: viewModel.previewText,
+                                            previewSize: listPreviewSize,
+                                            densityMode: densityMode,
+                                            language: viewModel.language,
+                                            searchQuery: viewModel.searchQuery
+                                        ) {
+                                            viewModel.selectFont(item)
+                                        } onToggleFavorite: {
+                                            viewModel.toggleFavorite(item)
+                                        }
                                     }
                                 }
+                                .padding(.horizontal)
+                                .padding(.top, 0)
+                                .padding(.bottom, 12)
                             }
-                            .padding(.horizontal)
-                            .padding(.top, 0)
-                            .padding(.bottom, 12)
                         }
                     } else {
                         List(viewModel.filteredFonts, selection: Binding(
@@ -94,11 +95,11 @@ struct FontListView: View {
                                     Text.highlighted(
                                         display.primary,
                                         query: viewModel.searchQuery
-                                    ).font(.headline)
+                                    ).font(.system(size: listPreviewSize, weight: .semibold))
                                     Text.highlighted(
                                         display.secondary,
                                         query: viewModel.searchQuery
-                                    ).font(.subheadline).foregroundStyle(.secondary)
+                                    ).font(.system(size: max(11, listPreviewSize - 2))).foregroundStyle(.secondary)
                                 }
                                 Spacer()
                                 Text(viewModel.styleLabel(for: item))
@@ -126,6 +127,8 @@ struct FontListView: View {
         .onAppear {
             displayMode = DisplayMode(rawValue: UserDefaults.standard.string(forKey: "rootfont.displayMode") ?? "grid") ?? .grid
             densityMode = DensityMode(rawValue: UserDefaults.standard.string(forKey: "rootfont.densityMode") ?? "compact") ?? .compact
+            let savedPreviewSize = UserDefaults.standard.double(forKey: "rootfont.listPreviewSize")
+            listPreviewSize = savedPreviewSize == 0 ? 18 : savedPreviewSize
             searchInput = viewModel.searchQuery
             if !didAutofocusSearch {
                 didAutofocusSearch = true
@@ -139,6 +142,9 @@ struct FontListView: View {
         }
         .onChange(of: densityMode) { _, newValue in
             UserDefaults.standard.set(newValue.rawValue, forKey: "rootfont.densityMode")
+        }
+        .onChange(of: listPreviewSize) { _, newValue in
+            UserDefaults.standard.set(newValue, forKey: "rootfont.listPreviewSize")
         }
         .onChange(of: searchInput) { _, newValue in
             searchDebounceTask?.cancel()
@@ -252,6 +258,25 @@ struct FontListView: View {
                     }
                     .fixedSize()
                 }
+
+                HStack(spacing: 6) {
+                    Text(viewModel.tr(.listPreviewSize))
+                        .foregroundStyle(.secondary)
+                        .fixedSize()
+                    Slider(
+                        value: Binding(
+                            get: { listPreviewSize },
+                            set: { listPreviewSize = $0.rounded() }
+                        ),
+                        in: 2...500
+                    )
+                        .frame(width: sliderWidth)
+                    Text("\(Int(listPreviewSize))")
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                        .frame(minWidth: 24, alignment: .trailing)
+                }
+                .fixedSize()
             }
 
             FlowLayout(hSpacing: 14, vSpacing: 6) {
@@ -323,16 +348,36 @@ struct FontListView: View {
         }
     }
 
-    private var gridMinimumWidth: CGFloat {
-        densityMode == .compact ? 170 : 240
-    }
-
-    private var gridMaximumWidth: CGFloat {
-        densityMode == .compact ? 220 : 300
+    private var sliderWidth: CGFloat {
+        switch viewModel.language {
+        case .english: return 130
+        case .simplifiedChinese, .traditionalChinese: return 110
+        case .japanese: return 120
+        case .korean: return 125
+        }
     }
 
     private var gridSpacing: CGFloat {
         densityMode == .compact ? 8 : 12
+    }
+
+    private func gridColumns(for containerWidth: CGFloat) -> [GridItem] {
+        let count = gridColumnCount(for: containerWidth)
+        return Array(repeating: GridItem(.flexible(), spacing: gridSpacing), count: count)
+    }
+
+    private func gridColumnCount(for containerWidth: CGFloat) -> Int {
+        let horizontalPadding: CGFloat = 32
+        let available = max(containerWidth - horizontalPadding, 200)
+
+        if listPreviewSize >= 499.5 { return 2 }
+
+        let sizeRatio = min(max((listPreviewSize - 2) / (500 - 2), 0), 1)
+        let minCardWidth: CGFloat = densityMode == .compact ? 100 : 140
+        let maxCardWidth: CGFloat = max(minCardWidth + 1, available / 2)
+        let targetCardWidth = minCardWidth + (maxCardWidth - minCardWidth) * sizeRatio
+        let raw = (available + gridSpacing) / (targetCardWidth + gridSpacing)
+        return max(2, Int(floor(raw)))
     }
 }
 
@@ -343,6 +388,7 @@ private struct FontGridCard: View {
     let isSelected: Bool
     let isFavorite: Bool
     let previewText: String
+    let previewSize: Double
     let densityMode: FontListView.DensityMode
     let language: AppLanguage
     let searchQuery: String
@@ -377,8 +423,11 @@ private struct FontGridCard: View {
             Text(sampleText)
                 .font(previewFont)
                 .lineLimit(densityMode == .compact ? 1 : 2)
-                .minimumScaleFactor(0.88)
+                .minimumScaleFactor(0.25)
+                .truncationMode(.tail)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(height: sampleTextVisibleHeight, alignment: .top)
+                .clipped()
 
             HStack(spacing: 6) {
                 tag(text: item.source == .system ? L10n.tr(.system, language: language) : L10n.tr(.user, language: language))
@@ -387,7 +436,7 @@ private struct FontGridCard: View {
             }
         }
         .padding(densityMode == .compact ? 10 : 12)
-        .frame(maxWidth: .infinity, minHeight: densityMode == .compact ? 112 : 146, alignment: .topLeading)
+        .frame(maxWidth: .infinity, minHeight: cardMinHeight, alignment: .topLeading)
         .background(cardBackground)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
@@ -435,11 +484,23 @@ private struct FontGridCard: View {
     }
 
     private var previewFont: Font {
-        let size: CGFloat = densityMode == .compact ? 16 : 20
+        let size = densityMode == .compact ? CGFloat(previewSize) : CGFloat(previewSize + 4)
         if let font = NSFont(name: item.postScriptName, size: size) {
             return Font(font)
         }
         return .system(size: size)
+    }
+
+    private var cardMinHeight: CGFloat {
+        let base: CGFloat = densityMode == .compact ? 112 : 146
+        let chromeHeight: CGFloat = densityMode == .compact ? 84 : 110
+        return max(base, sampleTextVisibleHeight + chromeHeight)
+    }
+
+    private var sampleTextVisibleHeight: CGFloat {
+        let nominal = densityMode == .compact ? CGFloat(previewSize) : CGFloat(previewSize + 4)
+        let capFactor: CGFloat = densityMode == .compact ? 0.82 : 1.65
+        return nominal * capFactor
     }
 
     private var styleLabel: String {

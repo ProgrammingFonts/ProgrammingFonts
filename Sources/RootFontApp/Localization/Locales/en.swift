@@ -85,6 +85,7 @@ enum L10nEN {
         .previewExpandedLetterSpacing: "Expanded letter spacing",
         .dropFontsToImport: "Drop font files to import",
         .expandPreview: "Show Preview Panel",
-        .collapsePreview: "Hide Preview Panel"
+        .collapsePreview: "Hide Preview Panel",
+        .listPreviewSize: "List Preview Size"
     ]
 }

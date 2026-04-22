@@ -85,6 +85,7 @@ enum L10nZHHans {
         .previewExpandedLetterSpacing: "加大字距",
         .dropFontsToImport: "拖拽字体文件到此处导入",
         .expandPreview: "展开预览栏",
-        .collapsePreview: "收起预览栏"
+        .collapsePreview: "收起预览栏",
+        .listPreviewSize: "列表预览字号"
     ]
 }

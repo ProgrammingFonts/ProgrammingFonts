@@ -85,4 +85,5 @@ enum L10nKey {
     case dropFontsToImport
     case expandPreview
     case collapsePreview
+    case listPreviewSize
 }

@@ -20,12 +20,20 @@ struct RootFontApp: App {
         WindowGroup(AppMetadata.appName) {
             RootSplitView(viewModel: viewModel)
                 .background(
-                    WindowAccessor { window in
-                        window.minSize = NSSize(width: 900, height: 600)
-                        window.styleMask.insert([.titled, .closable, .miniaturizable, .resizable])
-                        window.collectionBehavior.insert([.fullScreenPrimary, .fullScreenAllowsTiling])
-                        window.tabbingMode = .disallowed
-                    }
+                    WindowAccessor(
+                        onResolve: { window in
+                            window.minSize = NSSize(width: 900, height: 600)
+                            window.styleMask.insert([.titled, .closable, .miniaturizable, .resizable])
+                            window.collectionBehavior.insert([.fullScreenPrimary, .fullScreenAllowsTiling])
+                            window.tabbingMode = .disallowed
+                        },
+                        onAlwaysApply: { window in
+                            window.titlebarSeparatorStyle = .none
+                            if let toolbar = window.toolbar {
+                                toolbar.showsBaselineSeparator = false
+                            }
+                        }
+                    )
                 )
                 .onAppear {
                     viewModel.load()

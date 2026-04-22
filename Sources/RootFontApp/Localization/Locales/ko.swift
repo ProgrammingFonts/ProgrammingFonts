@@ -85,6 +85,7 @@ enum L10nKO {
         .previewExpandedLetterSpacing: "자간 넓히기",
         .dropFontsToImport: "글꼴 파일을 드래그해 가져오기",
         .expandPreview: "미리보기 패널 펼치기",
-        .collapsePreview: "미리보기 패널 숨기기"
+        .collapsePreview: "미리보기 패널 숨기기",
+        .listPreviewSize: "목록 미리보기 크기"
     ]
 }

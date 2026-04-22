@@ -85,6 +85,7 @@ enum L10nJA {
         .previewExpandedLetterSpacing: "文字間隔を広げる",
         .dropFontsToImport: "フォントファイルをドラッグして読み込む",
         .expandPreview: "プレビューパネルを表示",
-        .collapsePreview: "プレビューパネルを隠す"
+        .collapsePreview: "プレビューパネルを隠す",
+        .listPreviewSize: "一覧プレビューサイズ"
     ]
 }

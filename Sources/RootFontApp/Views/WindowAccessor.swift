@@ -3,6 +3,7 @@ import SwiftUI
 
 struct WindowAccessor: NSViewRepresentable {
     let onResolve: (NSWindow) -> Void
+    var onAlwaysApply: ((NSWindow) -> Void)? = nil
 
     private static var configuredWindows = Set<ObjectIdentifier>()
 
@@ -11,6 +12,7 @@ struct WindowAccessor: NSViewRepresentable {
         DispatchQueue.main.async {
             if let window = view.window {
                 resolveIfNeeded(window)
+                onAlwaysApply?(window)
             }
         }
         return view
@@ -20,6 +22,7 @@ struct WindowAccessor: NSViewRepresentable {
         DispatchQueue.main.async {
             if let window = nsView.window {
                 resolveIfNeeded(window)
+                onAlwaysApply?(window)
             }
         }
     }
