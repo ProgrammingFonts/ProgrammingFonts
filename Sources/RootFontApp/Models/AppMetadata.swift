@@ -7,8 +7,8 @@ enum AppMetadata {
     static let appName = "RootFont"
     static let websiteURL = "https://rootfont.com"
     static let githubURL = "https://github.com/rootfont/rootfont"
-    static let fallbackVersion = "0.2.0-alpha"
-    static let fallbackBuild = "3"
+    static let fallbackVersion = "0.2.0-beta"
+    static let fallbackBuild = "4"
 
     private struct VersionConfig: Decodable {
         let shortVersion: String
@@ -74,7 +74,7 @@ enum AppMetadata {
     }
 
     /// One-line string suitable for bug reports, e.g.
-    /// `RootFont v0.2.0-alpha (3) · commit abc1234`.
+    /// `RootFont v0.2.0-beta (4) · commit abc1234`.
     static var diagnosticsLine: String {
         var parts = ["\(appName) v\(shortVersion) (\(buildNumber))"]
         let sha = commitShortSHA

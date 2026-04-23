@@ -7,6 +7,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0-beta] - 2026-04-23
+
+### Added
+- About panel now shows the git short SHA under the build number and
+  ships two new copy actions: "Copy Version" pastes a diagnostics
+  line (`RootFont v<version> (<build>) · commit <sha>`), "Copy System
+  Info" additionally appends `macOS x.y.z · <arch> · <language> ·
+  <appearance>`.
+- `scripts/build-app.sh` embeds `RootFontCommitSha` into the packaged
+  `Info.plist` so release builds self-identify without needing the
+  working tree.
+- `scripts/check-version.py` now also verifies that `CHANGELOG.md`
+  contains a matching `## [<version>]` section.
+- Tracked git hooks under `scripts/hooks/`: `pre-commit` runs
+  `check-l10n.py` on staged localization files and `check-version.py`
+  on staged `AppVersion.json`, `README.md`, `AppMetadata.swift`, or
+  `CHANGELOG.md`. Install with `bash scripts/install-git-hooks.sh`.
+- `scripts/optimize-screenshots.py` for screenshot layout / size
+  validation and optional `pngquant` compression, documented in
+  `screenshots/README.md`.
+- `accessibilityLabel` on the favorite star buttons (grid + list) and
+  on the toolbar preview toggle so VoiceOver announces them.
+- New localization keys `favoriteAdd`, `favoriteRemove`,
+  `previewTruncatedInfo`, `aboutCopySystemInfo`,
+  `aboutSystemInfoCopied` across all five locales.
+
+### Changed
+- Font filter + sort + alias collapse + glyph coverage extracted into
+  a `Sendable` `FontFilterEngine`. Large catalogs run through
+  `Task.detached` with snapshotted inputs so the main actor stays
+  responsive while typing.
+- Up to eight recent filter results are cached by a signature that
+  covers query, coverage text, source/style/sidebar filter, sort,
+  language, catalog epoch, and favorites/recents fingerprints. Cache
+  invalidates automatically on catalog reload.
+- Grid column count is cached in `@State`, so `LazyVGrid.columns` only
+  reshapes when the target column count actually changes — smooths
+  dragging the list preview-size slider at high values.
+- Preview soft-wrap (ZWSP) now only applies up to 400 characters;
+  longer text defers to the native layout engine. Any preview text
+  over 2000 characters is truncated with a localized hint.
+- `WindowAccessor` uses a per-view, `@MainActor`-isolated coordinator
+  that self-cleans on `NSWindow.willCloseNotification`, replacing the
+  previous global set and fixing Swift 6 concurrency warnings.
+- `scripts/check-l10n.py` now also enforces printf placeholder
+  consistency (e.g. `%@`, `%1$d`) across every locale.
+- CONTRIBUTING.md rewritten for the SwiftPM layout (`swift build`,
+  `swift run`, `swift test`), documents the git hook install step,
+  and references the new validation scripts.
+
+### Localization
+- Migrated the last hardcoded `Add favorite` / `Remove favorite`
+  tooltips to localized keys; all five locales updated.
+
 ## [0.2.0-alpha] - 2026-04-22
 
 ### Added

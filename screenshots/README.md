@@ -15,7 +15,7 @@ screenshots/
 ```
 
 - `<version>` matches the tag produced from `AppVersion.json`, for
-  example `v0.2.0-alpha`.
+  example `v0.2.0-beta`.
 - Each image starts with a **two-digit numeric prefix** (`01-`, `02-`,
   …) that determines the display order in `README.md`.
 - Use **kebab-case slugs** that describe the view at a glance:

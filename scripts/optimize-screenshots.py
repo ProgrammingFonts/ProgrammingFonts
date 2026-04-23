@@ -53,14 +53,14 @@ def validate(paths: list[Path]) -> list[str]:
         if len(relative_to_shots) != 2:
             problems.append(
                 f"{rel}: files must live exactly one level deep "
-                f"(e.g. screenshots/v0.2.0-alpha/01-main-dark.png)."
+                f"(e.g. screenshots/v0.2.0-beta/01-main-dark.png)."
             )
             continue
 
         version_folder, file_name = relative_to_shots
         if not VERSION_DIR_PATTERN.match(version_folder):
             problems.append(
-                f"{rel}: parent folder '{version_folder}' must look like 'v0.2.0-alpha'."
+                f"{rel}: parent folder '{version_folder}' must look like 'v0.2.0-beta'."
             )
         if not FILE_PATTERN.match(file_name):
             problems.append(

@@ -116,7 +116,7 @@ rather than inside the SwiftUI view layer.
 ## Screenshots
 
 - Place screenshots under `screenshots/v<version>/NN-<slug>.png`.
-  Example: `screenshots/v0.2.0-alpha/01-main-dark.png`.
+  Example: `screenshots/v0.2.0-beta/01-main-dark.png`.
 - Run `python3 scripts/optimize-screenshots.py --check` before
   committing. Pass `--compress` (requires `pngquant`) to shrink PNGs
   in place if they exceed the recommended size.
