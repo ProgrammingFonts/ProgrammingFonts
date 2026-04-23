@@ -429,7 +429,7 @@ private struct FontGridCard: View {
                         .imageScale(.small)
                 }
                 .buttonStyle(.plain)
-                .help(isFavorite ? "Remove favorite" : "Add favorite")
+                .help(L10n.tr(isFavorite ? .favoriteRemove : .favoriteAdd, language: language))
             }
 
             Text.highlighted(secondaryTitle, query: searchQuery)

@@ -86,4 +86,9 @@ enum L10nKey {
     case expandPreview
     case collapsePreview
     case listPreviewSize
+    case favoriteAdd
+    case favoriteRemove
+    case previewTruncatedInfo
+    case aboutCopySystemInfo
+    case aboutSystemInfoCopied
 }

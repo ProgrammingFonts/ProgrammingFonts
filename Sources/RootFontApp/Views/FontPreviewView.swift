@@ -8,6 +8,15 @@ struct FontPreviewView: View {
     @State private var useMonospacedDigits = false
     @State private var expandedLetterSpacing = false
 
+    /// Texts under this length keep the ZWSP soft-wrap treatment.
+    /// Larger inputs fall back to the native layout engine because the
+    /// per-character joined string grows rapidly (O(n) strings, extra
+    /// allocations) and Text layout slows down noticeably.
+    private let softWrapCharacterLimit = 400
+    /// Any preview text longer than this is truncated with a visible
+    /// hint so the preview area stays responsive.
+    private let previewTextLengthLimit = 2000
+
     var body: some View {
         Group {
             if let selected = viewModel.selectedFont {
@@ -189,33 +198,97 @@ struct FontPreviewView: View {
 
     @ViewBuilder
     private func previewBlock(text: String, size: Double, item: FontItem) -> some View {
+        let prepared = preparedPreviewText(text)
         if useSingleLinePreview {
-            ScrollView(.horizontal, showsIndicators: false) {
-                Text(text)
-                    .font(previewFont(for: item, size: size, monospacedNumerals: useMonospacedDigits))
-                    .tracking(expandedLetterSpacing ? 0.5 : 0)
-                    .lineLimit(1)
-                    .padding()
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.quaternary.opacity(0.3))
-            .cornerRadius(10)
-        } else {
-            Text(softWrappedText(text))
-                .font(previewFont(for: item, size: size, monospacedNumerals: useMonospacedDigits))
-                .tracking(expandedLetterSpacing ? 0.5 : 0)
-                .lineLimit(nil)
-                .multilineTextAlignment(.leading)
-                .fixedSize(horizontal: false, vertical: true)
+            VStack(alignment: .leading, spacing: 4) {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    Text(prepared.renderText)
+                        .font(previewFont(for: item, size: size, monospacedNumerals: useMonospacedDigits))
+                        .tracking(expandedLetterSpacing ? 0.5 : 0)
+                        .lineLimit(1)
+                        .padding()
+                }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding()
                 .background(.quaternary.opacity(0.3))
                 .cornerRadius(10)
+                if prepared.didTruncate {
+                    previewTruncationHint(originalCount: prepared.originalCount)
+                }
+            }
+        } else {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(prepared.renderText)
+                    .font(previewFont(for: item, size: size, monospacedNumerals: useMonospacedDigits))
+                    .tracking(expandedLetterSpacing ? 0.5 : 0)
+                    .lineLimit(nil)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+                    .background(.quaternary.opacity(0.3))
+                    .cornerRadius(10)
+                if prepared.didTruncate {
+                    previewTruncationHint(originalCount: prepared.originalCount)
+                }
+            }
         }
     }
 
+    private struct PreparedPreviewText {
+        let renderText: String
+        let didTruncate: Bool
+        let originalCount: Int
+    }
+
+    private func preparedPreviewText(_ text: String) -> PreparedPreviewText {
+        let originalCount = text.count
+        let base: String
+        let didTruncate: Bool
+        if originalCount > previewTextLengthLimit {
+            let cutoff = text.index(text.startIndex, offsetBy: previewTextLengthLimit)
+            base = String(text[..<cutoff]) + "…"
+            didTruncate = true
+        } else {
+            base = text
+            didTruncate = false
+        }
+
+        let rendered: String
+        if base.count > softWrapCharacterLimit {
+            rendered = base
+        } else {
+            rendered = softWrappedText(base)
+        }
+        return PreparedPreviewText(
+            renderText: rendered,
+            didTruncate: didTruncate,
+            originalCount: originalCount
+        )
+    }
+
+    @ViewBuilder
+    private func previewTruncationHint(originalCount: Int) -> some View {
+        Label(
+            String(format: viewModel.tr(.previewTruncatedInfo), previewTextLengthLimit, originalCount),
+            systemImage: "scissors"
+        )
+        .font(.caption2)
+        .foregroundStyle(.secondary)
+    }
+
     private func softWrappedText(_ text: String) -> String {
-        text.map { String($0) }.joined(separator: "\u{200B}")
+        var result = String()
+        result.reserveCapacity(text.count * 4)
+        var first = true
+        for character in text {
+            if first {
+                first = false
+            } else {
+                result.append("\u{200B}")
+            }
+            result.append(character)
+        }
+        return result
     }
 
     private func previewFont(for item: FontItem, size: Double, monospacedNumerals: Bool) -> Font {

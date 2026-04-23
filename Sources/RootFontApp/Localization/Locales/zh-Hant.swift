@@ -86,6 +86,11 @@ enum L10nZHHant {
         .dropFontsToImport: "將字型檔拖曳到此處匯入",
         .expandPreview: "展開預覽欄",
         .collapsePreview: "收合預覽欄",
-        .listPreviewSize: "列表預覽字號"
+        .listPreviewSize: "列表預覽字號",
+        .favoriteAdd: "加入收藏",
+        .favoriteRemove: "移除收藏",
+        .previewTruncatedInfo: "為保持流暢度，已將 %2$d 個字元截斷為 %1$d 個。",
+        .aboutCopySystemInfo: "複製系統資訊",
+        .aboutSystemInfoCopied: "系統資訊已複製"
     ]
 }

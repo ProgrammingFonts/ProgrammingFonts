@@ -86,6 +86,11 @@ enum L10nKO {
         .dropFontsToImport: "글꼴 파일을 드래그해 가져오기",
         .expandPreview: "미리보기 패널 펼치기",
         .collapsePreview: "미리보기 패널 숨기기",
-        .listPreviewSize: "목록 미리보기 크기"
+        .listPreviewSize: "목록 미리보기 크기",
+        .favoriteAdd: "즐겨찾기에 추가",
+        .favoriteRemove: "즐겨찾기에서 제거",
+        .previewTruncatedInfo: "성능을 위해 %2$d자 중 %1$d자까지만 표시합니다.",
+        .aboutCopySystemInfo: "시스템 정보 복사",
+        .aboutSystemInfoCopied: "시스템 정보를 복사했습니다"
     ]
 }

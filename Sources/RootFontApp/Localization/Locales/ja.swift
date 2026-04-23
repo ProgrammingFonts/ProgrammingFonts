@@ -86,6 +86,11 @@ enum L10nJA {
         .dropFontsToImport: "フォントファイルをドラッグして読み込む",
         .expandPreview: "プレビューパネルを表示",
         .collapsePreview: "プレビューパネルを隠す",
-        .listPreviewSize: "一覧プレビューサイズ"
+        .listPreviewSize: "一覧プレビューサイズ",
+        .favoriteAdd: "お気に入りに追加",
+        .favoriteRemove: "お気に入りから削除",
+        .previewTruncatedInfo: "パフォーマンスのため %2$d 文字中 %1$d 文字までに省略しました。",
+        .aboutCopySystemInfo: "システム情報をコピー",
+        .aboutSystemInfoCopied: "システム情報をコピーしました"
     ]
 }

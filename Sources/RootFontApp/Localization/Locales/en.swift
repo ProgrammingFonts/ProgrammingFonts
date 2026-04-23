@@ -86,6 +86,11 @@ enum L10nEN {
         .dropFontsToImport: "Drop font files to import",
         .expandPreview: "Show Preview Panel",
         .collapsePreview: "Hide Preview Panel",
-        .listPreviewSize: "List Preview Size"
+        .listPreviewSize: "List Preview Size",
+        .favoriteAdd: "Add favorite",
+        .favoriteRemove: "Remove favorite",
+        .previewTruncatedInfo: "Preview truncated to %1$d of %2$d characters for performance.",
+        .aboutCopySystemInfo: "Copy System Info",
+        .aboutSystemInfoCopied: "System info copied"
     ]
 }

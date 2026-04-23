@@ -1,0 +1,45 @@
+#!/bin/sh
+# RootFont pre-commit hook
+#
+# Runs lightweight consistency checks that are cheap enough to run
+# on every commit. Uses `python3`, which ships with macOS 14+.
+#
+# To install:
+#   bash scripts/install-git-hooks.sh
+
+set -e
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+staged_files() {
+    git diff --cached --name-only --diff-filter=ACMR
+}
+
+CHANGED="$(staged_files || true)"
+
+needs_l10n=0
+needs_version=0
+
+for file in $CHANGED; do
+    case "$file" in
+        Sources/RootFontApp/Localization/*)
+            needs_l10n=1
+            ;;
+        Sources/RootFontApp/Resources/AppVersion.json|README.md|Sources/RootFontApp/Models/AppMetadata.swift)
+            needs_version=1
+            ;;
+    esac
+done
+
+if [ "$needs_l10n" -eq 1 ]; then
+    echo "pre-commit: running check-l10n.py"
+    python3 scripts/check-l10n.py
+fi
+
+if [ "$needs_version" -eq 1 ]; then
+    echo "pre-commit: running check-version.py"
+    python3 scripts/check-version.py
+fi
+
+exit 0

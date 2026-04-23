@@ -13,6 +13,7 @@ mkdir -p "$APP_BUNDLE/Contents/Resources"
 
 SHORT_VERSION="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["shortVersion"])' "$VERSION_CONFIG")"
 BUILD_NUMBER="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["buildNumber"])' "$VERSION_CONFIG")"
+COMMIT_SHA="$(git rev-parse --short=7 HEAD 2>/dev/null || true)"
 
 swift build -c release --product "$BIN_NAME"
 
@@ -46,6 +47,8 @@ cat > "$APP_BUNDLE/Contents/Info.plist" <<PLIST
     <string>NSApplication</string>
     <key>CFBundleIconFile</key>
     <string>logo-rootfont-300x300.png</string>
+    <key>RootFontCommitSha</key>
+    <string>$COMMIT_SHA</string>
 </dict>
 </plist>
 PLIST

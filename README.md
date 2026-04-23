@@ -15,9 +15,13 @@ RootFont is currently in active beta development.
 ## Screenshots (v0.2.0-alpha)
 
 <p align="center">
-  <img src="screenshots/01-main-dark.png" alt="RootFont main window in dark mode" width="46%" />
-  <img src="screenshots/02-main-light.png" alt="RootFont main window in light mode" width="46%" />
+  <img src="screenshots/v0.2.0-alpha/01-main-dark.png" alt="RootFont main window in dark mode" width="46%" />
+  <img src="screenshots/v0.2.0-alpha/02-main-light.png" alt="RootFont main window in light mode" width="46%" />
 </p>
+
+> Screenshots follow the `screenshots/v<version>/NN-<slug>.png` convention.
+> Validate locally with `python3 scripts/optimize-screenshots.py --check`
+> before committing new images.
 
 ## Features
 

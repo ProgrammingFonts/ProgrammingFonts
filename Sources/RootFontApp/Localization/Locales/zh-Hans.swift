@@ -86,6 +86,11 @@ enum L10nZHHans {
         .dropFontsToImport: "拖拽字体文件到此处导入",
         .expandPreview: "展开预览栏",
         .collapsePreview: "收起预览栏",
-        .listPreviewSize: "列表预览字号"
+        .listPreviewSize: "列表预览字号",
+        .favoriteAdd: "加入收藏",
+        .favoriteRemove: "取消收藏",
+        .previewTruncatedInfo: "为保证流畅度，已将 %2$d 个字符截断为 %1$d 个。",
+        .aboutCopySystemInfo: "复制系统信息",
+        .aboutSystemInfoCopied: "系统信息已复制"
     ]
 }

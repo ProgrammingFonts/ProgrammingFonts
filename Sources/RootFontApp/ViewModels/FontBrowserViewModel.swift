@@ -4,12 +4,7 @@ import Foundation
 
 @MainActor
 final class FontBrowserViewModel: ObservableObject {
-    private struct SearchIndexEntry {
-        let normalizedNames: [String]
-        let choseongNames: [String]
-    }
-
-    enum SidebarFilter: String, CaseIterable {
+    enum SidebarFilter: String, CaseIterable, Sendable {
         case all
         case system
         case user
@@ -17,11 +12,25 @@ final class FontBrowserViewModel: ObservableObject {
         case recents
     }
 
-    enum SortOption: String, CaseIterable, Identifiable {
+    enum SortOption: String, CaseIterable, Identifiable, Sendable {
         case familyName
         case displayName
 
         var id: Self { self }
+    }
+
+    private struct FilterSignature: Hashable {
+        let searchQuery: String
+        let coverageQuery: String
+        let selectedSource: FontSource?
+        let selectedStyle: FontStyleTag?
+        let sidebarFilter: SidebarFilter
+        let sortOption: SortOption
+        let language: AppLanguage
+        let showSystemAliasFonts: Bool
+        let catalogEpoch: Int
+        let favoritesSignature: Int
+        let recentsSignature: Int
     }
 
     enum PreviewPreset: String, CaseIterable, Identifiable {
@@ -107,9 +116,15 @@ final class FontBrowserViewModel: ObservableObject {
     private let preferencesStore: PreferencesStoreProtocol
     private let maxRecents = 30
     private let maxCoverageCacheEntries = 2048
-    private var searchIndexByFontID: [String: SearchIndexEntry] = [:]
+    private let backgroundFilterThreshold = 400
+    private let filterResultCacheLimit = 8
+    private var searchIndexByFontID: [String: FontFilterEngine.SearchIndexEntry] = [:]
     private var coverageSupportCache: [String: Bool] = [:]
     private var coverageCacheOrder: [String] = []
+    private var catalogEpoch: Int = 0
+    private var activeFilterTask: Task<Void, Never>?
+    private var filterResultCache: [FilterSignature: [FontItem]] = [:]
+    private var filterResultCacheOrder: [FilterSignature] = []
 
     @Published private(set) var allFonts: [FontItem] = []
     @Published private(set) var filteredFonts: [FontItem] = []
@@ -419,66 +434,111 @@ final class FontBrowserViewModel: ObservableObject {
         updatePreviewText(preset.text)
     }
 
-    private func sorted(_ fonts: [FontItem]) -> [FontItem] {
-        switch sidebarFilter {
-        case .recents:
-            return fonts.sorted { lhs, rhs in
-                let li = indexOfRecentFont(lhs.id) ?? Int.max
-                let ri = indexOfRecentFont(rhs.id) ?? Int.max
-                return li < ri
-            }
-        default:
-            let lang = language
-            switch sortOption {
-            case .familyName:
-                return fonts.sorted {
-                    $0.familyName(for: lang).localizedCaseInsensitiveCompare($1.familyName(for: lang)) == .orderedAscending
-                }
-            case .displayName:
-                return fonts.sorted {
-                    $0.displayName(for: lang).localizedCaseInsensitiveCompare($1.displayName(for: lang)) == .orderedAscending
-                }
+    func applyFilters() {
+        let signature = currentFilterSignature()
+
+        if let cached = filterResultCache[signature] {
+            commitFilterResult(cached, signature: signature, fromCache: true)
+            return
+        }
+
+        activeFilterTask?.cancel()
+
+        let inputs = currentFilterInputs()
+
+        if allFonts.count <= backgroundFilterThreshold {
+            let computed = FontFilterEngine.compute(
+                fonts: allFonts,
+                searchIndex: searchIndexByFontID,
+                favoriteIDs: favoriteIDs,
+                recentIDs: recentFontIDs,
+                inputs: inputs
+            )
+            commitFilterResult(computed, signature: signature, fromCache: false)
+            return
+        }
+
+        let fontsSnapshot = allFonts
+        let searchIndexSnapshot = searchIndexByFontID
+        let favoriteSnapshot = favoriteIDs
+        let recentSnapshot = recentFontIDs
+
+        activeFilterTask = Task { [weak self] in
+            let computed = await Task.detached(priority: .userInitiated) {
+                FontFilterEngine.compute(
+                    fonts: fontsSnapshot,
+                    searchIndex: searchIndexSnapshot,
+                    favoriteIDs: favoriteSnapshot,
+                    recentIDs: recentSnapshot,
+                    inputs: inputs
+                )
+            }.value
+
+            guard !Task.isCancelled else { return }
+            await MainActor.run {
+                guard let self else { return }
+                guard self.currentFilterSignature() == signature else { return }
+                self.commitFilterResult(computed, signature: signature, fromCache: false)
             }
         }
     }
 
-    func applyFilters() {
-        let preparedQuery = SearchMatcher.prepare(query: searchQuery)
-        let coverageQuery = glyphCoverageQuery.trimmingCharacters(in: .whitespacesAndNewlines)
-        let result = allFonts.filter { item in
-            if !preparedQuery.isEmpty {
-                let matched = matchesSearchQuery(item: item, preparedQuery: preparedQuery)
-                if !matched { return false }
-            }
-
-            if let selectedSource, item.source != selectedSource {
-                return false
-            }
-
-            if let selectedStyle, !item.styleTags.contains(selectedStyle) {
-                return false
-            }
-
-            if !coverageQuery.isEmpty, !fontSupportsAllCharacters(postScriptName: item.postScriptName, text: coverageQuery) {
-                return false
-            }
-
-            switch sidebarFilter {
-            case .all:
-                return true
-            case .system:
-                return item.source == .system
-            case .user:
-                return item.source == .user
-            case .favorites:
-                return favoriteIDs.contains(item.id)
-            case .recents:
-                return recentFontIDs.contains(item.id)
-            }
+    private func commitFilterResult(
+        _ items: [FontItem],
+        signature: FilterSignature,
+        fromCache: Bool
+    ) {
+        if !fromCache {
+            storeFilterResultInCache(items, for: signature)
         }
-        let presentationResult = showSystemAliasFonts ? result : collapseSystemAliasFonts(in: result)
-        filteredFonts = sorted(presentationResult)
+        filteredFonts = items
         selectFirstIfNeeded()
+    }
+
+    private func currentFilterInputs() -> FontFilterEngine.Inputs {
+        FontFilterEngine.Inputs(
+            preparedQuery: SearchMatcher.prepare(query: searchQuery),
+            coverageQuery: glyphCoverageQuery.trimmingCharacters(in: .whitespacesAndNewlines),
+            selectedSource: selectedSource,
+            selectedStyle: selectedStyle,
+            sidebarFilter: sidebarFilter,
+            sortOption: sortOption,
+            language: language,
+            showSystemAliasFonts: showSystemAliasFonts
+        )
+    }
+
+    private func currentFilterSignature() -> FilterSignature {
+        FilterSignature(
+            searchQuery: searchQuery,
+            coverageQuery: glyphCoverageQuery.trimmingCharacters(in: .whitespacesAndNewlines),
+            selectedSource: selectedSource,
+            selectedStyle: selectedStyle,
+            sidebarFilter: sidebarFilter,
+            sortOption: sortOption,
+            language: language,
+            showSystemAliasFonts: showSystemAliasFonts,
+            catalogEpoch: catalogEpoch,
+            favoritesSignature: favoriteIDs.hashValue,
+            recentsSignature: recentFontIDs.hashValue
+        )
+    }
+
+    private func storeFilterResultInCache(_ items: [FontItem], for signature: FilterSignature) {
+        if filterResultCache[signature] != nil {
+            filterResultCacheOrder.removeAll { $0 == signature }
+        }
+        filterResultCache[signature] = items
+        filterResultCacheOrder.append(signature)
+        while filterResultCacheOrder.count > filterResultCacheLimit {
+            let stale = filterResultCacheOrder.removeFirst()
+            filterResultCache.removeValue(forKey: stale)
+        }
+    }
+
+    private func invalidateFilterResultCache() {
+        filterResultCache.removeAll(keepingCapacity: true)
+        filterResultCacheOrder.removeAll(keepingCapacity: true)
     }
 
     /// Exposed for tests — returns true when the font resolved by
@@ -499,26 +559,15 @@ final class FontBrowserViewModel: ObservableObject {
         return supported
     }
 
-    private func matchesSearchQuery(item: FontItem, preparedQuery: SearchMatcher.PreparedQuery) -> Bool {
-        guard let entry = searchIndexByFontID[item.id] else {
-            return item.searchableNames.contains { SearchMatcher.matches(haystack: $0, query: preparedQuery.trimmed) }
-        }
-        if entry.normalizedNames.contains(where: { $0.contains(preparedQuery.normalized) }) {
-            return true
-        }
-        if preparedQuery.isChoseongOnly {
-            return entry.choseongNames.contains(where: { $0.contains(preparedQuery.choseong) })
-        }
-        return false
-    }
-
     private func rebuildSearchIndex() {
         searchIndexByFontID = Dictionary(uniqueKeysWithValues: allFonts.map { item in
             let names = item.searchableNames
             let normalized = names.map(SearchMatcher.normalize)
             let choseong = names.map(SearchMatcher.choseongProjection)
-            return (item.id, SearchIndexEntry(normalizedNames: normalized, choseongNames: choseong))
+            return (item.id, FontFilterEngine.SearchIndexEntry(normalizedNames: normalized, choseongNames: choseong))
         })
+        catalogEpoch &+= 1
+        invalidateFilterResultCache()
     }
 
     private func clearCoverageCache() {
@@ -561,40 +610,6 @@ final class FontBrowserViewModel: ObservableObject {
             return (alias, secondaryDefault)
         }
         return (primaryDefault, secondaryDefault)
-    }
-
-    private func collapseSystemAliasFonts(in fonts: [FontItem]) -> [FontItem] {
-        var seen = Set<String>()
-        var collapsed: [FontItem] = []
-
-        for item in fonts {
-            let key = aliasFoldKey(for: item)
-            if seen.insert(key).inserted {
-                collapsed.append(item)
-            }
-        }
-        return collapsed
-    }
-
-    private func aliasFoldKey(for item: FontItem) -> String {
-        guard isSystemAliasFont(item) else {
-            return item.id
-        }
-        return "systemAlias|\(item.familyName.lowercased())|\(primaryStyleTag(for: item).rawValue)"
-    }
-
-    private func isSystemAliasFont(_ item: FontItem) -> Bool {
-        guard item.source == .system else { return false }
-        let family = item.familyName.lowercased()
-        let postScript = item.postScriptName.lowercased()
-        return family.contains("applesystemui") || postScript.contains("applesystemui")
-    }
-
-    private func primaryStyleTag(for item: FontItem) -> FontStyleTag {
-        if item.styleTags.contains(.bold) { return .bold }
-        if item.styleTags.contains(.italic) { return .italic }
-        if item.styleTags.contains(.regular) { return .regular }
-        return .other
     }
 
     private func supportsAllCharacters(font: NSFont, text: String) -> Bool {

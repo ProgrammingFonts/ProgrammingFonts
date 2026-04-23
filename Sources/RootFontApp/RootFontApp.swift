@@ -57,10 +57,17 @@ struct RootFontApp: App {
     }
 
     private func showAboutPanel() {
+        let systemInfoLine = AppMetadata.systemInfoLine(
+            appearance: viewModel.appearanceMode,
+            language: viewModel.language
+        )
         let aboutView = AboutPanelView(
             appName: AppMetadata.appName,
             versionText: AppMetadata.semanticVersionDisplay,
             buildText: AppMetadata.buildDisplay,
+            commitShortSHA: AppMetadata.commitShortSHA,
+            diagnosticsLine: AppMetadata.diagnosticsLine,
+            systemInfoLine: systemInfoLine,
             slogan: viewModel.tr(.aboutSlogan),
             websiteURL: AppMetadata.websiteURL,
             githubURL: AppMetadata.githubURL,
@@ -68,10 +75,12 @@ struct RootFontApp: App {
             githubLabel: viewModel.tr(.aboutGitHub),
             copyVersionLabel: viewModel.tr(.aboutCopyVersion),
             versionCopiedLabel: viewModel.tr(.aboutVersionCopied),
+            copySystemInfoLabel: viewModel.tr(.aboutCopySystemInfo),
+            systemInfoCopiedLabel: viewModel.tr(.aboutSystemInfoCopied),
             copyrightText: AppMetadata.copyrightText
         )
         let window = RootFontApp.aboutWindow ?? NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 380, height: 320),
+            contentRect: NSRect(x: 0, y: 0, width: 420, height: 380),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
@@ -90,6 +99,9 @@ private struct AboutPanelView: View {
     let appName: String
     let versionText: String
     let buildText: String
+    let commitShortSHA: String
+    let diagnosticsLine: String
+    let systemInfoLine: String
     let slogan: String
     let websiteURL: String
     let githubURL: String
@@ -97,8 +109,11 @@ private struct AboutPanelView: View {
     let githubLabel: String
     let copyVersionLabel: String
     let versionCopiedLabel: String
+    let copySystemInfoLabel: String
+    let systemInfoCopiedLabel: String
     let copyrightText: String
     @State private var didCopyVersion = false
+    @State private var didCopySystemInfo = false
     private let logoFileName = "logo-rootfont-300x300"
     private let logoFileExtension = "png"
 
@@ -118,6 +133,12 @@ private struct AboutPanelView: View {
             Text(buildText)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+            if !commitShortSHA.isEmpty {
+                Text("commit \(commitShortSHA)")
+                    .font(.caption.monospaced())
+                    .foregroundStyle(.tertiary)
+                    .textSelection(.enabled)
+            }
             Text(slogan)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
@@ -133,14 +154,23 @@ private struct AboutPanelView: View {
                         .font(.caption)
                 }
                 Button(didCopyVersion ? versionCopiedLabel : copyVersionLabel) {
-                    NSPasteboard.general.clearContents()
-                    NSPasteboard.general.setString(versionText, forType: .string)
+                    copyToPasteboard(diagnosticsLine)
                     didCopyVersion = true
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
                         didCopyVersion = false
                     }
                 }
                 .font(.caption)
+                .help(diagnosticsLine)
+                Button(didCopySystemInfo ? systemInfoCopiedLabel : copySystemInfoLabel) {
+                    copyToPasteboard("\(diagnosticsLine)\n\(systemInfoLine)")
+                    didCopySystemInfo = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                        didCopySystemInfo = false
+                    }
+                }
+                .font(.caption)
+                .help(systemInfoLine)
             }
             Text(copyrightText)
                 .font(.caption2)
@@ -149,6 +179,11 @@ private struct AboutPanelView: View {
         }
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func copyToPasteboard(_ text: String) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
     }
 
     private var aboutLogoImage: NSImage? {
