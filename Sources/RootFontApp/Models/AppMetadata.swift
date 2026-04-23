@@ -21,23 +21,23 @@ enum AppMetadata {
     }()
 
     static var shortVersion: String {
+        if let configValue = bundledVersionConfig?.shortVersion, !configValue.isEmpty {
+            return configValue
+        }
         if let plistValue = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String,
            !plistValue.isEmpty {
             return plistValue
-        }
-        if let configValue = bundledVersionConfig?.shortVersion, !configValue.isEmpty {
-            return configValue
         }
         return fallbackVersion
     }
 
     static var buildNumber: String {
+        if let configValue = bundledVersionConfig?.buildNumber, !configValue.isEmpty {
+            return configValue
+        }
         if let plistValue = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String,
            !plistValue.isEmpty {
             return plistValue
-        }
-        if let configValue = bundledVersionConfig?.buildNumber, !configValue.isEmpty {
-            return configValue
         }
         return fallbackBuild
     }
@@ -48,6 +48,10 @@ enum AppMetadata {
 
     static var buildDisplay: String {
         "Build \(buildNumber)"
+    }
+
+    static var combinedVersionDisplay: String {
+        "v\(shortVersion) (\(buildNumber))"
     }
 
     static var copyrightText: String {

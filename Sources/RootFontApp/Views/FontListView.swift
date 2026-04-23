@@ -10,6 +10,8 @@ struct FontListView: View {
     @State private var searchDebounceTask: Task<Void, Never>?
     @FocusState private var isSearchFieldFocused: Bool
     @State private var didAutofocusSearch = false
+    @State private var cachedGridColumnCount: Int = 4
+    @State private var lastGridContainerWidth: CGFloat = 0
 
     enum DisplayMode: String, CaseIterable, Identifiable {
         case grid
@@ -52,7 +54,7 @@ struct FontListView: View {
                         GeometryReader { proxy in
                             ScrollView {
                                 LazyVGrid(
-                                    columns: gridColumns(for: proxy.size.width),
+                                    columns: cachedGridColumns,
                                     spacing: gridSpacing
                                 ) {
                                     ForEach(viewModel.filteredFonts) { item in
@@ -78,6 +80,10 @@ struct FontListView: View {
                                 .padding(.horizontal)
                                 .padding(.top, 0)
                                 .padding(.bottom, 12)
+                            }
+                            .onChange(of: proxy.size.width, initial: true) { _, newWidth in
+                                lastGridContainerWidth = newWidth
+                                updateGridColumnCountIfNeeded(for: newWidth)
                             }
                         }
                     } else {
@@ -142,9 +148,11 @@ struct FontListView: View {
         }
         .onChange(of: densityMode) { _, newValue in
             UserDefaults.standard.set(newValue.rawValue, forKey: "rootfont.densityMode")
+            updateGridColumnCountIfNeeded(for: lastGridContainerWidth)
         }
         .onChange(of: listPreviewSize) { _, newValue in
             UserDefaults.standard.set(newValue, forKey: "rootfont.listPreviewSize")
+            updateGridColumnCountIfNeeded(for: lastGridContainerWidth)
         }
         .onChange(of: searchInput) { _, newValue in
             searchDebounceTask?.cancel()
@@ -361,12 +369,22 @@ struct FontListView: View {
         densityMode == .compact ? 8 : 12
     }
 
-    private func gridColumns(for containerWidth: CGFloat) -> [GridItem] {
-        let count = gridColumnCount(for: containerWidth)
-        return Array(repeating: GridItem(.flexible(), spacing: gridSpacing), count: count)
+    private var cachedGridColumns: [GridItem] {
+        Array(
+            repeating: GridItem(.flexible(), spacing: gridSpacing),
+            count: cachedGridColumnCount
+        )
     }
 
-    private func gridColumnCount(for containerWidth: CGFloat) -> Int {
+    private func updateGridColumnCountIfNeeded(for containerWidth: CGFloat) {
+        guard containerWidth > 0 else { return }
+        let newCount = computeGridColumnCount(for: containerWidth)
+        if newCount != cachedGridColumnCount {
+            cachedGridColumnCount = newCount
+        }
+    }
+
+    private func computeGridColumnCount(for containerWidth: CGFloat) -> Int {
         let horizontalPadding: CGFloat = 32
         let available = max(containerWidth - horizontalPadding, 200)
 
