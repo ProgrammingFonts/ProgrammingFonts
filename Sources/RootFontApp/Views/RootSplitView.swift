@@ -32,6 +32,7 @@ struct RootSplitView: View {
                             Image(systemName: isPreviewInspectorPresented ? "sidebar.right" : "sidebar.squares.right")
                         }
                         .help(viewModel.tr(isPreviewInspectorPresented ? .collapsePreview : .expandPreview))
+                        .accessibilityLabel(viewModel.tr(isPreviewInspectorPresented ? .collapsePreview : .expandPreview))
                     }
                 }
                 .inspector(isPresented: $isPreviewInspectorPresented) {

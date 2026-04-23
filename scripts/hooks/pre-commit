@@ -26,7 +26,7 @@ for file in $CHANGED; do
         Sources/RootFontApp/Localization/*)
             needs_l10n=1
             ;;
-        Sources/RootFontApp/Resources/AppVersion.json|README.md|Sources/RootFontApp/Models/AppMetadata.swift)
+        Sources/RootFontApp/Resources/AppVersion.json|README.md|Sources/RootFontApp/Models/AppMetadata.swift|CHANGELOG.md)
             needs_version=1
             ;;
     esac

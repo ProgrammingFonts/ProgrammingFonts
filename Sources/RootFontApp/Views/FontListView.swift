@@ -118,6 +118,8 @@ struct FontListView: View {
                                         .foregroundStyle(viewModel.isFavorite(item) ? .yellow : .secondary)
                                 }
                                 .buttonStyle(.plain)
+                                .help(viewModel.tr(viewModel.isFavorite(item) ? .favoriteRemove : .favoriteAdd))
+                                .accessibilityLabel(viewModel.tr(viewModel.isFavorite(item) ? .favoriteRemove : .favoriteAdd))
                             }
                             .contentShape(Rectangle())
                             .onTapGesture {
@@ -430,6 +432,7 @@ private struct FontGridCard: View {
                 }
                 .buttonStyle(.plain)
                 .help(L10n.tr(isFavorite ? .favoriteRemove : .favoriteAdd, language: language))
+                .accessibilityLabel(L10n.tr(isFavorite ? .favoriteRemove : .favoriteAdd, language: language))
             }
 
             Text.highlighted(secondaryTitle, query: searchQuery)

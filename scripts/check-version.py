@@ -5,6 +5,7 @@ Sources of truth (must all agree):
     1. Sources/RootFontApp/Resources/AppVersion.json   -> canonical
     2. README.md                                       -> contains "v<version> (<build>)"
     3. Sources/RootFontApp/Models/AppMetadata.swift    -> fallbackVersion / fallbackBuild
+    4. CHANGELOG.md                                    -> has "[<version>]" section
 
 Exits non-zero when any source disagrees. Usage:
     python3 scripts/check-version.py
@@ -21,6 +22,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 VERSION_JSON = REPO_ROOT / "Sources/RootFontApp/Resources/AppVersion.json"
 README = REPO_ROOT / "README.md"
 METADATA = REPO_ROOT / "Sources/RootFontApp/Models/AppMetadata.swift"
+CHANGELOG = REPO_ROOT / "CHANGELOG.md"
 
 
 def load_canonical() -> tuple[str, str]:
@@ -37,6 +39,16 @@ def check_readme(short: str, build: str) -> list[str]:
     expected = f"v{short} ({build})"
     if expected not in text:
         return [f"README.md does not contain expected tag '{expected}'"]
+    return []
+
+
+def check_changelog(short: str) -> list[str]:
+    if not CHANGELOG.exists():
+        return [f"CHANGELOG.md not found at {CHANGELOG}"]
+    text = CHANGELOG.read_text(encoding="utf-8")
+    pattern = re.compile(rf"^##\s*\[{re.escape(short)}\]", re.MULTILINE)
+    if not pattern.search(text):
+        return [f"CHANGELOG.md is missing a '## [{short}]' section"]
     return []
 
 
@@ -62,7 +74,11 @@ def check_metadata_fallback(short: str, build: str) -> list[str]:
 
 def main() -> int:
     short, build = load_canonical()
-    errors = check_readme(short, build) + check_metadata_fallback(short, build)
+    errors = (
+        check_readme(short, build)
+        + check_metadata_fallback(short, build)
+        + check_changelog(short)
+    )
 
     if errors:
         print("Version inconsistency detected:")
