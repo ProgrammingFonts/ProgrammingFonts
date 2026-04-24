@@ -4,17 +4,25 @@ import Foundation
 
 @MainActor
 final class FontBrowserViewModel: ObservableObject {
+    enum WorkspaceModule: String, CaseIterable, Sendable {
+        case library
+        case programming
+    }
+
     enum SidebarFilter: String, CaseIterable, Sendable {
         case all
         case system
         case user
         case favorites
         case recents
+        case recommendedForCode
+        case avoidForCode
     }
 
     enum SortOption: String, CaseIterable, Identifiable, Sendable {
         case familyName
         case displayName
+        case programmingFit
 
         var id: Self { self }
     }
@@ -31,6 +39,7 @@ final class FontBrowserViewModel: ObservableObject {
         let catalogEpoch: Int
         let favoritesSignature: Int
         let recentsSignature: Int
+        let workspaceModule: WorkspaceModule
     }
 
     enum PreviewPreset: String, CaseIterable, Identifiable {
@@ -145,6 +154,9 @@ final class FontBrowserViewModel: ObservableObject {
     @Published private(set) var appearanceMode: AppAppearanceMode
     @Published private(set) var showSystemAliasFonts: Bool
     @Published private(set) var smartCollections: [SmartCollection] = []
+    @Published private(set) var workspaceModule: WorkspaceModule = .library
+    @Published private(set) var scoreWeights: ScoreWeights = .default
+    @Published private(set) var scoreWeightPreset: ScoreWeightPreset = .default
 
     init(
         catalogService: FontCatalogServiceProtocol,
@@ -165,6 +177,11 @@ final class FontBrowserViewModel: ObservableObject {
         self.sidebarFilter = SidebarFilter(rawValue: preferencesStore.sidebarFilter) ?? .all
         self.sortOption = SortOption(rawValue: preferencesStore.sortOption) ?? .familyName
         self.smartCollections = Self.decodeSmartCollections(preferencesStore.smartCollectionsData)
+        if let data = preferencesStore.scoreWeightsData,
+           let decoded = try? JSONDecoder().decode(ScoreWeights.self, from: data) {
+            self.scoreWeights = decoded
+            self.scoreWeightPreset = Self.bestMatchingPreset(for: decoded)
+        }
     }
 
     func tr(_ key: L10nKey) -> String {
@@ -242,6 +259,40 @@ final class FontBrowserViewModel: ObservableObject {
         applyFilters()
     }
 
+    func updateWorkspaceModule(_ value: WorkspaceModule) {
+        guard workspaceModule != value else { return }
+        workspaceModule = value
+        if value == .programming {
+            updateSortOption(.programmingFit)
+            if sidebarFilter == .all {
+                updateSidebarFilter(.recommendedForCode)
+                return
+            }
+        } else if sortOption == .programmingFit {
+            updateSortOption(.familyName)
+        }
+        applyFilters()
+    }
+
+    func applyScoreWeightPreset(_ preset: ScoreWeightPreset) {
+        scoreWeightPreset = preset
+        scoreWeights = preset.weights
+        persistScoreWeights()
+        recalculateProgrammingScores()
+        applyFilters()
+    }
+
+    func updateScoreWeight(
+        _ keyPath: WritableKeyPath<ScoreWeights, Double>,
+        value: Double
+    ) {
+        scoreWeights[keyPath: keyPath] = value
+        scoreWeightPreset = Self.bestMatchingPreset(for: scoreWeights)
+        persistScoreWeights()
+        recalculateProgrammingScores()
+        applyFilters()
+    }
+
     @discardableResult
     func importFonts(from urls: [URL]) -> Bool {
         guard !urls.isEmpty else { return false }
@@ -259,6 +310,8 @@ final class FontBrowserViewModel: ObservableObject {
             return tr(.byFamilyName)
         case .displayName:
             return tr(.byDisplayName)
+        case .programmingFit:
+            return tr(.byProgrammingFit)
         }
     }
 
@@ -294,6 +347,7 @@ final class FontBrowserViewModel: ObservableObject {
             loadErrorMessage = tr(.catalogReadFailed)
         } else if let fonts {
             allFonts = fonts
+            recalculateProgrammingScores()
             rebuildSearchIndex()
             clearCoverageCache()
             applyFilters()
@@ -319,6 +373,9 @@ final class FontBrowserViewModel: ObservableObject {
 
     var activeFilterSummary: String {
         var parts: [String] = []
+        if workspaceModule == .programming {
+            parts.append("Programming")
+        }
         if !searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             parts.append(tr(.filterKeyword))
         }
@@ -446,9 +503,10 @@ final class FontBrowserViewModel: ObservableObject {
 
         let inputs = currentFilterInputs()
 
-        if allFonts.count <= backgroundFilterThreshold {
+        let filteredByModule = scopedFonts(for: allFonts)
+        if filteredByModule.count <= backgroundFilterThreshold {
             let computed = FontFilterEngine.compute(
-                fonts: allFonts,
+                fonts: filteredByModule,
                 searchIndex: searchIndexByFontID,
                 favoriteIDs: favoriteIDs,
                 recentIDs: recentFontIDs,
@@ -458,7 +516,7 @@ final class FontBrowserViewModel: ObservableObject {
             return
         }
 
-        let fontsSnapshot = allFonts
+        let fontsSnapshot = filteredByModule
         let searchIndexSnapshot = searchIndexByFontID
         let favoriteSnapshot = favoriteIDs
         let recentSnapshot = recentFontIDs
@@ -504,7 +562,8 @@ final class FontBrowserViewModel: ObservableObject {
             sidebarFilter: sidebarFilter,
             sortOption: sortOption,
             language: language,
-            showSystemAliasFonts: showSystemAliasFonts
+            showSystemAliasFonts: showSystemAliasFonts,
+            scoreWeights: scoreWeights
         )
     }
 
@@ -520,8 +579,18 @@ final class FontBrowserViewModel: ObservableObject {
             showSystemAliasFonts: showSystemAliasFonts,
             catalogEpoch: catalogEpoch,
             favoritesSignature: favoriteIDs.hashValue,
-            recentsSignature: recentFontIDs.hashValue
+            recentsSignature: recentFontIDs.hashValue,
+            workspaceModule: workspaceModule
         )
+    }
+
+    private func scopedFonts(for fonts: [FontItem]) -> [FontItem] {
+        switch workspaceModule {
+        case .library:
+            return fonts
+        case .programming:
+            return fonts.filter { $0.programming?.isMonospaced == true }
+        }
     }
 
     private func storeFilterResultInCache(_ items: [FontItem], for signature: FilterSignature) {
@@ -593,6 +662,23 @@ final class FontBrowserViewModel: ObservableObject {
     private static func decodeSmartCollections(_ data: Data?) -> [SmartCollection] {
         guard let data else { return [] }
         return (try? JSONDecoder().decode([SmartCollection].self, from: data)) ?? []
+    }
+
+    private func recalculateProgrammingScores() {
+        let engine = ProgrammingScoreEngine(weights: scoreWeights)
+        allFonts = FontCatalogService.attachProgrammingScores(allFonts, scoreEngine: engine)
+    }
+
+    private func persistScoreWeights() {
+        preferencesStore.scoreWeightsData = try? JSONEncoder().encode(scoreWeights)
+    }
+
+    private static func bestMatchingPreset(for weights: ScoreWeights) -> ScoreWeightPreset {
+        if weights == ScoreWeightPreset.default.weights { return .default }
+        if weights == ScoreWeightPreset.terminalHeavy.weights { return .terminalHeavy }
+        if weights == ScoreWeightPreset.ideHeavy.weights { return .ideHeavy }
+        if weights == ScoreWeightPreset.minimalist.weights { return .minimalist }
+        return .default
     }
 
     func preferredSearchDisplay(for item: FontItem) -> (primary: String, secondary: String) {

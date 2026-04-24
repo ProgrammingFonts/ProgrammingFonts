@@ -34,6 +34,7 @@ final class InMemoryPreferencesStore: PreferencesStoreProtocol {
     var displayMode: String = "grid"
     var densityMode: String = "compact"
     var smartCollectionsData: Data?
+    var scoreWeightsData: Data?
 
     var appLanguage: AppLanguage {
         get { didChooseAppLanguage ? storedLanguage : .english }

@@ -11,10 +11,32 @@ struct SidebarView: View {
             get: { viewModel.sidebarFilter },
             set: { viewModel.updateSidebarFilter($0) }
         )) {
+            Section(viewModel.tr(.workspace)) {
+                moduleRow(
+                    title: viewModel.tr(.moduleLibrary),
+                    systemImage: "square.grid.2x2",
+                    module: .library
+                )
+                moduleRow(
+                    title: viewModel.tr(.moduleProgramming),
+                    systemImage: "chevron.left.forwardslash.chevron.right",
+                    module: .programming
+                )
+            }
+
             Section(viewModel.tr(.browse)) {
                 Label(viewModel.tr(.allFonts), systemImage: "textformat").tag(FontBrowserViewModel.SidebarFilter.all)
                 Label(viewModel.tr(.systemFonts), systemImage: "desktopcomputer").tag(FontBrowserViewModel.SidebarFilter.system)
                 Label(viewModel.tr(.userFonts), systemImage: "person").tag(FontBrowserViewModel.SidebarFilter.user)
+            }
+
+            if viewModel.workspaceModule == .programming {
+                Section(viewModel.tr(.programmingModule)) {
+                    Label(viewModel.tr(.recommendedForCode), systemImage: "checkmark.seal")
+                        .tag(FontBrowserViewModel.SidebarFilter.recommendedForCode)
+                    Label(viewModel.tr(.avoidForCode), systemImage: "exclamationmark.triangle")
+                        .tag(FontBrowserViewModel.SidebarFilter.avoidForCode)
+                }
             }
 
             Section(viewModel.tr(.personal)) {
@@ -169,5 +191,26 @@ struct SidebarView: View {
                 }
             }
         }
+    }
+
+    @ViewBuilder
+    private func moduleRow(
+        title: String,
+        systemImage: String,
+        module: FontBrowserViewModel.WorkspaceModule
+    ) -> some View {
+        Button {
+            viewModel.updateWorkspaceModule(module)
+        } label: {
+            HStack {
+                Label(title, systemImage: systemImage)
+                Spacer()
+                if viewModel.workspaceModule == module {
+                    Image(systemName: "checkmark")
+                        .foregroundStyle(.tint)
+                }
+            }
+        }
+        .buttonStyle(.plain)
     }
 }

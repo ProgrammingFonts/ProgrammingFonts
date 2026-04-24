@@ -9,6 +9,7 @@ enum FontStyleTag: String, CaseIterable, Codable {
     case regular
     case bold
     case italic
+    case monospace
     case other
 }
 
@@ -23,6 +24,12 @@ struct FontItem: Identifiable, Hashable, Codable {
     var localizedFamilyNames: [String: String]
     /// Display/full name variants per BCP47 language tag.
     var localizedDisplayNames: [String: String]
+    /// Programming-related capabilities detected from font metadata.
+    var programming: ProgrammingProfile?
+    /// Optional measured metrics used by score engine.
+    var metrics: FontMetricsSample?
+    /// Cached in-memory suitability score for coding use.
+    var programmingScore: ProgrammingScore?
 
     init(
         id: String,
@@ -32,7 +39,10 @@ struct FontItem: Identifiable, Hashable, Codable {
         source: FontSource,
         styleTags: Set<FontStyleTag>,
         localizedFamilyNames: [String: String] = [:],
-        localizedDisplayNames: [String: String] = [:]
+        localizedDisplayNames: [String: String] = [:],
+        programming: ProgrammingProfile? = nil,
+        metrics: FontMetricsSample? = nil,
+        programmingScore: ProgrammingScore? = nil
     ) {
         self.id = id
         self.familyName = familyName
@@ -42,6 +52,9 @@ struct FontItem: Identifiable, Hashable, Codable {
         self.styleTags = styleTags
         self.localizedFamilyNames = localizedFamilyNames
         self.localizedDisplayNames = localizedDisplayNames
+        self.programming = programming
+        self.metrics = metrics
+        self.programmingScore = programmingScore
     }
 
     /// Preferred family name for the given language, falling back to the

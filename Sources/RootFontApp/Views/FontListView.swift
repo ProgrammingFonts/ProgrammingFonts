@@ -111,6 +111,10 @@ struct FontListView: View {
                                 Text(viewModel.styleLabel(for: item))
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
+                                if item.programming?.isMonospaced == true,
+                                   let score = item.programmingScore {
+                                    scoreChip(grade: score.grade)
+                                }
                                 Button {
                                     viewModel.toggleFavorite(item)
                                 } label: {
@@ -216,6 +220,7 @@ struct FontListView: View {
                     Text(viewModel.tr(.regular)).tag(FontStyleTag?.some(.regular))
                     Text(viewModel.tr(.bold)).tag(FontStyleTag?.some(.bold))
                     Text(viewModel.tr(.italic)).tag(FontStyleTag?.some(.italic))
+                    Text(viewModel.tr(.monospace)).tag(FontStyleTag?.some(.monospace))
                 }
                 .controlSize(.regular)
                 .frame(minWidth: pickerMinWidth)
@@ -452,6 +457,10 @@ private struct FontGridCard: View {
 
             HStack(spacing: 6) {
                 tag(text: item.source == .system ? L10n.tr(.system, language: language) : L10n.tr(.user, language: language))
+                if item.programming?.isMonospaced == true,
+                   let score = item.programmingScore {
+                    scoreChip(grade: score.grade)
+                }
                 Spacer(minLength: 0)
                 tag(text: styleLabel)
             }
@@ -483,6 +492,36 @@ private struct FontGridCard: View {
             .padding(.vertical, 3)
             .background(Color.secondary.opacity(0.14), in: Capsule())
             .foregroundStyle(.secondary)
+    }
+
+    private func scoreChip(grade: ProgrammingGrade) -> some View {
+        Text(gradeText(grade))
+            .font(.caption2.weight(.bold))
+            .lineLimit(1)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            .background(gradeColor(grade).opacity(0.18), in: Capsule())
+            .foregroundStyle(gradeColor(grade))
+    }
+
+    private func gradeText(_ grade: ProgrammingGrade) -> String {
+        switch grade {
+        case .s: return "S"
+        case .a: return "A"
+        case .b: return "B"
+        case .c: return "C"
+        case .notRecommended: return "NR"
+        }
+    }
+
+    private func gradeColor(_ grade: ProgrammingGrade) -> Color {
+        switch grade {
+        case .s: return .green
+        case .a: return .mint
+        case .b: return .yellow
+        case .c: return .orange
+        case .notRecommended: return .red
+        }
     }
 
     private var cardBackground: Color {
@@ -530,4 +569,38 @@ private struct FontGridCard: View {
         if item.styleTags.contains(.regular) { return L10n.tr(.regular, language: language) }
         return L10n.tr(.other, language: language)
     }
+}
+
+private func scoreChip(grade: ProgrammingGrade) -> some View {
+    Text({
+        switch grade {
+        case .s: return "S"
+        case .a: return "A"
+        case .b: return "B"
+        case .c: return "C"
+        case .notRecommended: return "NR"
+        }
+    }())
+    .font(.caption2.weight(.bold))
+    .lineLimit(1)
+    .padding(.horizontal, 8)
+    .padding(.vertical, 3)
+    .background({
+        switch grade {
+        case .s: return Color.green.opacity(0.18)
+        case .a: return Color.mint.opacity(0.18)
+        case .b: return Color.yellow.opacity(0.18)
+        case .c: return Color.orange.opacity(0.18)
+        case .notRecommended: return Color.red.opacity(0.18)
+        }
+    }(), in: Capsule())
+    .foregroundStyle({
+        switch grade {
+        case .s: return Color.green
+        case .a: return Color.mint
+        case .b: return Color.yellow
+        case .c: return Color.orange
+        case .notRecommended: return Color.red
+        }
+    }())
 }

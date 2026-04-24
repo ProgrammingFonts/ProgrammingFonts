@@ -12,9 +12,23 @@ struct FontCatalogService: FontCatalogServiceProtocol {
     }
 
     private let styleResolver: FontStyleResolverProtocol
+    private let featureInspector: FontFeatureInspectorProtocol
+    private let metricsProbe: FontMetricsProbeProtocol
+    private let scoreEngine: ProgrammingScoreEngine
+    private let scoreManifestStore: ScoreManifestStoreProtocol
 
-    init(styleResolver: FontStyleResolverProtocol = FontStyleResolver()) {
+    init(
+        styleResolver: FontStyleResolverProtocol = FontStyleResolver(),
+        featureInspector: FontFeatureInspectorProtocol = FontFeatureInspector(),
+        metricsProbe: FontMetricsProbeProtocol = FontMetricsProbe(),
+        scoreEngine: ProgrammingScoreEngine = ProgrammingScoreEngine(),
+        scoreManifestStore: ScoreManifestStoreProtocol = ScoreManifestStore()
+    ) {
         self.styleResolver = styleResolver
+        self.featureInspector = featureInspector
+        self.metricsProbe = metricsProbe
+        self.scoreEngine = scoreEngine
+        self.scoreManifestStore = scoreManifestStore
     }
 
     func loadFonts() throws -> [FontItem] {
@@ -24,6 +38,8 @@ struct FontCatalogService: FontCatalogServiceProtocol {
 
         var seen = Set<String>()
         var items: [FontItem] = []
+        let cachedEntries = scoreManifestStore.load()
+        var nextCache: [String: CachedScoreEntry] = [:]
 
         for url in descriptors {
             let postScriptName = url.deletingPathExtension().lastPathComponent
@@ -34,6 +50,13 @@ struct FontCatalogService: FontCatalogServiceProtocol {
             let nsFont = NSFont(name: postScriptName, size: 16) ?? NSFont.systemFont(ofSize: 16)
             let source: FontSource = url.path.contains("/System/Library/Fonts") ? .system : .user
             let styles = styleResolver.resolveStyleTags(for: nsFont)
+            let cacheKey = scoreManifestStore.cacheKey(for: postScriptName, fileURL: url)
+            let cached = cachedEntries[cacheKey]
+            let programmingProfile = cached?.programming ?? featureInspector.inspect(postScriptName: postScriptName)
+            let metrics = cached?.metrics ?? metricsProbe.measure(
+                postScriptName: postScriptName,
+                isMonospaced: programmingProfile.isMonospaced
+            )
 
             let ctFont = CTFontCreateWithName(postScriptName as CFString, 16, nil)
             let defaultFamily = nsFont.familyName ?? postScriptName
@@ -50,13 +73,42 @@ struct FontCatalogService: FontCatalogServiceProtocol {
                     source: source,
                     styleTags: styles,
                     localizedFamilyNames: localizedFamily,
-                    localizedDisplayNames: localizedDisplay
+                    localizedDisplayNames: localizedDisplay,
+                    programming: programmingProfile,
+                    metrics: metrics,
+                    programmingScore: cached?.score
                 )
             )
         }
 
-        return items.sorted { lhs, rhs in
+        let scoredItems = Self.attachProgrammingScores(items, scoreEngine: scoreEngine)
+        for item in scoredItems {
+            let url = descriptors.first { $0.deletingPathExtension().lastPathComponent == item.postScriptName }
+            if let url {
+                let key = scoreManifestStore.cacheKey(for: item.postScriptName, fileURL: url)
+                nextCache[key] = CachedScoreEntry(
+                    programming: item.programming,
+                    metrics: item.metrics,
+                    score: item.programmingScore
+                )
+            }
+        }
+        scoreManifestStore.save(nextCache)
+        return scoredItems.sorted { lhs, rhs in
             lhs.familyName.localizedCaseInsensitiveCompare(rhs.familyName) == .orderedAscending
+        }
+    }
+
+    static func attachProgrammingScores(
+        _ items: [FontItem],
+        familyCoverage: FamilyWeightCoverage? = nil,
+        scoreEngine: ProgrammingScoreEngine = ProgrammingScoreEngine()
+    ) -> [FontItem] {
+        let coverage = familyCoverage ?? FamilyWeightCoverage.build(from: items)
+        return items.map { item in
+            var updated = item
+            updated.programmingScore = scoreEngine.score(item: item, familyCoverage: coverage)
+            return updated
         }
     }
 

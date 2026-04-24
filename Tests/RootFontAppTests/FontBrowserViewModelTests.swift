@@ -55,6 +55,34 @@ final class FontBrowserViewModelTests: XCTestCase {
         XCTAssertEqual(store.appLanguage, .korean)
     }
 
+    func testApplyScoreWeightPresetPersistsToStore() throws {
+        let store = InMemoryPreferencesStore()
+        let viewModel = FontBrowserViewModel(
+            catalogService: MockCatalogService(fonts: []),
+            preferencesStore: store
+        )
+
+        viewModel.applyScoreWeightPreset(.terminalHeavy)
+
+        let saved = try XCTUnwrap(store.scoreWeightsData)
+        let decoded = try JSONDecoder().decode(ScoreWeights.self, from: saved)
+        XCTAssertEqual(decoded, .terminalHeavy)
+        XCTAssertEqual(viewModel.scoreWeightPreset, .terminalHeavy)
+    }
+
+    func testRestoresScoreWeightsFromStore() throws {
+        let store = InMemoryPreferencesStore()
+        store.scoreWeightsData = try JSONEncoder().encode(ScoreWeights.ideHeavy)
+
+        let viewModel = FontBrowserViewModel(
+            catalogService: MockCatalogService(fonts: []),
+            preferencesStore: store
+        )
+
+        XCTAssertEqual(viewModel.scoreWeights, .ideHeavy)
+        XCTAssertEqual(viewModel.scoreWeightPreset, .ideHeavy)
+    }
+
 
     func testRestoresFilterStateFromStore() {
         let store = InMemoryPreferencesStore()
@@ -226,6 +254,104 @@ final class FontBrowserViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.filteredFonts.first?.id, "2")
     }
 
+    func testProgrammingModuleShowsOnlyMonospacedProgrammingCandidates() {
+        let coding = FontItem(
+            id: "mono",
+            familyName: "Mono",
+            postScriptName: "Mono-Regular",
+            displayName: "Mono",
+            source: .user,
+            styleTags: [.regular, .monospace],
+            programming: ProgrammingProfile.empty.withMonospaced(true)
+        )
+        let decorative = FontItem(
+            id: "display",
+            familyName: "Display",
+            postScriptName: "Display-Regular",
+            displayName: "Display",
+            source: .user,
+            styleTags: [.regular],
+            programming: ProgrammingProfile.empty.withMonospaced(false)
+        )
+        let viewModel = FontBrowserViewModel(
+            catalogService: MockCatalogService(fonts: [coding, decorative]),
+            preferencesStore: InMemoryPreferencesStore()
+        )
+
+        viewModel.load()
+        waitForLoad(viewModel)
+        viewModel.updateWorkspaceModule(.programming)
+        viewModel.updateSidebarFilter(.all)
+
+        XCTAssertEqual(viewModel.filteredFonts.map(\.id), ["mono"])
+    }
+
+    func testProgrammingModuleDefaultsToRecommendedAndProgrammingSort() {
+        let coding = FontItem.sample(
+            id: "mono",
+            familyName: "Mono",
+            source: .user,
+            styleTags: [.regular, .monospace]
+        )
+        let viewModel = FontBrowserViewModel(
+            catalogService: MockCatalogService(fonts: [coding]),
+            preferencesStore: InMemoryPreferencesStore()
+        )
+
+        viewModel.load()
+        waitForLoad(viewModel)
+        viewModel.updateWorkspaceModule(.programming)
+
+        XCTAssertEqual(viewModel.sidebarFilter, .recommendedForCode)
+        XCTAssertEqual(viewModel.sortOption, .programmingFit)
+    }
+
+    func testRecommendedForCodeFilterUsesProgrammingSignals() {
+        let recommended = FontItem(
+            id: "recommended",
+            familyName: "Recommended",
+            postScriptName: "Recommended-Regular",
+            displayName: "Recommended",
+            source: .user,
+            styleTags: [.regular, .monospace],
+            programming: ProgrammingProfile(
+                isMonospaced: true,
+                hasProgrammingLigatures: true,
+                availableStylisticSets: [],
+                hasZeroVariant: true,
+                hasPowerlineGlyphs: false,
+                hasNerdFontGlyphs: false,
+                hasBoxDrawing: true,
+                coverageBuckets: [.latinExtended, .cyrillic, .greek],
+                isVariableFont: false
+            ),
+            metrics: FontMetricsSample(asciiAdvanceVariance: 0.1, uniformWidth: true, confusableDistances: [:])
+        )
+        let avoid = FontItem(
+            id: "avoid",
+            familyName: "Avoid",
+            postScriptName: "Avoid-Regular",
+            displayName: "Avoid",
+            source: .user,
+            styleTags: [.regular, .monospace],
+            programming: ProgrammingProfile.empty.withMonospaced(true),
+            metrics: FontMetricsSample(asciiAdvanceVariance: 1.8, uniformWidth: false, confusableDistances: [:])
+        )
+        let viewModel = FontBrowserViewModel(
+            catalogService: MockCatalogService(fonts: [recommended, avoid]),
+            preferencesStore: InMemoryPreferencesStore()
+        )
+
+        viewModel.load()
+        waitForLoad(viewModel)
+        viewModel.updateWorkspaceModule(.programming)
+        viewModel.updateSidebarFilter(.recommendedForCode)
+        XCTAssertEqual(viewModel.filteredFonts.map(\.id), ["recommended"])
+
+        viewModel.updateSidebarFilter(.avoidForCode)
+        XCTAssertEqual(viewModel.filteredFonts.map(\.id), ["avoid"])
+    }
+
     func testFavoriteTogglePersistsState() {
         let item = FontItem.sample(id: "1", familyName: "Arial", source: .system, styleTags: [.regular])
         let store = InMemoryPreferencesStore()
@@ -358,5 +484,13 @@ final class FontBrowserViewModelTests: XCTestCase {
         XCTAssertTrue(FontBrowserViewModel.PreviewPreset.japanese.text.contains("RootFont"))
         XCTAssertEqual(FontBrowserViewModel.PreviewPreset.japanese.title(language: .english), "Japanese")
         XCTAssertEqual(FontBrowserViewModel.PreviewPreset.korean.title(language: .korean), "한국어")
+    }
+}
+
+private extension ProgrammingProfile {
+    func withMonospaced(_ value: Bool) -> ProgrammingProfile {
+        var copy = self
+        copy.isMonospaced = value
+        return copy
     }
 }

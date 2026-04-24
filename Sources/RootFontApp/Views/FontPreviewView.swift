@@ -7,6 +7,9 @@ struct FontPreviewView: View {
     @State private var useSingleLinePreview = false
     @State private var useMonospacedDigits = false
     @State private var expandedLetterSpacing = false
+    @State private var showScoreBreakdown = false
+    @State private var activeWhyFactor: ProgrammingScoreFactor?
+    @State private var compareFontID: String?
 
     /// Texts under this length keep the ZWSP soft-wrap treatment.
     /// Larger inputs fall back to the native layout engine because the
@@ -28,6 +31,14 @@ struct FontPreviewView: View {
                         previewSizeSection
                         previewModeSection
                         typographyOptionsSection
+                        if selected.programming?.isMonospaced == true,
+                           let score = selected.programmingScore {
+                            if shouldShowWhyNotHint(score: score) {
+                                whyNotHint(score: score)
+                            }
+                            compareSection(baseline: selected, baselineScore: score)
+                            scoreBreakdownSection(score: score)
+                        }
                         previewBlocksSection(for: selected)
                         if !viewModel.hasRenderablePreviewFont() {
                             Label(viewModel.tr(.fallbackPreviewInfo), systemImage: "info.circle")
@@ -185,6 +196,325 @@ struct FontPreviewView: View {
             Toggle(viewModel.tr(.previewExpandedLetterSpacing), isOn: $expandedLetterSpacing)
                 .toggleStyle(.switch)
         }
+    }
+
+    private func scoreBreakdownSection(score: ProgrammingScore) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            DisclosureGroup(isExpanded: $showScoreBreakdown) {
+                VStack(alignment: .leading, spacing: 10) {
+                    ForEach(score.breakdown, id: \.factor) { item in
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack(spacing: 8) {
+                                Text(factorTitle(item.factor))
+                                    .font(.caption.weight(.semibold))
+                                Spacer(minLength: 8)
+                                Button(whyButtonTitle()) {
+                                    activeWhyFactor = item.factor
+                                }
+                                .buttonStyle(.plain)
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(.tint)
+                                .popover(isPresented: Binding(
+                                    get: { activeWhyFactor == item.factor },
+                                    set: { showing in
+                                        if !showing, activeWhyFactor == item.factor {
+                                            activeWhyFactor = nil
+                                        }
+                                    }
+                                ), arrowEdge: .bottom) {
+                                    whyPopover(for: item.factor)
+                                }
+                                Text("\(Int(round(item.weightedValue)))/\(Int(round(item.maxWeight)))")
+                                    .font(.caption.monospacedDigit())
+                                    .foregroundStyle(.secondary)
+                            }
+                            ProgressView(value: item.weightedValue, total: item.maxWeight)
+                                .controlSize(.small)
+                            Text(factorHint(item.factor))
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .padding(.top, 4)
+            } label: {
+                HStack(spacing: 8) {
+                    Text(scoreBreakdownTitle())
+                        .font(.subheadline.weight(.semibold))
+                    gradeBadge(score.grade)
+                    Text("\(score.total)")
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private func compareSection(baseline: FontItem, baselineScore: ProgrammingScore) -> some View {
+        let candidates = compareCandidates(for: baseline)
+        if !candidates.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                Picker(compareTitle(), selection: Binding(
+                    get: { compareFontID ?? "" },
+                    set: { compareFontID = $0.isEmpty ? nil : $0 }
+                )) {
+                    Text(compareNoneOption()).tag("")
+                    ForEach(candidates) { item in
+                        Text(item.familyName(for: viewModel.language)).tag(item.id)
+                    }
+                }
+                .pickerStyle(.menu)
+
+                if let compare = selectedCompareFont(from: candidates),
+                   let compareScore = compare.programmingScore {
+                    let totalDelta = compareScore.total - baselineScore.total
+                    HStack(spacing: 8) {
+                        Text(compareDeltaTitle())
+                            .font(.caption.weight(.semibold))
+                        Text(formatSigned(totalDelta))
+                            .font(.caption.monospacedDigit())
+                            .foregroundStyle(totalDelta >= 0 ? .green : .orange)
+                    }
+
+                    let deltas = ProgrammingScoreEngine.factorDeltas(
+                        baseline: baselineScore,
+                        candidate: compareScore
+                    )
+                    ForEach(deltas.prefix(4), id: \.factor) { item in
+                        HStack(spacing: 8) {
+                            Text(factorTitle(item.factor))
+                                .font(.caption2)
+                                .lineLimit(1)
+                            Spacer(minLength: 8)
+                            Text(formatSigned(item.delta))
+                                .font(.caption2.monospacedDigit())
+                                .foregroundStyle(item.delta >= 0 ? .green : .orange)
+                        }
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    private func factorTitle(_ factor: ProgrammingScoreFactor) -> String {
+        switch factor {
+        case .monospaceBaseline:
+            return viewModel.tr(.factorMonospaceBaseline)
+        case .glyphDisambiguation:
+            return viewModel.tr(.factorGlyphDisambiguation)
+        case .ligatureSupport:
+            return viewModel.tr(.factorLigatureSupport)
+        case .stylisticFlexibility:
+            return viewModel.tr(.factorStylisticFlexibility)
+        case .boxDrawing:
+            return viewModel.tr(.factorBoxDrawing)
+        case .powerlineGlyphs:
+            return viewModel.tr(.factorPowerlineGlyphs)
+        case .nerdFontCoverage:
+            return viewModel.tr(.factorNerdFontCoverage)
+        case .variableFont:
+            return viewModel.tr(.factorVariableFont)
+        case .languageCoverage:
+            return viewModel.tr(.factorLanguageCoverage)
+        case .weightVariety:
+            return viewModel.tr(.factorWeightVariety)
+        }
+    }
+
+    private func factorHint(_ factor: ProgrammingScoreFactor) -> String {
+        switch factor {
+        case .monospaceBaseline:
+            return viewModel.tr(.factorHintMonospaceBaseline)
+        case .glyphDisambiguation:
+            return viewModel.tr(.factorHintGlyphDisambiguation)
+        case .ligatureSupport:
+            return viewModel.tr(.factorHintLigatureSupport)
+        case .stylisticFlexibility:
+            return viewModel.tr(.factorHintStylisticFlexibility)
+        case .boxDrawing:
+            return viewModel.tr(.factorHintBoxDrawing)
+        case .powerlineGlyphs:
+            return viewModel.tr(.factorHintPowerlineGlyphs)
+        case .nerdFontCoverage:
+            return viewModel.tr(.factorHintNerdFontCoverage)
+        case .variableFont:
+            return viewModel.tr(.factorHintVariableFont)
+        case .languageCoverage:
+            return viewModel.tr(.factorHintLanguageCoverage)
+        case .weightVariety:
+            return viewModel.tr(.factorHintWeightVariety)
+        }
+    }
+
+    @ViewBuilder
+    private func whyPopover(for factor: ProgrammingScoreFactor) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(whyTitle(for: factor))
+                .font(.subheadline.weight(.semibold))
+            Text(whyDescription(for: factor))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            Text(whyExample(for: factor))
+                .font(.caption2.monospaced())
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
+        }
+        .padding(12)
+        .frame(width: 300)
+    }
+
+    private func scoreBreakdownTitle() -> String {
+        viewModel.tr(.scoreBreakdownTitle)
+    }
+
+    private func shouldShowWhyNotHint(score: ProgrammingScore) -> Bool {
+        score.grade == .c || score.grade == .notRecommended
+    }
+
+    @ViewBuilder
+    private func whyNotHint(score: ProgrammingScore) -> some View {
+        let weakest = weakestContributions(from: score.breakdown, limit: 3)
+        let summary = weakest.map { item in
+            "\(factorTitle(item.factor)) \(Int(round(item.weightedValue)))/\(Int(round(item.maxWeight)))"
+        }.joined(separator: " · ")
+
+        Label(
+            whyNotTitleText() + " " + summary,
+            systemImage: "exclamationmark.triangle.fill"
+        )
+        .font(.caption)
+        .foregroundStyle(.orange)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+    }
+
+    private func weakestContributions(
+        from breakdown: [FactorContribution],
+        limit: Int
+    ) -> [FactorContribution] {
+        breakdown
+            .sorted { lhs, rhs in
+                let lRatio = lhs.maxWeight > 0 ? lhs.weightedValue / lhs.maxWeight : 0
+                let rRatio = rhs.maxWeight > 0 ? rhs.weightedValue / rhs.maxWeight : 0
+                if lRatio == rRatio {
+                    return lhs.weightedValue < rhs.weightedValue
+                }
+                return lRatio < rRatio
+            }
+            .prefix(limit)
+            .map { $0 }
+    }
+
+    private func whyNotTitleText() -> String {
+        viewModel.tr(.whyNotRecommended)
+    }
+
+    private func compareCandidates(for baseline: FontItem) -> [FontItem] {
+        viewModel.filteredFonts.filter { item in
+            item.id != baseline.id &&
+            item.programming?.isMonospaced == true &&
+            item.programmingScore != nil
+        }
+    }
+
+    private func selectedCompareFont(from candidates: [FontItem]) -> FontItem? {
+        if let compareFontID, let found = candidates.first(where: { $0.id == compareFontID }) {
+            return found
+        }
+        return candidates.first
+    }
+
+    private func compareTitle() -> String {
+        viewModel.tr(.compareWith)
+    }
+
+    private func compareNoneOption() -> String {
+        viewModel.tr(.compareNone)
+    }
+
+    private func compareDeltaTitle() -> String {
+        viewModel.tr(.scoreDelta)
+    }
+
+    private func formatSigned(_ value: Int) -> String {
+        value >= 0 ? "+\(value)" : "\(value)"
+    }
+
+    private func formatSigned(_ value: Double) -> String {
+        let rounded = Int(round(value))
+        return rounded >= 0 ? "+\(rounded)" : "\(rounded)"
+    }
+
+    private func whyButtonTitle() -> String {
+        viewModel.tr(.whyButton)
+    }
+
+    private func whyTitle(for factor: ProgrammingScoreFactor) -> String {
+        "\(factorTitle(factor)) · \(viewModel.tr(.whyItMattersSuffix))"
+    }
+
+    private func whyDescription(for factor: ProgrammingScoreFactor) -> String {
+        switch factor {
+        case .monospaceBaseline:
+            return viewModel.tr(.factorWhyMonospaceBaseline)
+        case .glyphDisambiguation:
+            return viewModel.tr(.factorWhyGlyphDisambiguation)
+        case .ligatureSupport:
+            return viewModel.tr(.factorWhyLigatureSupport)
+        case .stylisticFlexibility:
+            return viewModel.tr(.factorWhyStylisticFlexibility)
+        case .boxDrawing:
+            return viewModel.tr(.factorWhyBoxDrawing)
+        case .powerlineGlyphs:
+            return viewModel.tr(.factorWhyPowerlineGlyphs)
+        case .nerdFontCoverage:
+            return viewModel.tr(.factorWhyNerdFontCoverage)
+        case .variableFont:
+            return viewModel.tr(.factorWhyVariableFont)
+        case .languageCoverage:
+            return viewModel.tr(.factorWhyLanguageCoverage)
+        case .weightVariety:
+            return viewModel.tr(.factorWhyWeightVariety)
+        }
+    }
+
+    private func whyExample(for factor: ProgrammingScoreFactor) -> String {
+        switch factor {
+        case .monospaceBaseline: return "let x = 10\nlet longName = 20"
+        case .glyphDisambiguation: return "Il1  O0  rn/m  8B"
+        case .ligatureSupport: return "!=  >=  <=  =>  ->"
+        case .stylisticFlexibility: return "0  0̸  ss01  ss02"
+        case .boxDrawing: return "┌─┬─┐\n│ │ │\n└─┴─┘"
+        case .powerlineGlyphs: return "      "
+        case .nerdFontCoverage: return "󰈙  󰄛  󰆍  󰒓"
+        case .variableFont: return "wght: 400 -> 550"
+        case .languageCoverage: return "Hello 你好 Привет"
+        case .weightVariety: return "Thin Regular Medium Bold"
+        }
+    }
+
+    private func gradeBadge(_ grade: ProgrammingGrade) -> some View {
+        Text({
+            switch grade {
+            case .s: return "S"
+            case .a: return "A"
+            case .b: return "B"
+            case .c: return "C"
+            case .notRecommended: return "NR"
+            }
+        }())
+        .font(.caption2.weight(.bold))
+        .padding(.horizontal, 7)
+        .padding(.vertical, 3)
+        .background(.quaternary, in: Capsule())
     }
 
     @ViewBuilder

@@ -58,4 +58,41 @@ final class FontItemLocalizationTests: XCTestCase {
         }
         XCTAssertTrue(matched, "Query in hiragana should match katakana localized name")
     }
+
+    func testFontStyleIncludesMonospaceTag() {
+        XCTAssertTrue(FontStyleTag.allCases.contains(.monospace))
+    }
+
+    func testProgrammingFieldsDefaultToNil() {
+        let item = FontItem.sample(
+            id: "sample",
+            familyName: "Sample Mono",
+            source: .user,
+            styleTags: [.regular]
+        )
+
+        XCTAssertNil(item.programming)
+        XCTAssertNil(item.metrics)
+        XCTAssertNil(item.programmingScore)
+    }
+
+    func testDecodingLegacyPayloadKeepsNewFieldsNil() throws {
+        let json = """
+        {
+          "id": "legacy",
+          "familyName": "Legacy",
+          "postScriptName": "Legacy-Regular",
+          "displayName": "Legacy Regular",
+          "source": "system",
+          "styleTags": ["regular"],
+          "localizedFamilyNames": {},
+          "localizedDisplayNames": {}
+        }
+        """.data(using: .utf8)!
+
+        let item = try JSONDecoder().decode(FontItem.self, from: json)
+        XCTAssertNil(item.programming)
+        XCTAssertNil(item.metrics)
+        XCTAssertNil(item.programmingScore)
+    }
 }

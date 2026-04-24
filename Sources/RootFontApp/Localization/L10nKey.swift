@@ -2,6 +2,9 @@ import Foundation
 
 enum L10nKey {
     case browse
+    case workspace
+    case moduleLibrary
+    case moduleProgramming
     case personal
     case allFonts
     case systemFonts
@@ -28,12 +31,14 @@ enum L10nKey {
     case style
     case allStyles
     case regular
+    case monospace
     case bold
     case italic
     case other
     case sort
     case byFamilyName
     case byDisplayName
+    case byProgrammingFit
     case display
     case grid
     case list
@@ -91,4 +96,60 @@ enum L10nKey {
     case previewTruncatedInfo
     case aboutCopySystemInfo
     case aboutSystemInfoCopied
+    case programmingModule
+    case recommendedForCode
+    case avoidForCode
+    case programmingScoreWeights
+    case preset
+    case presetDefault
+    case presetTerminalHeavy
+    case presetIDEHeavy
+    case presetMinimalist
+    case weightMonospace
+    case weightDisambiguation
+    case weightLigatures
+    case weightStylisticSets
+    case weightBoxDrawing
+    case weightPowerline
+    case weightNerdFont
+    case weightVariable
+    case weightLanguage
+    case weightVariety
+    case scoreBreakdownTitle
+    case whyButton
+    case whyNotRecommended
+    case compareWith
+    case compareNone
+    case scoreDelta
+    case whyItMattersSuffix
+    case factorMonospaceBaseline
+    case factorGlyphDisambiguation
+    case factorLigatureSupport
+    case factorStylisticFlexibility
+    case factorBoxDrawing
+    case factorPowerlineGlyphs
+    case factorNerdFontCoverage
+    case factorVariableFont
+    case factorLanguageCoverage
+    case factorWeightVariety
+    case factorHintMonospaceBaseline
+    case factorHintGlyphDisambiguation
+    case factorHintLigatureSupport
+    case factorHintStylisticFlexibility
+    case factorHintBoxDrawing
+    case factorHintPowerlineGlyphs
+    case factorHintNerdFontCoverage
+    case factorHintVariableFont
+    case factorHintLanguageCoverage
+    case factorHintWeightVariety
+    case factorWhyMonospaceBaseline
+    case factorWhyGlyphDisambiguation
+    case factorWhyLigatureSupport
+    case factorWhyStylisticFlexibility
+    case factorWhyBoxDrawing
+    case factorWhyPowerlineGlyphs
+    case factorWhyNerdFontCoverage
+    case factorWhyVariableFont
+    case factorWhyLanguageCoverage
+    case factorWhyWeightVariety
 }

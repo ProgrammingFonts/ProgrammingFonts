@@ -16,6 +16,9 @@ struct FontStyleResolver: FontStyleResolverProtocol {
         if traits.contains(.italicFontMask) {
             tags.insert(.italic)
         }
+        if font.fontDescriptor.symbolicTraits.contains(.monoSpace) {
+            tags.insert(.monospace)
+        }
         if tags.isEmpty {
             tags.insert(.regular)
         }

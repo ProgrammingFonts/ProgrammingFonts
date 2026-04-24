@@ -22,6 +22,7 @@ enum FontFilterEngine {
         let sortOption: FontBrowserViewModel.SortOption
         let language: AppLanguage
         let showSystemAliasFonts: Bool
+        let scoreWeights: ScoreWeights
     }
 
     static func compute(
@@ -31,6 +32,8 @@ enum FontFilterEngine {
         recentIDs: [String],
         inputs: Inputs
     ) -> [FontItem] {
+        let scoreEngine = ProgrammingScoreEngine(weights: inputs.scoreWeights)
+        let familyCoverage = FamilyWeightCoverage.build(from: fonts)
         let filtered = fonts.filter { item in
             if !inputs.preparedQuery.isEmpty,
                !matches(item: item, index: searchIndex[item.id], query: inputs.preparedQuery) {
@@ -64,13 +67,23 @@ enum FontFilterEngine {
                 return favoriteIDs.contains(item.id)
             case .recents:
                 return recentIDs.contains(item.id)
+            case .recommendedForCode:
+                return isRecommendedForCode(item, coverage: familyCoverage, scoreEngine: scoreEngine)
+            case .avoidForCode:
+                return isAvoidForCode(item, coverage: familyCoverage, scoreEngine: scoreEngine)
             }
         }
 
         let presentation = inputs.showSystemAliasFonts
             ? filtered
             : collapseSystemAliasFonts(in: filtered)
-        return sort(presentation, inputs: inputs, recentIDs: recentIDs)
+        return sort(
+            presentation,
+            inputs: inputs,
+            recentIDs: recentIDs,
+            coverage: familyCoverage,
+            scoreEngine: scoreEngine
+        )
     }
 
     // MARK: Matching
@@ -99,7 +112,9 @@ enum FontFilterEngine {
     private static func sort(
         _ fonts: [FontItem],
         inputs: Inputs,
-        recentIDs: [String]
+        recentIDs: [String],
+        coverage: FamilyWeightCoverage,
+        scoreEngine: ProgrammingScoreEngine
     ) -> [FontItem] {
         switch inputs.sidebarFilter {
         case .recents:
@@ -124,8 +139,36 @@ enum FontFilterEngine {
                         .localizedCaseInsensitiveCompare($1.displayName(for: language))
                         == .orderedAscending
                 }
+            case .programmingFit:
+                return fonts.sorted { lhs, rhs in
+                    let lScore = scoreEngine.score(item: lhs, familyCoverage: coverage)?.total ?? -1
+                    let rScore = scoreEngine.score(item: rhs, familyCoverage: coverage)?.total ?? -1
+                    if lScore == rScore {
+                        return lhs.familyName(for: language)
+                            .localizedCaseInsensitiveCompare(rhs.familyName(for: language)) == .orderedAscending
+                    }
+                    return lScore > rScore
+                }
             }
         }
+    }
+
+    private static func isRecommendedForCode(
+        _ item: FontItem,
+        coverage: FamilyWeightCoverage,
+        scoreEngine: ProgrammingScoreEngine
+    ) -> Bool {
+        guard let score = scoreEngine.score(item: item, familyCoverage: coverage) else { return false }
+        return score.total >= 55
+    }
+
+    private static func isAvoidForCode(
+        _ item: FontItem,
+        coverage: FamilyWeightCoverage,
+        scoreEngine: ProgrammingScoreEngine
+    ) -> Bool {
+        guard let score = scoreEngine.score(item: item, familyCoverage: coverage) else { return true }
+        return score.total < 55
     }
 
     // MARK: Alias collapsing
