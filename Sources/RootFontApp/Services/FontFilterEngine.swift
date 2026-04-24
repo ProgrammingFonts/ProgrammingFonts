@@ -23,6 +23,7 @@ enum FontFilterEngine {
         let language: AppLanguage
         let showSystemAliasFonts: Bool
         let scoreWeights: ScoreWeights
+        let managedFontIDs: Set<String>
     }
 
     static func compute(
@@ -71,6 +72,8 @@ enum FontFilterEngine {
                 return isRecommendedForCode(item, coverage: familyCoverage, scoreEngine: scoreEngine)
             case .avoidForCode:
                 return isAvoidForCode(item, coverage: familyCoverage, scoreEngine: scoreEngine)
+            case .managed:
+                return inputs.managedFontIDs.contains(item.id)
             }
         }
 

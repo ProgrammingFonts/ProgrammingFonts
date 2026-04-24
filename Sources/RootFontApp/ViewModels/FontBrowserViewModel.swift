@@ -17,6 +17,7 @@ final class FontBrowserViewModel: ObservableObject {
         case recents
         case recommendedForCode
         case avoidForCode
+        case managed
     }
 
     enum SortOption: String, CaseIterable, Identifiable, Sendable {
@@ -40,6 +41,7 @@ final class FontBrowserViewModel: ObservableObject {
         let favoritesSignature: Int
         let recentsSignature: Int
         let workspaceModule: WorkspaceModule
+        let managedSignature: Int
     }
 
     enum PreviewPreset: String, CaseIterable, Identifiable {
@@ -123,6 +125,7 @@ final class FontBrowserViewModel: ObservableObject {
     private let catalogService: FontCatalogServiceProtocol
     private let fontImportService: FontImportServiceProtocol
     private let preferencesStore: PreferencesStoreProtocol
+    private let activationService: FontActivationServiceProtocol
     private let maxRecents = 30
     private let maxCoverageCacheEntries = 2048
     private let backgroundFilterThreshold = 400
@@ -157,15 +160,19 @@ final class FontBrowserViewModel: ObservableObject {
     @Published private(set) var workspaceModule: WorkspaceModule = .library
     @Published private(set) var scoreWeights: ScoreWeights = .default
     @Published private(set) var scoreWeightPreset: ScoreWeightPreset = .default
+    private var fontFeaturePrefsMap: [String: FontFeaturePreferences] = [:]
+    private var managedFontIDs: Set<String> = []
 
     init(
         catalogService: FontCatalogServiceProtocol,
         fontImportService: FontImportServiceProtocol = FontImportService(),
-        preferencesStore: PreferencesStoreProtocol
+        preferencesStore: PreferencesStoreProtocol,
+        activationService: FontActivationServiceProtocol = FontActivationService()
     ) {
         self.catalogService = catalogService
         self.fontImportService = fontImportService
         self.preferencesStore = preferencesStore
+        self.activationService = activationService
         self.favoriteIDs = preferencesStore.favoriteIDs
         self.recentFontIDs = preferencesStore.recentFontIDs
         self.previewText = preferencesStore.previewText
@@ -182,6 +189,11 @@ final class FontBrowserViewModel: ObservableObject {
             self.scoreWeights = decoded
             self.scoreWeightPreset = Self.bestMatchingPreset(for: decoded)
         }
+        if let data = preferencesStore.fontFeaturePrefsData,
+           let decoded = try? JSONDecoder().decode([String: FontFeaturePreferences].self, from: data) {
+            self.fontFeaturePrefsMap = decoded
+        }
+        self.managedFontIDs = activationService.managedFontIDs()
     }
 
     func tr(_ key: L10nKey) -> String {
@@ -291,6 +303,15 @@ final class FontBrowserViewModel: ObservableObject {
         persistScoreWeights()
         recalculateProgrammingScores()
         applyFilters()
+    }
+
+    func featurePreferences(forFontID fontID: String) -> FontFeaturePreferences? {
+        fontFeaturePrefsMap[fontID]
+    }
+
+    func updateFeaturePreferences(_ prefs: FontFeaturePreferences, forFontID fontID: String) {
+        fontFeaturePrefsMap[fontID] = prefs
+        preferencesStore.fontFeaturePrefsData = try? JSONEncoder().encode(fontFeaturePrefsMap)
     }
 
     @discardableResult
@@ -492,6 +513,7 @@ final class FontBrowserViewModel: ObservableObject {
     }
 
     func applyFilters() {
+        managedFontIDs = activationService.managedFontIDs()
         let signature = currentFilterSignature()
 
         if let cached = filterResultCache[signature] {
@@ -563,7 +585,8 @@ final class FontBrowserViewModel: ObservableObject {
             sortOption: sortOption,
             language: language,
             showSystemAliasFonts: showSystemAliasFonts,
-            scoreWeights: scoreWeights
+            scoreWeights: scoreWeights,
+            managedFontIDs: managedFontIDs
         )
     }
 
@@ -580,7 +603,8 @@ final class FontBrowserViewModel: ObservableObject {
             catalogEpoch: catalogEpoch,
             favoritesSignature: favoriteIDs.hashValue,
             recentsSignature: recentFontIDs.hashValue,
-            workspaceModule: workspaceModule
+            workspaceModule: workspaceModule,
+            managedSignature: managedFontIDs.hashValue
         )
     }
 

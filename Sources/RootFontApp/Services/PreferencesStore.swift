@@ -16,6 +16,7 @@ protocol PreferencesStoreProtocol: AnyObject {
     var densityMode: String { get set }
     var smartCollectionsData: Data? { get set }
     var scoreWeightsData: Data? { get set }
+    var fontFeaturePrefsData: Data? { get set }
 }
 
 final class PreferencesStore: PreferencesStoreProtocol {
@@ -37,6 +38,7 @@ final class PreferencesStore: PreferencesStoreProtocol {
         static let densityMode = "rootfont.densityMode"
         static let smartCollectionsData = "rootfont.smartCollectionsData"
         static let scoreWeightsData = "rootfont.scoreWeightsData"
+        static let fontFeaturePrefsData = "rootfont.fontFeaturePrefsData"
     }
 
     init(defaults: UserDefaults = .standard) {
@@ -134,5 +136,10 @@ final class PreferencesStore: PreferencesStoreProtocol {
     var scoreWeightsData: Data? {
         get { defaults.data(forKey: Keys.scoreWeightsData) }
         set { defaults.set(newValue, forKey: Keys.scoreWeightsData) }
+    }
+
+    var fontFeaturePrefsData: Data? {
+        get { defaults.data(forKey: Keys.fontFeaturePrefsData) }
+        set { defaults.set(newValue, forKey: Keys.fontFeaturePrefsData) }
     }
 }

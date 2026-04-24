@@ -4,11 +4,13 @@ import SwiftUI
 @main
 struct RootFontApp: App {
     private static var aboutWindow: NSWindow?
+    private let activationService = FontActivationService()
 
     init() {
         NSApplication.shared.setActivationPolicy(.regular)
         NSApplication.shared.activate(ignoringOtherApps: true)
         AppAppearanceApplier.applyImmediately(PreferencesStore().appearanceMode)
+        try? FontActivationService().reconcile()
     }
 
     @StateObject private var viewModel = FontBrowserViewModel(
@@ -59,14 +61,15 @@ struct RootFontApp: App {
     private func showAboutPanel() {
         let systemInfoLine = AppMetadata.systemInfoLine(
             appearance: viewModel.appearanceMode,
-            language: viewModel.language
+            language: viewModel.language,
+            managedCount: activationService.managedCount()
         )
         let aboutView = AboutPanelView(
             appName: AppMetadata.appName,
             versionText: AppMetadata.semanticVersionDisplay,
             buildText: AppMetadata.buildDisplay,
             commitShortSHA: AppMetadata.commitShortSHA,
-            diagnosticsLine: AppMetadata.diagnosticsLine,
+            diagnosticsLine: AppMetadata.diagnosticsLine(managedCount: activationService.managedCount()),
             systemInfoLine: systemInfoLine,
             slogan: viewModel.tr(.aboutSlogan),
             websiteURL: AppMetadata.websiteURL,

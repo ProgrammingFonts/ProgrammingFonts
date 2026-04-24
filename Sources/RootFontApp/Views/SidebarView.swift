@@ -44,6 +44,8 @@ struct SidebarView: View {
                     .tag(FontBrowserViewModel.SidebarFilter.favorites)
                 Label("\(viewModel.tr(.recents)) (\(viewModel.recentCount))", systemImage: "clock")
                     .tag(FontBrowserViewModel.SidebarFilter.recents)
+                Label(viewModel.tr(.managedByRootFont), systemImage: "externaldrive.badge.checkmark")
+                    .tag(FontBrowserViewModel.SidebarFilter.managed)
             }
 
             Section {

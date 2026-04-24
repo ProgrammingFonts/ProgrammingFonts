@@ -83,6 +83,46 @@ final class FontBrowserViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.scoreWeightPreset, .ideHeavy)
     }
 
+    func testUpdateFeaturePreferencesPersistsToStore() throws {
+        let store = InMemoryPreferencesStore()
+        let viewModel = FontBrowserViewModel(
+            catalogService: MockCatalogService(fonts: []),
+            preferencesStore: store
+        )
+
+        let prefs = FontFeaturePreferences(
+            ligaturesEnabled: false,
+            zeroVariantEnabled: true,
+            stylisticSetTags: ["ss01", "ss02"]
+        )
+        viewModel.updateFeaturePreferences(prefs, forFontID: "JetBrainsMono-Regular")
+
+        let saved = try XCTUnwrap(store.fontFeaturePrefsData)
+        let decoded = try JSONDecoder().decode([String: FontFeaturePreferences].self, from: saved)
+        XCTAssertEqual(decoded["JetBrainsMono-Regular"], prefs)
+    }
+
+    func testRestoresFeaturePreferencesFromStore() throws {
+        let store = InMemoryPreferencesStore()
+        let saved: [String: FontFeaturePreferences] = [
+            "FiraCode-Regular": FontFeaturePreferences(
+                ligaturesEnabled: true,
+                zeroVariantEnabled: false,
+                stylisticSetTags: ["ss03"]
+            )
+        ]
+        store.fontFeaturePrefsData = try JSONEncoder().encode(saved)
+        let viewModel = FontBrowserViewModel(
+            catalogService: MockCatalogService(fonts: []),
+            preferencesStore: store
+        )
+
+        XCTAssertEqual(
+            viewModel.featurePreferences(forFontID: "FiraCode-Regular"),
+            saved["FiraCode-Regular"]
+        )
+    }
+
 
     func testRestoresFilterStateFromStore() {
         let store = InMemoryPreferencesStore()

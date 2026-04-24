@@ -1,0 +1,154 @@
+import SwiftUI
+
+struct FontCompareView: View {
+    let baseline: FontItem
+    let candidate: FontItem
+    let baselineScore: ProgrammingScore
+    let candidateScore: ProgrammingScore
+    let codeSnippet: AttributedString
+    let baselineFont: Font
+    let candidateFont: Font
+    let factorTitle: (ProgrammingScoreFactor) -> String
+    let tr: (L10nKey) -> String
+
+    private var totalDelta: Int {
+        candidateScore.total - baselineScore.total
+    }
+
+    private var topFactorDeltas: [FactorDelta] {
+        ProgrammingScoreEngine.factorDeltas(
+            baseline: baselineScore,
+            candidate: candidateScore
+        )
+        .prefix(6)
+        .map { $0 }
+    }
+
+    private var coverage: CoverageDiff {
+        CoverageDiff(baseline: baseline.programming, candidate: candidate.programming)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Text(tr(.scoreDelta))
+                    .font(.caption.weight(.semibold))
+                Text(formatSigned(totalDelta))
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(totalDelta >= 0 ? .green : .orange)
+                Spacer(minLength: 0)
+                Text("\(baselineScore.total) -> \(candidateScore.total)")
+                    .font(.caption2.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
+
+            HStack(alignment: .top, spacing: 10) {
+                compareColumn(title: baseline.familyName, attributed: codeSnippet, font: baselineFont)
+                compareColumn(title: candidate.familyName, attributed: codeSnippet, font: candidateFont)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                ForEach(topFactorDeltas, id: \.factor) { item in
+                    HStack(spacing: 8) {
+                        Text(factorTitle(item.factor))
+                            .font(.caption2)
+                        Spacer(minLength: 8)
+                        Text(formatSigned(item.delta))
+                            .font(.caption2.monospacedDigit())
+                            .foregroundStyle(item.delta >= 0 ? .green : .orange)
+                    }
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text(tr(.coverageDiffTitle))
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                HStack(spacing: 8) {
+                    coverageTags(title: tr(.coverageOnlyBaseline), buckets: coverage.baselineOnly)
+                    coverageTags(title: tr(.coverageOnlyCandidate), buckets: coverage.candidateOnly)
+                    coverageTags(title: tr(.coverageBoth), buckets: coverage.both)
+                }
+            }
+        }
+        .padding(10)
+        .background(.quaternary.opacity(0.25), in: RoundedRectangle(cornerRadius: 10))
+    }
+
+    private func compareColumn(title: String, attributed: AttributedString, font: Font) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.caption.weight(.semibold))
+                .lineLimit(1)
+            ScrollView(.horizontal, showsIndicators: false) {
+                Text(attributed)
+                    .font(font)
+                    .lineLimit(3)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(8)
+            .background(.background.opacity(0.7), in: RoundedRectangle(cornerRadius: 8))
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func coverageTags(title: String, buckets: [CoverageBucket]) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+            if buckets.isEmpty {
+                Text("-")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            } else {
+                Text(buckets.map(bucketTitle).joined(separator: ", "))
+                    .font(.caption2)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func bucketTitle(_ bucket: CoverageBucket) -> String {
+        switch bucket {
+        case .latinExtended:
+            return "LatinExt"
+        case .cyrillic:
+            return "Cyrillic"
+        case .greek:
+            return "Greek"
+        case .cjk:
+            return "CJK"
+        }
+    }
+
+    private func formatSigned(_ value: Int) -> String {
+        value >= 0 ? "+\(value)" : "\(value)"
+    }
+
+    private func formatSigned(_ value: Double) -> String {
+        let rounded = Int(round(value))
+        return rounded >= 0 ? "+\(rounded)" : "\(rounded)"
+    }
+}
+
+private struct CoverageDiff {
+    let baselineOnly: [CoverageBucket]
+    let candidateOnly: [CoverageBucket]
+    let both: [CoverageBucket]
+
+    init(baseline: ProgrammingProfile?, candidate: ProgrammingProfile?) {
+        let left = baseline?.coverageBuckets ?? []
+        let right = candidate?.coverageBuckets ?? []
+        self.baselineOnly = left.subtracting(right).sortedByRawValue
+        self.candidateOnly = right.subtracting(left).sortedByRawValue
+        self.both = left.intersection(right).sortedByRawValue
+    }
+}
+
+private extension Set where Element == CoverageBucket {
+    var sortedByRawValue: [CoverageBucket] {
+        sorted { $0.rawValue < $1.rawValue }
+    }
+}

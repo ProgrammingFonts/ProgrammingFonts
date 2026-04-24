@@ -113,7 +113,7 @@ struct FontListView: View {
                                     .foregroundStyle(.secondary)
                                 if item.programming?.isMonospaced == true,
                                    let score = item.programmingScore {
-                                    scoreChip(grade: score.grade)
+                                    scoreChip(grade: score.grade, language: viewModel.language)
                                 }
                                 Button {
                                     viewModel.toggleFavorite(item)
@@ -502,6 +502,7 @@ private struct FontGridCard: View {
             .padding(.vertical, 3)
             .background(gradeColor(grade).opacity(0.18), in: Capsule())
             .foregroundStyle(gradeColor(grade))
+            .accessibilityLabel(L10n.tr(gradeL10nKey(grade), language: language))
     }
 
     private func gradeText(_ grade: ProgrammingGrade) -> String {
@@ -521,6 +522,16 @@ private struct FontGridCard: View {
         case .b: return .yellow
         case .c: return .orange
         case .notRecommended: return .red
+        }
+    }
+
+    private func gradeL10nKey(_ grade: ProgrammingGrade) -> L10nKey {
+        switch grade {
+        case .s: return .gradeS
+        case .a: return .gradeA
+        case .b: return .gradeB
+        case .c: return .gradeC
+        case .notRecommended: return .gradeNotRecommended
         }
     }
 
@@ -571,16 +582,8 @@ private struct FontGridCard: View {
     }
 }
 
-private func scoreChip(grade: ProgrammingGrade) -> some View {
-    Text({
-        switch grade {
-        case .s: return "S"
-        case .a: return "A"
-        case .b: return "B"
-        case .c: return "C"
-        case .notRecommended: return "NR"
-        }
-    }())
+private func scoreChip(grade: ProgrammingGrade, language: AppLanguage) -> some View {
+    Text(gradeText(grade))
     .font(.caption2.weight(.bold))
     .lineLimit(1)
     .padding(.horizontal, 8)
@@ -603,4 +606,25 @@ private func scoreChip(grade: ProgrammingGrade) -> some View {
         case .notRecommended: return Color.red
         }
     }())
+    .accessibilityLabel(L10n.tr(gradeL10nKey(grade), language: language))
+}
+
+private func gradeText(_ grade: ProgrammingGrade) -> String {
+    switch grade {
+    case .s: return "S"
+    case .a: return "A"
+    case .b: return "B"
+    case .c: return "C"
+    case .notRecommended: return "NR"
+    }
+}
+
+private func gradeL10nKey(_ grade: ProgrammingGrade) -> L10nKey {
+    switch grade {
+    case .s: return .gradeS
+    case .a: return .gradeA
+    case .b: return .gradeB
+    case .c: return .gradeC
+    case .notRecommended: return .gradeNotRecommended
+    }
 }

@@ -1,15 +1,34 @@
 import AppKit
+import CoreText
 import SwiftUI
 
 struct FontPreviewView: View {
+    private enum PreviewSurface: String, CaseIterable, Identifiable {
+        case sample
+        case code
+        var id: Self { self }
+    }
+
     @ObservedObject var viewModel: FontBrowserViewModel
     @State private var previewPreset: FontBrowserViewModel.PreviewPreset = .mixed
+    @State private var previewSurface: PreviewSurface = .sample
+    @State private var codeLanguage: MiniTokenizer.Language = .swift
+    @State private var codeSnippet: String = FontPreviewView.defaultSnippet(for: .swift)
     @State private var useSingleLinePreview = false
     @State private var useMonospacedDigits = false
     @State private var expandedLetterSpacing = false
+    @State private var ligaturesEnabled = true
+    @State private var zeroVariantEnabled = false
+    @State private var enabledStylisticSetTags: Set<String> = []
     @State private var showScoreBreakdown = false
     @State private var activeWhyFactor: ProgrammingScoreFactor?
     @State private var compareFontID: String?
+    @State private var showCopyToast = false
+    @State private var activationMessage: String?
+    @State private var activationConflictPath: String?
+    @State private var fontBookMessage: String?
+    @State private var fontBookPathHint: String?
+    @State private var showInstallConfirm = false
 
     /// Texts under this length keep the ZWSP soft-wrap treatment.
     /// Larger inputs fall back to the native layout engine because the
@@ -19,6 +38,10 @@ struct FontPreviewView: View {
     /// Any preview text longer than this is truncated with a visible
     /// hint so the preview area stays responsive.
     private let previewTextLengthLimit = 2000
+    private let miniTokenizer = MiniTokenizer()
+    private let featureBinder: OpenTypeFeatureBinding = OpenTypeFeatureBinder()
+    private let configExporter = EditorConfigExporter()
+    private let activationService: FontActivationServiceProtocol = FontActivationService()
 
     var body: some View {
         Group {
@@ -26,11 +49,19 @@ struct FontPreviewView: View {
                 ScrollView(.vertical, showsIndicators: true) {
                     VStack(alignment: .leading, spacing: 16) {
                         headerSection(for: selected)
-                        quickSampleSection
-                        previewTextField
+                        previewSurfaceSection
+                        if previewSurface == .sample {
+                            quickSampleSection
+                            previewTextField
+                        } else {
+                            codeLanguageSection
+                        }
                         previewSizeSection
-                        previewModeSection
+                        if previewSurface == .sample {
+                            previewModeSection
+                        }
                         typographyOptionsSection
+                        featureToggleSection(for: selected)
                         if selected.programming?.isMonospaced == true,
                            let score = selected.programmingScore {
                             if shouldShowWhyNotHint(score: score) {
@@ -39,7 +70,11 @@ struct FontPreviewView: View {
                             compareSection(baseline: selected, baselineScore: score)
                             scoreBreakdownSection(score: score)
                         }
-                        previewBlocksSection(for: selected)
+                        if previewSurface == .sample {
+                            previewBlocksSection(for: selected)
+                        } else {
+                            codePreviewSection(for: selected)
+                        }
                         if !viewModel.hasRenderablePreviewFont() {
                             Label(viewModel.tr(.fallbackPreviewInfo), systemImage: "info.circle")
                                 .font(.caption)
@@ -76,6 +111,31 @@ struct FontPreviewView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
+        .onChange(of: viewModel.selectedFont?.id, initial: true) { _, _ in
+            guard let selected = viewModel.selectedFont else { return }
+            loadFeaturePreferences(for: selected)
+        }
+        .onChange(of: ligaturesEnabled) { _, _ in
+            persistFeaturePreferencesIfPossible()
+        }
+        .onChange(of: zeroVariantEnabled) { _, _ in
+            persistFeaturePreferencesIfPossible()
+        }
+        .onChange(of: enabledStylisticSetTags) { _, _ in
+            persistFeaturePreferencesIfPossible()
+        }
+        .alert(viewModel.tr(.installConfirmTitle), isPresented: $showInstallConfirm) {
+            Button(viewModel.tr(.installConfirmAction)) {
+                if let selected = viewModel.selectedFont {
+                    performActivation {
+                        try activationService.installForUser(fontID: selected.postScriptName)
+                    }
+                }
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text(viewModel.tr(.installConfirmMessage))
+        }
     }
 
     @ViewBuilder
@@ -108,6 +168,15 @@ struct FontPreviewView: View {
                 }
                 .buttonStyle(.link)
                 .fixedSize()
+                Menu(viewModel.tr(.copyEditorConfig)) {
+                    ForEach(EditorTarget.allCases) { target in
+                        Button(editorTitle(target)) {
+                            copyEditorConfig(target: target, postScriptName: selected.postScriptName)
+                        }
+                    }
+                }
+                .menuStyle(.borderlessButton)
+                .fixedSize()
                 Text(selected.postScriptName)
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -115,6 +184,69 @@ struct FontPreviewView: View {
                     .truncationMode(.middle)
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
+                Button(viewModel.tr(.openInFontBook)) {
+                    openInFontBook(for: selected)
+                }
+                .buttonStyle(.link)
+                .fixedSize()
+            }
+            if showCopyToast {
+                Text(viewModel.tr(.copiedToClipboard))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .transition(.opacity)
+            }
+            if let fontBookMessage {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(fontBookMessage)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    if let fontBookPathHint {
+                        Text("\(viewModel.tr(.fontPathPrefix)): \(fontBookPathHint)")
+                            .font(.caption2.monospaced())
+                            .foregroundStyle(.secondary)
+                            .textSelection(.enabled)
+                    }
+                }
+            }
+            if selected.source == .user {
+                HStack(spacing: 8) {
+                    Button(viewModel.tr(.activateForSession)) {
+                        performActivation {
+                            try activationService.activateForProcess(fontID: selected.postScriptName)
+                        }
+                    }
+                    .controlSize(.small)
+                    Button(viewModel.tr(.installForAllApps)) {
+                        showInstallConfirm = true
+                    }
+                    .controlSize(.small)
+                    if activationService.isManaged(fontID: selected.postScriptName) {
+                        Button(viewModel.tr(.uninstallManagedFont)) {
+                            performActivation {
+                                try activationService.uninstall(fontID: selected.postScriptName)
+                            }
+                        }
+                        .controlSize(.small)
+                    }
+                }
+                if let activationMessage {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(activationMessage)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        if let activationConflictPath {
+                            Text("\(viewModel.tr(.activationConflictPrefix)): \(activationConflictPath)")
+                                .font(.caption2.monospaced())
+                                .foregroundStyle(.secondary)
+                                .textSelection(.enabled)
+                        }
+                    }
+                }
+                Button(viewModel.tr(.openManagedFontsFolder)) {
+                    NSWorkspace.shared.open(activationService.managedFontsDirectoryURL())
+                }
+                .controlSize(.small)
             }
         }
     }
@@ -146,6 +278,41 @@ struct FontPreviewView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var previewSurfaceSection: some View {
+        Picker(viewModel.tr(.previewMode), selection: $previewSurface) {
+            Text(viewModel.tr(.previewModeSample)).tag(PreviewSurface.sample)
+            Text(viewModel.tr(.previewModeCode)).tag(PreviewSurface.code)
+        }
+        .pickerStyle(.segmented)
+    }
+
+    private var codeLanguageSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Picker(viewModel.tr(.codeLanguage), selection: $codeLanguage) {
+                Text("Swift").tag(MiniTokenizer.Language.swift)
+                Text("TypeScript").tag(MiniTokenizer.Language.typescript)
+                Text("Python").tag(MiniTokenizer.Language.python)
+                Text("Rust").tag(MiniTokenizer.Language.rust)
+                Text("Go").tag(MiniTokenizer.Language.go)
+                Text("JSON").tag(MiniTokenizer.Language.json)
+                Text("Shell").tag(MiniTokenizer.Language.shell)
+                Text("CSS").tag(MiniTokenizer.Language.css)
+            }
+            .pickerStyle(.menu)
+
+            TextEditor(text: $codeSnippet)
+                .font(.system(size: 12, design: .monospaced))
+                .frame(minHeight: 120, maxHeight: 180)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(.quaternary, lineWidth: 1)
+                )
+        }
+        .onChange(of: codeLanguage) { _, newLanguage in
+            codeSnippet = Self.defaultSnippet(for: newLanguage)
+        }
     }
 
     private var previewTextField: some View {
@@ -195,6 +362,41 @@ struct FontPreviewView: View {
                 .toggleStyle(.switch)
             Toggle(viewModel.tr(.previewExpandedLetterSpacing), isOn: $expandedLetterSpacing)
                 .toggleStyle(.switch)
+        }
+    }
+
+    @ViewBuilder
+    private func featureToggleSection(for selected: FontItem) -> some View {
+        if let profile = selected.programming, profile.isMonospaced {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(viewModel.tr(.featureSection))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Toggle(viewModel.tr(.featureLigatures), isOn: $ligaturesEnabled)
+                    .toggleStyle(.switch)
+                if profile.hasZeroVariant {
+                    Toggle(viewModel.tr(.featureZeroVariant), isOn: $zeroVariantEnabled)
+                        .toggleStyle(.switch)
+                }
+                if !profile.availableStylisticSets.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 6) {
+                            ForEach(profile.availableStylisticSets, id: \.tag) { set in
+                                Button(set.tag.uppercased()) {
+                                    if enabledStylisticSetTags.contains(set.tag) {
+                                        enabledStylisticSetTags.remove(set.tag)
+                                    } else {
+                                        enabledStylisticSetTags.insert(set.tag)
+                                    }
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .tint(enabledStylisticSetTags.contains(set.tag) ? .accentColor : .secondary)
+                                .controlSize(.small)
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -269,30 +471,17 @@ struct FontPreviewView: View {
 
                 if let compare = selectedCompareFont(from: candidates),
                    let compareScore = compare.programmingScore {
-                    let totalDelta = compareScore.total - baselineScore.total
-                    HStack(spacing: 8) {
-                        Text(compareDeltaTitle())
-                            .font(.caption.weight(.semibold))
-                        Text(formatSigned(totalDelta))
-                            .font(.caption.monospacedDigit())
-                            .foregroundStyle(totalDelta >= 0 ? .green : .orange)
-                    }
-
-                    let deltas = ProgrammingScoreEngine.factorDeltas(
-                        baseline: baselineScore,
-                        candidate: compareScore
+                    FontCompareView(
+                        baseline: baseline,
+                        candidate: compare,
+                        baselineScore: baselineScore,
+                        candidateScore: compareScore,
+                        codeSnippet: highlightedCode(for: codeSnippet),
+                        baselineFont: previewFont(for: baseline, size: max(12, viewModel.previewSize * 0.82), monospacedNumerals: true),
+                        candidateFont: previewFont(for: compare, size: max(12, viewModel.previewSize * 0.82), monospacedNumerals: true),
+                        factorTitle: factorTitle,
+                        tr: viewModel.tr
                     )
-                    ForEach(deltas.prefix(4), id: \.factor) { item in
-                        HStack(spacing: 8) {
-                            Text(factorTitle(item.factor))
-                                .font(.caption2)
-                                .lineLimit(1)
-                            Spacer(minLength: 8)
-                            Text(formatSigned(item.delta))
-                                .font(.caption2.monospacedDigit())
-                                .foregroundStyle(item.delta >= 0 ? .green : .orange)
-                        }
-                    }
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -354,10 +543,23 @@ struct FontPreviewView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(whyTitle(for: factor))
                 .font(.subheadline.weight(.semibold))
+            Text(viewModel.tr(.whyMeasurementTitle))
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(.secondary)
+            Text(factorHint(factor))
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            Text(viewModel.tr(.whyImpactTitle))
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(.secondary)
             Text(whyDescription(for: factor))
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+            Text(viewModel.tr(.whyExampleTitle))
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(.secondary)
             Text(whyExample(for: factor))
                 .font(.caption2.monospaced())
                 .padding(.horizontal, 8)
@@ -394,6 +596,17 @@ struct FontPreviewView: View {
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+        HStack(spacing: 8) {
+            Button(viewModel.tr(.whyInspectFactors)) {
+                showScoreBreakdown = true
+                previewSurface = .code
+            }
+            .controlSize(.small)
+            Button(viewModel.tr(.whyCompareNow)) {
+                previewSurface = .code
+            }
+            .controlSize(.small)
+        }
     }
 
     private func weakestContributions(
@@ -438,19 +651,6 @@ struct FontPreviewView: View {
 
     private func compareNoneOption() -> String {
         viewModel.tr(.compareNone)
-    }
-
-    private func compareDeltaTitle() -> String {
-        viewModel.tr(.scoreDelta)
-    }
-
-    private func formatSigned(_ value: Int) -> String {
-        value >= 0 ? "+\(value)" : "\(value)"
-    }
-
-    private func formatSigned(_ value: Double) -> String {
-        let rounded = Int(round(value))
-        return rounded >= 0 ? "+\(rounded)" : "\(rounded)"
     }
 
     private func whyButtonTitle() -> String {
@@ -502,19 +702,32 @@ struct FontPreviewView: View {
     }
 
     private func gradeBadge(_ grade: ProgrammingGrade) -> some View {
-        Text({
-            switch grade {
-            case .s: return "S"
-            case .a: return "A"
-            case .b: return "B"
-            case .c: return "C"
-            case .notRecommended: return "NR"
-            }
-        }())
+        Text(gradeText(grade))
         .font(.caption2.weight(.bold))
         .padding(.horizontal, 7)
         .padding(.vertical, 3)
         .background(.quaternary, in: Capsule())
+        .accessibilityLabel(viewModel.tr(gradeL10nKey(grade)))
+    }
+
+    private func gradeText(_ grade: ProgrammingGrade) -> String {
+        switch grade {
+        case .s: return "S"
+        case .a: return "A"
+        case .b: return "B"
+        case .c: return "C"
+        case .notRecommended: return "NR"
+        }
+    }
+
+    private func gradeL10nKey(_ grade: ProgrammingGrade) -> L10nKey {
+        switch grade {
+        case .s: return .gradeS
+        case .a: return .gradeA
+        case .b: return .gradeB
+        case .c: return .gradeC
+        case .notRecommended: return .gradeNotRecommended
+        }
     }
 
     @ViewBuilder
@@ -562,6 +775,137 @@ struct FontPreviewView: View {
                 }
             }
         }
+    }
+
+    @ViewBuilder
+    private func codePreviewSection(for item: FontItem) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(viewModel.tr(.codePreviewTitle))
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+            ScrollView(.horizontal, showsIndicators: true) {
+                Text(highlightedCode(for: codeSnippet))
+                    .font(previewFont(for: item, size: max(12, viewModel.previewSize * 0.86), monospacedNumerals: true))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+            }
+            .background(.quaternary.opacity(0.28))
+            .cornerRadius(10)
+
+            ambiguityLensSection(for: item)
+
+            Text(viewModel.tr(.waterfallTitle))
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 6) {
+                ForEach([11.0, 12.0, 13.0, 14.0, 16.0, 18.0], id: \.self) { size in
+                    HStack(spacing: 8) {
+                        Text("\(Int(size)) pt")
+                            .font(.caption2.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                            .frame(width: 44, alignment: .leading)
+                        Text(highlightedCode(for: codeSnippet))
+                            .font(previewFont(for: item, size: size, monospacedNumerals: true))
+                            .lineLimit(1)
+                    }
+                }
+            }
+            .padding(10)
+            .background(.quaternary.opacity(0.2))
+            .cornerRadius(10)
+
+            glyphMatrixSection(for: item)
+        }
+    }
+
+    @ViewBuilder
+    private func ambiguityLensSection(for item: FontItem) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(viewModel.tr(.ambiguityLensTitle))
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+            Text("Il1 O0 8B 5S 9gq rnm co ci {}()[] ,.;:")
+                .font(previewFont(for: item, size: 32, monospacedNumerals: true))
+                .lineLimit(1)
+                .padding(10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(.quaternary.opacity(0.2), in: RoundedRectangle(cornerRadius: 10))
+        }
+    }
+
+    @ViewBuilder
+    private func glyphMatrixSection(for item: FontItem) -> some View {
+        if let profile = item.programming,
+           profile.hasPowerlineGlyphs || profile.hasNerdFontGlyphs {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(viewModel.tr(.glyphMatrixTitle))
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                if profile.hasPowerlineGlyphs {
+                    glyphGrid(
+                        title: viewModel.tr(.powerlineGlyphsTitle),
+                        entries: [("\u{E0A0}", "E0A0"), ("\u{E0A3}", "E0A3"), ("\u{E0B0}", "E0B0"), ("\u{E0B3}", "E0B3")],
+                        item: item
+                    )
+                }
+                if profile.hasNerdFontGlyphs {
+                    glyphGrid(
+                        title: viewModel.tr(.nerdFontGlyphsTitle),
+                        entries: [("\u{E5FA}", "E5FA"), ("\u{E62B}", "E62B"), ("\u{F013}", "F013"), ("\u{F0C8}", "F0C8"), ("\u{F120}", "F120"), ("\u{F489}", "F489")],
+                        item: item
+                    )
+                }
+            }
+        }
+    }
+
+    private func glyphGrid(title: String, entries: [(String, String)], item: FontItem) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(.secondary)
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 86), spacing: 8)], spacing: 8) {
+                ForEach(entries, id: \.1) { entry in
+                    VStack(spacing: 2) {
+                        Text(entry.0)
+                            .font(previewFont(for: item, size: 24, monospacedNumerals: true))
+                        Text("U+\(entry.1)")
+                            .font(.caption2.monospaced())
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 48)
+                    .padding(.vertical, 6)
+                    .background(.quaternary.opacity(0.18), in: RoundedRectangle(cornerRadius: 8))
+                }
+            }
+        }
+    }
+
+    private func highlightedCode(for text: String) -> AttributedString {
+        let mutable = NSMutableAttributedString(string: text)
+        let tokens = miniTokenizer.tokenize(text, language: codeLanguage)
+        for token in tokens {
+            guard token.range.location != NSNotFound else { continue }
+            let color: NSColor
+            switch token.kind {
+            case .keyword:
+                color = .systemBlue
+            case .type:
+                color = .systemMint
+            case .string:
+                color = .systemOrange
+            case .number:
+                color = .systemPurple
+            case .comment:
+                color = .secondaryLabelColor
+            case .punctuation, .operator:
+                color = .systemPink
+            case .identifier:
+                color = .labelColor
+            }
+            mutable.addAttribute(.foregroundColor, value: color, range: token.range)
+        }
+        return (try? AttributedString(NSAttributedString(attributedString: mutable), including: \.appKit)) ?? AttributedString(text)
     }
 
     private struct PreparedPreviewText {
@@ -622,12 +966,147 @@ struct FontPreviewView: View {
     }
 
     private func previewFont(for item: FontItem, size: Double, monospacedNumerals: Bool) -> Font {
-        if monospacedNumerals {
+        if monospacedNumerals && previewSurface == .sample {
             return .system(size: size, design: .monospaced)
         }
-        if let font = NSFont(name: item.postScriptName, size: size) {
-            return Font(font)
+        if let baseFont = NSFont(name: item.postScriptName, size: size) {
+            let bound = featureBinder.bind(
+                base: baseFont,
+                options: OpenTypeFeatureOptions(
+                    ligaturesEnabled: ligaturesEnabled,
+                    zeroVariantEnabled: zeroVariantEnabled,
+                    stylisticSetTags: enabledStylisticSetTags
+                )
+            )
+            return Font(bound)
         }
         return .system(size: size)
+    }
+
+    private static func defaultSnippet(for language: MiniTokenizer.Language) -> String {
+        switch language {
+        case .swift:
+            return "import Foundation\n\nstruct User {\n    let id: Int\n    let name: String\n}\n\nfunc greet(_ user: User) -> String {\n    return \"Hello, \\(user.name)!\"\n}"
+        case .typescript:
+            return "interface User { id: number; name: string }\n\nconst greet = (user: User): string => {\n  return `Hello, ${user.name}!`\n}"
+        case .python:
+            return "from dataclasses import dataclass\n\n@dataclass\nclass User:\n    id: int\n    name: str\n\ndef greet(user: User) -> str:\n    return f\"Hello, {user.name}!\""
+        case .rust:
+            return "struct User { id: u64, name: String }\n\nfn greet(user: &User) -> String {\n    format!(\"Hello, {}!\", user.name)\n}"
+        case .go:
+            return "type User struct { ID int; Name string }\n\nfunc Greet(user User) string {\n    return fmt.Sprintf(\"Hello, %s!\", user.Name)\n}"
+        case .json:
+            return "{\n  \"theme\": \"dark\",\n  \"font\": \"JetBrains Mono\",\n  \"size\": 14,\n  \"ligatures\": true\n}"
+        case .shell:
+            return "#!/usr/bin/env bash\nset -euo pipefail\n\nname=\"RootFont\"\necho \"Hello, ${name}\""
+        case .css:
+            return ":root {\n  --font-main: \"JetBrains Mono\";\n  --font-size: 14px;\n}\n\n.editor {\n  font-family: var(--font-main);\n  font-size: var(--font-size);\n}"
+        }
+    }
+
+    private func loadFeaturePreferences(for selected: FontItem) {
+        guard let profile = selected.programming, profile.isMonospaced else {
+            ligaturesEnabled = true
+            zeroVariantEnabled = false
+            enabledStylisticSetTags = []
+            return
+        }
+        if let saved = viewModel.featurePreferences(forFontID: selected.id) {
+            ligaturesEnabled = saved.ligaturesEnabled
+            zeroVariantEnabled = profile.hasZeroVariant ? saved.zeroVariantEnabled : false
+            let availableSets = Set(profile.availableStylisticSets.map { $0.tag.lowercased() })
+            let savedSets = Set(saved.stylisticSetTags.map { $0.lowercased() })
+            enabledStylisticSetTags = availableSets.intersection(savedSets)
+        } else {
+            ligaturesEnabled = profile.hasProgrammingLigatures
+            zeroVariantEnabled = false
+            enabledStylisticSetTags = []
+        }
+    }
+
+    private func persistFeaturePreferencesIfPossible() {
+        guard let selected = viewModel.selectedFont,
+              let profile = selected.programming,
+              profile.isMonospaced else { return }
+        let normalizedSets = Set(profile.availableStylisticSets.map { $0.tag.lowercased() })
+        let prefs = FontFeaturePreferences(
+            ligaturesEnabled: ligaturesEnabled,
+            zeroVariantEnabled: profile.hasZeroVariant ? zeroVariantEnabled : false,
+            stylisticSetTags: enabledStylisticSetTags.intersection(normalizedSets)
+        )
+        viewModel.updateFeaturePreferences(prefs, forFontID: selected.id)
+    }
+
+    private func editorTitle(_ target: EditorTarget) -> String {
+        switch target {
+        case .vscode: return viewModel.tr(.editorVSCode)
+        case .cursor: return viewModel.tr(.editorCursor)
+        case .alacritty: return viewModel.tr(.editorAlacritty)
+        case .kitty: return viewModel.tr(.editorKitty)
+        case .warp: return viewModel.tr(.editorWarp)
+        case .zed: return viewModel.tr(.editorZed)
+        }
+    }
+
+    private func copyEditorConfig(target: EditorTarget, postScriptName: String) {
+        let snippet = configExporter.snippet(
+            target: target,
+            postScriptName: postScriptName,
+            size: Int(viewModel.previewSize.rounded()),
+            ligaturesEnabled: ligaturesEnabled
+        )
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(snippet, forType: .string)
+        withAnimation(.easeOut(duration: 0.15)) {
+            showCopyToast = true
+        }
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 1_400_000_000)
+            withAnimation(.easeOut(duration: 0.15)) {
+                showCopyToast = false
+            }
+        }
+    }
+
+    private func openInFontBook(for item: FontItem) {
+        fontBookMessage = nil
+        fontBookPathHint = nil
+        guard let url = resolveFontURL(postScriptName: item.postScriptName) else {
+            fontBookMessage = viewModel.tr(.fontBookOpenFailed)
+            return
+        }
+        if NSWorkspace.shared.open(url) {
+            return
+        }
+        fontBookMessage = viewModel.tr(.fontBookOpenFailed)
+        fontBookPathHint = url.path
+    }
+
+    private func resolveFontURL(postScriptName: String) -> URL? {
+        guard let urls = CTFontManagerCopyAvailableFontURLs() as? [URL] else {
+            return nil
+        }
+        return urls.first { url in
+            url.deletingPathExtension().lastPathComponent == postScriptName
+        }
+    }
+
+    private func performActivation(_ operation: @escaping () throws -> Void) {
+        Task { @MainActor in
+            do {
+                try operation()
+                activationMessage = viewModel.tr(.activationDone)
+                activationConflictPath = nil
+            } catch let FontActivationError.installConflict(destination) {
+                activationMessage = viewModel.tr(.activationConflict)
+                activationConflictPath = destination.path
+            } catch {
+                activationMessage = viewModel.tr(.activationFailed)
+                activationConflictPath = nil
+            }
+            try? await Task.sleep(nanoseconds: 1_500_000_000)
+            activationMessage = nil
+            activationConflictPath = nil
+        }
     }
 }

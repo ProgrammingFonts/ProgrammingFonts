@@ -152,4 +152,54 @@ enum L10nKey {
     case factorWhyVariableFont
     case factorWhyLanguageCoverage
     case factorWhyWeightVariety
+    case gradeS
+    case gradeA
+    case gradeB
+    case gradeC
+    case gradeNotRecommended
+    case previewMode
+    case previewModeSample
+    case previewModeCode
+    case codeLanguage
+    case featureSection
+    case featureLigatures
+    case featureZeroVariant
+    case copyEditorConfig
+    case copiedToClipboard
+    case editorVSCode
+    case editorCursor
+    case editorAlacritty
+    case editorKitty
+    case editorWarp
+    case editorZed
+    case activateForSession
+    case installForAllApps
+    case uninstallManagedFont
+    case activationDone
+    case activationFailed
+    case managedByRootFont
+    case installConfirmTitle
+    case installConfirmMessage
+    case installConfirmAction
+    case activationConflict
+    case openManagedFontsFolder
+    case activationConflictPrefix
+    case openInFontBook
+    case fontBookOpenFailed
+    case fontPathPrefix
+    case codePreviewTitle
+    case waterfallTitle
+    case ambiguityLensTitle
+    case glyphMatrixTitle
+    case powerlineGlyphsTitle
+    case nerdFontGlyphsTitle
+    case coverageDiffTitle
+    case coverageOnlyBaseline
+    case coverageOnlyCandidate
+    case coverageBoth
+    case whyMeasurementTitle
+    case whyImpactTitle
+    case whyExampleTitle
+    case whyInspectFactors
+    case whyCompareNow
 }

@@ -84,6 +84,10 @@ enum AppMetadata {
         return parts.joined(separator: " · ")
     }
 
+    static func diagnosticsLine(managedCount: Int) -> String {
+        "\(diagnosticsLine) · managed \(managedCount)"
+    }
+
     /// Host OS + user locale + appearance trait, joined with ` · `.
     /// Designed for pasting into bug reports.
     static func systemInfoLine(appearance: AppAppearanceMode, language: AppLanguage) -> String {
@@ -100,6 +104,10 @@ enum AppMetadata {
         architecture = "unknown"
         #endif
         return [osString, architecture, languageLabel, appearanceLabel].joined(separator: " · ")
+    }
+
+    static func systemInfoLine(appearance: AppAppearanceMode, language: AppLanguage, managedCount: Int) -> String {
+        "\(systemInfoLine(appearance: appearance, language: language)) · managed \(managedCount)"
     }
 
     private static func appearanceDescription(_ mode: AppAppearanceMode) -> String {
