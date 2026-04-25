@@ -125,10 +125,8 @@ struct FontListView: View {
                                 .help(viewModel.tr(viewModel.isFavorite(item) ? .favoriteRemove : .favoriteAdd))
                                 .accessibilityLabel(viewModel.tr(viewModel.isFavorite(item) ? .favoriteRemove : .favoriteAdd))
                             }
+                            .frame(maxWidth: .infinity, alignment: .leading)
                             .contentShape(Rectangle())
-                            .onTapGesture {
-                                viewModel.selectFont(item)
-                            }
                         }
                         .listStyle(.inset)
                     }
