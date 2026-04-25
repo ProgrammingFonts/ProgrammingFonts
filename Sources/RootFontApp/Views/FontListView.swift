@@ -126,7 +126,9 @@ struct FontListView: View {
                                 .accessibilityLabel(viewModel.tr(viewModel.isFavorite(item) ? .favoriteRemove : .favoriteAdd))
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.vertical, 4)
                             .contentShape(Rectangle())
+                            .listRowInsets(EdgeInsets(top: 3, leading: 10, bottom: 3, trailing: 10))
                         }
                         .listStyle(.inset)
                     }

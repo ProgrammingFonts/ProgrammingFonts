@@ -27,14 +27,17 @@ struct SidebarView: View {
             Section(viewModel.tr(.browse)) {
                 Label(viewModel.tr(.allFonts), systemImage: "textformat")
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 2)
                     .contentShape(Rectangle())
                     .tag(FontBrowserViewModel.SidebarFilter.all)
                 Label(viewModel.tr(.systemFonts), systemImage: "desktopcomputer")
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 2)
                     .contentShape(Rectangle())
                     .tag(FontBrowserViewModel.SidebarFilter.system)
                 Label(viewModel.tr(.userFonts), systemImage: "person")
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 2)
                     .contentShape(Rectangle())
                     .tag(FontBrowserViewModel.SidebarFilter.user)
             }
@@ -43,10 +46,12 @@ struct SidebarView: View {
                 Section(viewModel.tr(.programmingModule)) {
                     Label(viewModel.tr(.recommendedForCode), systemImage: "checkmark.seal")
                         .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.vertical, 2)
                         .contentShape(Rectangle())
                         .tag(FontBrowserViewModel.SidebarFilter.recommendedForCode)
                     Label(viewModel.tr(.avoidForCode), systemImage: "exclamationmark.triangle")
                         .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.vertical, 2)
                         .contentShape(Rectangle())
                         .tag(FontBrowserViewModel.SidebarFilter.avoidForCode)
                 }
@@ -55,14 +60,17 @@ struct SidebarView: View {
             Section(viewModel.tr(.personal)) {
                 Label("\(viewModel.tr(.favorites)) (\(viewModel.favoriteCount))", systemImage: "star")
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 2)
                     .contentShape(Rectangle())
                     .tag(FontBrowserViewModel.SidebarFilter.favorites)
                 Label("\(viewModel.tr(.recents)) (\(viewModel.recentCount))", systemImage: "clock")
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 2)
                     .contentShape(Rectangle())
                     .tag(FontBrowserViewModel.SidebarFilter.recents)
                 Label(viewModel.tr(.managedByRootFont), systemImage: "externaldrive.badge.checkmark")
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 2)
                     .contentShape(Rectangle())
                     .tag(FontBrowserViewModel.SidebarFilter.managed)
             }
@@ -232,6 +240,7 @@ struct SidebarView: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.vertical, 2)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
