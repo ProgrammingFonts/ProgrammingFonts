@@ -10,6 +10,9 @@ struct FontCompareView: View {
     let candidateFont: Font
     let factorTitle: (ProgrammingScoreFactor) -> String
     let tr: (L10nKey) -> String
+    @State private var displayMode: CompareDisplayMode = .sideBySide
+    @State private var overlayOpacity: Double = 0.55
+    @State private var overlayVisibility: OverlayVisibility = .both
 
     private var totalDelta: Int {
         candidateScore.total - baselineScore.total
@@ -42,9 +45,21 @@ struct FontCompareView: View {
                     .foregroundStyle(.secondary)
             }
 
-            HStack(alignment: .top, spacing: 10) {
-                compareColumn(title: baseline.familyName, attributed: codeSnippet, font: baselineFont)
-                compareColumn(title: candidate.familyName, attributed: codeSnippet, font: candidateFont)
+            Picker(tr(.compareDisplayMode), selection: $displayMode) {
+                ForEach(CompareDisplayMode.allCases) { mode in
+                    Text(mode.title(tr)).tag(mode)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            if displayMode == .sideBySide {
+                HStack(alignment: .top, spacing: 10) {
+                    compareColumn(title: baseline.familyName, attributed: codeSnippet, font: baselineFont)
+                    compareColumn(title: candidate.familyName, attributed: codeSnippet, font: candidateFont)
+                }
+            } else {
+                overlayControls
+                overlayComparePanel
             }
 
             VStack(alignment: .leading, spacing: 4) {
@@ -73,6 +88,61 @@ struct FontCompareView: View {
         }
         .padding(10)
         .background(.quaternary.opacity(0.25), in: RoundedRectangle(cornerRadius: 10))
+    }
+
+    private var overlayControls: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Text(tr(.compareOverlayOpacity))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                Slider(value: $overlayOpacity, in: 0.1 ... 1.0)
+            }
+            Picker(tr(.compareOverlayVisibility), selection: $overlayVisibility) {
+                ForEach(OverlayVisibility.allCases) { visibility in
+                    Text(visibility.title(tr)).tag(visibility)
+                }
+            }
+            .pickerStyle(.segmented)
+        }
+    }
+
+    private var overlayComparePanel: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 8) {
+                Text(baseline.familyName)
+                    .font(.caption.weight(.semibold))
+                    .lineLimit(1)
+                Text("•")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                Text(candidate.familyName)
+                    .font(.caption.weight(.semibold))
+                    .lineLimit(1)
+                Spacer(minLength: 0)
+            }
+            ScrollView(.horizontal, showsIndicators: false) {
+                ZStack(alignment: .topLeading) {
+                    if overlayVisibility.showsBaseline {
+                        Text(codeSnippet)
+                            .font(baselineFont)
+                            .lineLimit(3)
+                            .foregroundStyle(.primary.opacity(overlayVisibility.showsCandidate ? overlayOpacity : 1.0))
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    if overlayVisibility.showsCandidate {
+                        Text(codeSnippet)
+                            .font(candidateFont)
+                            .lineLimit(3)
+                            .foregroundStyle(Color.accentColor.opacity(overlayVisibility.showsBaseline ? overlayOpacity : 1.0))
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(8)
+            .background(.background.opacity(0.7), in: RoundedRectangle(cornerRadius: 8))
+        }
     }
 
     private func compareColumn(title: String, attributed: AttributedString, font: Font) -> some View {
@@ -130,6 +200,49 @@ struct FontCompareView: View {
     private func formatSigned(_ value: Double) -> String {
         let rounded = Int(round(value))
         return rounded >= 0 ? "+\(rounded)" : "\(rounded)"
+    }
+}
+
+private enum CompareDisplayMode: String, CaseIterable, Identifiable {
+    case sideBySide
+    case overlay
+
+    var id: String { rawValue }
+
+    func title(_ tr: (L10nKey) -> String) -> String {
+        switch self {
+        case .sideBySide:
+            tr(.compareModeSideBySide)
+        case .overlay:
+            tr(.compareModeOverlay)
+        }
+    }
+}
+
+private enum OverlayVisibility: String, CaseIterable, Identifiable {
+    case both
+    case baseline
+    case candidate
+
+    var id: String { rawValue }
+
+    var showsBaseline: Bool {
+        self == .both || self == .baseline
+    }
+
+    var showsCandidate: Bool {
+        self == .both || self == .candidate
+    }
+
+    func title(_ tr: (L10nKey) -> String) -> String {
+        switch self {
+        case .both:
+            tr(.compareOverlayBoth)
+        case .baseline:
+            tr(.compareOverlayBaselineOnly)
+        case .candidate:
+            tr(.compareOverlayCandidateOnly)
+        }
     }
 }
 

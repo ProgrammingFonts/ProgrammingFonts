@@ -120,6 +120,14 @@ enum L10nKey {
     case whyNotRecommended
     case compareWith
     case compareNone
+    case compareDisplayMode
+    case compareModeSideBySide
+    case compareModeOverlay
+    case compareOverlayOpacity
+    case compareOverlayVisibility
+    case compareOverlayBoth
+    case compareOverlayBaselineOnly
+    case compareOverlayCandidateOnly
     case scoreDelta
     case whyItMattersSuffix
     case factorMonospaceBaseline
