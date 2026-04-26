@@ -128,6 +128,20 @@ enum L10nKey {
     case compareOverlayBoth
     case compareOverlayBaselineOnly
     case compareOverlayCandidateOnly
+    case compareModeGlyphZoom
+    case compareModeOutlineDiff
+    case glyphZoomTitle
+    case glyphZoomPreset
+    case glyphZoomPresetConfusable
+    case glyphZoomPresetPunctuation
+    case glyphZoomPresetFromSnippet
+    case glyphZoomScale
+    case glyphZoomGrid
+    case outlineDiffTitle
+    case outlineDiffCharacter
+    case outlineDiffOverlap
+    case outlineDiffShiftX
+    case outlineDiffShiftY
     case scoreDelta
     case whyItMattersSuffix
     case factorMonospaceBaseline

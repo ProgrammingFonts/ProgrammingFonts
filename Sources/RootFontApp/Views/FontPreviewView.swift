@@ -966,9 +966,6 @@ struct FontPreviewView: View {
     }
 
     private func previewFont(for item: FontItem, size: Double, monospacedNumerals: Bool) -> Font {
-        if monospacedNumerals && previewSurface == .sample {
-            return .system(size: size, design: .monospaced)
-        }
         if let baseFont = NSFont(name: item.postScriptName, size: size) {
             let bound = featureBinder.bind(
                 base: baseFont,
@@ -979,6 +976,9 @@ struct FontPreviewView: View {
                 )
             )
             return Font(bound)
+        }
+        if monospacedNumerals && previewSurface == .sample {
+            return .system(size: size, design: .monospaced)
         }
         return .system(size: size)
     }

@@ -10,9 +10,17 @@ struct FontCompareView: View {
     let candidateFont: Font
     let factorTitle: (ProgrammingScoreFactor) -> String
     let tr: (L10nKey) -> String
+
     @State private var displayMode: CompareDisplayMode = .sideBySide
-    @State private var overlayOpacity: Double = 0.55
-    @State private var overlayVisibility: OverlayVisibility = .both
+    @State private var overlayOpacity: Double = 0.58
+    @State private var overlayVisibility: CompareOverlayVisibility = .both
+    @State private var glyphSamplePreset: GlyphSamplePreset = .confusable
+    @State private var glyphZoomScale: Double = 3.0
+    @State private var showGlyphGrid = true
+    @State private var outlineCharacter = "A"
+    @State private var cachedOutlineKey = ""
+    @State private var cachedBaselineBounds: CGRect?
+    @State private var cachedCandidateBounds: CGRect?
 
     private var totalDelta: Int {
         candidateScore.total - baselineScore.total
@@ -45,22 +53,8 @@ struct FontCompareView: View {
                     .foregroundStyle(.secondary)
             }
 
-            Picker(tr(.compareDisplayMode), selection: $displayMode) {
-                ForEach(CompareDisplayMode.allCases) { mode in
-                    Text(mode.title(tr)).tag(mode)
-                }
-            }
-            .pickerStyle(.segmented)
-
-            if displayMode == .sideBySide {
-                HStack(alignment: .top, spacing: 10) {
-                    compareColumn(title: baseline.familyName, attributed: codeSnippet, font: baselineFont)
-                    compareColumn(title: candidate.familyName, attributed: codeSnippet, font: candidateFont)
-                }
-            } else {
-                overlayControls
-                overlayComparePanel
-            }
+            compareModeControls
+            compareSurface
 
             VStack(alignment: .leading, spacing: 4) {
                 ForEach(topFactorDeltas, id: \.factor) { item in
@@ -90,58 +84,211 @@ struct FontCompareView: View {
         .background(.quaternary.opacity(0.25), in: RoundedRectangle(cornerRadius: 10))
     }
 
-    private var overlayControls: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
-                Text(tr(.compareOverlayOpacity))
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                Slider(value: $overlayOpacity, in: 0.1 ... 1.0)
+    @ViewBuilder
+    private var compareSurface: some View {
+        switch displayMode {
+        case .sideBySide:
+            HStack(alignment: .top, spacing: 10) {
+                compareColumn(title: baseline.familyName, attributed: codeSnippet, font: baselineFont)
+                compareColumn(title: candidate.familyName, attributed: codeSnippet, font: candidateFont)
             }
-            Picker(tr(.compareOverlayVisibility), selection: $overlayVisibility) {
-                ForEach(OverlayVisibility.allCases) { visibility in
-                    Text(visibility.title(tr)).tag(visibility)
-                }
-            }
-            .pickerStyle(.segmented)
+        case .overlay:
+            overlayCompareBlock
+        case .glyphZoom:
+            glyphZoomCompareBlock
+        case .outlineDiff:
+            outlineDiffCompareBlock
         }
     }
 
-    private var overlayComparePanel: some View {
-        VStack(alignment: .leading, spacing: 4) {
+    private var compareModeControls: some View {
+        VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
-                Text(baseline.familyName)
+                Text(tr(.compareDisplayMode))
                     .font(.caption.weight(.semibold))
-                    .lineLimit(1)
-                Text("•")
-                    .font(.caption2)
                     .foregroundStyle(.secondary)
-                Text(candidate.familyName)
-                    .font(.caption.weight(.semibold))
-                    .lineLimit(1)
-                Spacer(minLength: 0)
+                Picker("", selection: $displayMode) {
+                    Text(tr(.compareModeSideBySide)).tag(CompareDisplayMode.sideBySide)
+                    Text(tr(.compareModeOverlay)).tag(CompareDisplayMode.overlay)
+                    Text(tr(.compareModeGlyphZoom)).tag(CompareDisplayMode.glyphZoom)
+                    Text(tr(.compareModeOutlineDiff)).tag(CompareDisplayMode.outlineDiff)
+                }
+                .labelsHidden()
+                .pickerStyle(.segmented)
             }
-            ScrollView(.horizontal, showsIndicators: false) {
-                ZStack(alignment: .topLeading) {
-                    if overlayVisibility.showsBaseline {
-                        Text(codeSnippet)
-                            .font(baselineFont)
-                            .lineLimit(3)
-                            .foregroundStyle(.primary.opacity(overlayVisibility.showsCandidate ? overlayOpacity : 1.0))
-                            .frame(maxWidth: .infinity, alignment: .leading)
+
+            if displayMode == .overlay {
+                HStack(spacing: 8) {
+                    Text(tr(.compareOverlayOpacity))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Slider(value: $overlayOpacity, in: 0.15...1)
+                    Picker(tr(.compareOverlayVisibility), selection: $overlayVisibility) {
+                        Text(tr(.compareOverlayBoth)).tag(CompareOverlayVisibility.both)
+                        Text(tr(.compareOverlayBaselineOnly)).tag(CompareOverlayVisibility.baselineOnly)
+                        Text(tr(.compareOverlayCandidateOnly)).tag(CompareOverlayVisibility.candidateOnly)
                     }
-                    if overlayVisibility.showsCandidate {
-                        Text(codeSnippet)
-                            .font(candidateFont)
-                            .lineLimit(3)
-                            .foregroundStyle(Color.accentColor.opacity(overlayVisibility.showsBaseline ? overlayOpacity : 1.0))
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                    .pickerStyle(.menu)
+                    .frame(minWidth: 160)
+                }
+            } else if displayMode == .glyphZoom {
+                HStack(spacing: 8) {
+                    Text(tr(.glyphZoomPreset))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Picker("", selection: $glyphSamplePreset) {
+                        Text(tr(.glyphZoomPresetConfusable)).tag(GlyphSamplePreset.confusable)
+                        Text(tr(.glyphZoomPresetPunctuation)).tag(GlyphSamplePreset.punctuation)
+                        Text(tr(.glyphZoomPresetFromSnippet)).tag(GlyphSamplePreset.fromSnippet)
                     }
+                    .labelsHidden()
+                    .pickerStyle(.menu)
+
+                    Text(tr(.glyphZoomScale))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Slider(value: $glyphZoomScale, in: 1.8...6)
+                    Toggle(tr(.glyphZoomGrid), isOn: $showGlyphGrid)
+                        .toggleStyle(.checkbox)
+                        .font(.caption2)
+                }
+            } else if displayMode == .outlineDiff {
+                HStack(spacing: 8) {
+                    Text(tr(.outlineDiffCharacter))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    TextField("", text: $outlineCharacter)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: 56)
                 }
             }
-            .frame(maxWidth: .infinity)
-            .padding(8)
-            .background(.background.opacity(0.7), in: RoundedRectangle(cornerRadius: 8))
+        }
+    }
+
+    private var overlayCompareBlock: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(tr(.compareModeOverlay))
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+            ZStack(alignment: .topLeading) {
+                if overlayVisibility != .candidateOnly {
+                    Text(codeSnippet)
+                        .font(baselineFont)
+                        .foregroundStyle(.blue.opacity(overlayOpacity))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                if overlayVisibility != .baselineOnly {
+                    Text(codeSnippet)
+                        .font(candidateFont)
+                        .foregroundStyle(.red.opacity(overlayOpacity))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+            .lineLimit(4)
+            .padding(10)
+            .background(.background.opacity(0.75), in: RoundedRectangle(cornerRadius: 8))
+        }
+    }
+
+    private var glyphZoomCompareBlock: some View {
+        let samples = CompareOverlaySupport.samples(for: glyphSamplePreset, snippet: String(codeSnippet.characters))
+        return VStack(alignment: .leading, spacing: 8) {
+            Text(tr(.glyphZoomTitle))
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 8)], spacing: 8) {
+                ForEach(samples, id: \.label) { sample in
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(sample.label)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        ZStack {
+                            if showGlyphGrid {
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(.quaternary, style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
+                            }
+                            Text(sample.value)
+                                .font(baselineFont)
+                                .foregroundStyle(.blue.opacity(0.7))
+                            Text(sample.value)
+                                .font(candidateFont)
+                                .foregroundStyle(.red.opacity(0.6))
+                        }
+                        .frame(height: 70)
+                    }
+                    .font(.system(size: 12 * glyphZoomScale))
+                    .padding(8)
+                    .background(.background.opacity(0.75), in: RoundedRectangle(cornerRadius: 8))
+                }
+            }
+        }
+    }
+
+    private var outlineDiffCompareBlock: some View {
+        let baselineBounds = cachedBaselineBounds
+        let candidateBounds = cachedCandidateBounds
+        let metrics = CompareOverlaySupport.outlineMetrics(
+            baselineBounds: baselineBounds ?? .zero,
+            candidateBounds: candidateBounds ?? .zero
+        )
+        return VStack(alignment: .leading, spacing: 8) {
+            Text(tr(.outlineDiffTitle))
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+            ZStack {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(.background.opacity(0.75))
+                HStack(spacing: 10) {
+                    outlineRect(title: baseline.familyName, bounds: baselineBounds, tint: .blue)
+                    outlineRect(title: candidate.familyName, bounds: candidateBounds, tint: .red)
+                }
+                .padding(10)
+            }
+            .frame(height: 130)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("\(tr(.outlineDiffOverlap)): \(Int(metrics.overlapRatio * 100))%")
+                Text("\(tr(.outlineDiffShiftX)): \(formatSigned(metrics.horizontalShift))")
+                Text("\(tr(.outlineDiffShiftY)): \(formatSigned(metrics.verticalShift))")
+            }
+            .font(.caption2.monospacedDigit())
+            .foregroundStyle(.secondary)
+        }
+        .onAppear {
+            refreshOutlineCacheIfNeeded()
+        }
+        .onChange(of: outlineCharacter) { _, _ in
+            refreshOutlineCacheIfNeeded()
+        }
+        .onChange(of: baseline.postScriptName) { _, _ in
+            refreshOutlineCacheIfNeeded()
+        }
+        .onChange(of: candidate.postScriptName) { _, _ in
+            refreshOutlineCacheIfNeeded()
+        }
+    }
+
+    private func outlineRect(title: String, bounds: CGRect?, tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.caption2)
+                .lineLimit(1)
+            ZStack {
+                RoundedRectangle(cornerRadius: 6)
+                    .stroke(tint.opacity(0.35), lineWidth: 1)
+                if let bounds {
+                    RoundedRectangle(cornerRadius: 4)
+                        .stroke(tint.opacity(0.85), lineWidth: 2)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 10)
+                    Text("w:\(Int(bounds.width)) h:\(Int(bounds.height))")
+                        .font(.caption2.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text("-")
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .frame(height: 70)
         }
     }
 
@@ -201,49 +348,20 @@ struct FontCompareView: View {
         let rounded = Int(round(value))
         return rounded >= 0 ? "+\(rounded)" : "\(rounded)"
     }
-}
 
-private enum CompareDisplayMode: String, CaseIterable, Identifiable {
-    case sideBySide
-    case overlay
-
-    var id: String { rawValue }
-
-    func title(_ tr: (L10nKey) -> String) -> String {
-        switch self {
-        case .sideBySide:
-            tr(.compareModeSideBySide)
-        case .overlay:
-            tr(.compareModeOverlay)
-        }
-    }
-}
-
-private enum OverlayVisibility: String, CaseIterable, Identifiable {
-    case both
-    case baseline
-    case candidate
-
-    var id: String { rawValue }
-
-    var showsBaseline: Bool {
-        self == .both || self == .baseline
+    private func glyphBounds(for text: String, postScriptName: String) -> CGRect? {
+        CompareOverlaySupport.glyphBounds(for: text, postScriptName: postScriptName)
     }
 
-    var showsCandidate: Bool {
-        self == .both || self == .candidate
+    private func refreshOutlineCacheIfNeeded() {
+        let glyph = String(outlineCharacter.prefix(1))
+        let key = "\(glyph)#\(baseline.postScriptName)#\(candidate.postScriptName)"
+        guard key != cachedOutlineKey else { return }
+        cachedOutlineKey = key
+        cachedBaselineBounds = glyphBounds(for: glyph, postScriptName: baseline.postScriptName)
+        cachedCandidateBounds = glyphBounds(for: glyph, postScriptName: candidate.postScriptName)
     }
 
-    func title(_ tr: (L10nKey) -> String) -> String {
-        switch self {
-        case .both:
-            tr(.compareOverlayBoth)
-        case .baseline:
-            tr(.compareOverlayBaselineOnly)
-        case .candidate:
-            tr(.compareOverlayCandidateOnly)
-        }
-    }
 }
 
 private struct CoverageDiff {
