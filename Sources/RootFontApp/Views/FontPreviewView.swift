@@ -12,8 +12,9 @@ struct FontPreviewView: View {
     @ObservedObject var viewModel: FontBrowserViewModel
     @State private var previewPreset: FontBrowserViewModel.PreviewPreset = .mixed
     @State private var previewSurface: PreviewSurface = .sample
+    @State private var snippetStrategy: SnippetStrategy = .semantic
     @State private var codeLanguage: MiniTokenizer.Language = .swift
-    @State private var codeSnippet: String = FontPreviewView.defaultSnippet(for: .swift)
+    @State private var codeSnippet: String = SnippetCatalog.snippet(language: .swift, strategy: .semantic)
     @State private var useSingleLinePreview = false
     @State private var useMonospacedDigits = false
     @State private var expandedLetterSpacing = false
@@ -123,6 +124,12 @@ struct FontPreviewView: View {
         }
         .onChange(of: enabledStylisticSetTags) { _, _ in
             persistFeaturePreferencesIfPossible()
+        }
+        .onChange(of: codeLanguage) { _, newLanguage in
+            codeSnippet = SnippetCatalog.snippet(language: newLanguage, strategy: snippetStrategy)
+        }
+        .onChange(of: snippetStrategy) { _, newStrategy in
+            codeSnippet = SnippetCatalog.snippet(language: codeLanguage, strategy: newStrategy)
         }
         .alert(viewModel.tr(.installConfirmTitle), isPresented: $showInstallConfirm) {
             Button(viewModel.tr(.installConfirmAction)) {
@@ -290,15 +297,25 @@ struct FontPreviewView: View {
 
     private var codeLanguageSection: some View {
         VStack(alignment: .leading, spacing: 6) {
+            Picker(viewModel.tr(.snippetStrategy), selection: $snippetStrategy) {
+                Text(viewModel.tr(.snippetStrategySemantic)).tag(SnippetStrategy.semantic)
+                Text(viewModel.tr(.snippetStrategyNative)).tag(SnippetStrategy.native)
+            }
+            .pickerStyle(.segmented)
+
             Picker(viewModel.tr(.codeLanguage), selection: $codeLanguage) {
-                Text("Swift").tag(MiniTokenizer.Language.swift)
-                Text("TypeScript").tag(MiniTokenizer.Language.typescript)
-                Text("Python").tag(MiniTokenizer.Language.python)
-                Text("Rust").tag(MiniTokenizer.Language.rust)
-                Text("Go").tag(MiniTokenizer.Language.go)
-                Text("JSON").tag(MiniTokenizer.Language.json)
-                Text("Shell").tag(MiniTokenizer.Language.shell)
-                Text("CSS").tag(MiniTokenizer.Language.css)
+                Text(viewModel.tr(.languageSwift)).tag(MiniTokenizer.Language.swift)
+                Text(viewModel.tr(.languageTypeScript)).tag(MiniTokenizer.Language.typescript)
+                Text(viewModel.tr(.languageJavaScript)).tag(MiniTokenizer.Language.javascript)
+                Text(viewModel.tr(.languagePython)).tag(MiniTokenizer.Language.python)
+                Text(viewModel.tr(.languageRust)).tag(MiniTokenizer.Language.rust)
+                Text(viewModel.tr(.languageGo)).tag(MiniTokenizer.Language.go)
+                Text(viewModel.tr(.languageJava)).tag(MiniTokenizer.Language.java)
+                Text(viewModel.tr(.languageKotlin)).tag(MiniTokenizer.Language.kotlin)
+                Text(viewModel.tr(.languageSQL)).tag(MiniTokenizer.Language.sql)
+                Text(viewModel.tr(.languageJSON)).tag(MiniTokenizer.Language.json)
+                Text(viewModel.tr(.languageShell)).tag(MiniTokenizer.Language.shell)
+                Text(viewModel.tr(.languageCSS)).tag(MiniTokenizer.Language.css)
             }
             .pickerStyle(.menu)
 
@@ -309,9 +326,6 @@ struct FontPreviewView: View {
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(.quaternary, lineWidth: 1)
                 )
-        }
-        .onChange(of: codeLanguage) { _, newLanguage in
-            codeSnippet = Self.defaultSnippet(for: newLanguage)
         }
     }
 
@@ -458,6 +472,7 @@ struct FontPreviewView: View {
         let candidates = compareCandidates(for: baseline)
         if !candidates.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
+                compareSnippetControls
                 Picker(compareTitle(), selection: Binding(
                     get: { compareFontID ?? "" },
                     set: { compareFontID = $0.isEmpty ? nil : $0 }
@@ -485,6 +500,23 @@ struct FontPreviewView: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    private var compareSnippetControls: some View {
+        HStack(spacing: 8) {
+            Picker(viewModel.tr(.snippetStrategy), selection: $snippetStrategy) {
+                Text(viewModel.tr(.snippetStrategySemantic)).tag(SnippetStrategy.semantic)
+                Text(viewModel.tr(.snippetStrategyNative)).tag(SnippetStrategy.native)
+            }
+            .pickerStyle(.menu)
+
+            Picker(viewModel.tr(.codeLanguage), selection: $codeLanguage) {
+                ForEach(MiniTokenizer.Language.allCases) { language in
+                    Text(codeLanguageTitle(language)).tag(language)
+                }
+            }
+            .pickerStyle(.menu)
         }
     }
 
@@ -651,6 +683,23 @@ struct FontPreviewView: View {
 
     private func compareNoneOption() -> String {
         viewModel.tr(.compareNone)
+    }
+
+    private func codeLanguageTitle(_ language: MiniTokenizer.Language) -> String {
+        switch language {
+        case .swift: return viewModel.tr(.languageSwift)
+        case .typescript: return viewModel.tr(.languageTypeScript)
+        case .javascript: return viewModel.tr(.languageJavaScript)
+        case .python: return viewModel.tr(.languagePython)
+        case .rust: return viewModel.tr(.languageRust)
+        case .go: return viewModel.tr(.languageGo)
+        case .java: return viewModel.tr(.languageJava)
+        case .kotlin: return viewModel.tr(.languageKotlin)
+        case .sql: return viewModel.tr(.languageSQL)
+        case .json: return viewModel.tr(.languageJSON)
+        case .shell: return viewModel.tr(.languageShell)
+        case .css: return viewModel.tr(.languageCSS)
+        }
     }
 
     private func whyButtonTitle() -> String {
@@ -981,27 +1030,6 @@ struct FontPreviewView: View {
             return .system(size: size, design: .monospaced)
         }
         return .system(size: size)
-    }
-
-    private static func defaultSnippet(for language: MiniTokenizer.Language) -> String {
-        switch language {
-        case .swift:
-            return "import Foundation\n\nstruct User {\n    let id: Int\n    let name: String\n}\n\nfunc greet(_ user: User) -> String {\n    return \"Hello, \\(user.name)!\"\n}"
-        case .typescript:
-            return "interface User { id: number; name: string }\n\nconst greet = (user: User): string => {\n  return `Hello, ${user.name}!`\n}"
-        case .python:
-            return "from dataclasses import dataclass\n\n@dataclass\nclass User:\n    id: int\n    name: str\n\ndef greet(user: User) -> str:\n    return f\"Hello, {user.name}!\""
-        case .rust:
-            return "struct User { id: u64, name: String }\n\nfn greet(user: &User) -> String {\n    format!(\"Hello, {}!\", user.name)\n}"
-        case .go:
-            return "type User struct { ID int; Name string }\n\nfunc Greet(user User) string {\n    return fmt.Sprintf(\"Hello, %s!\", user.Name)\n}"
-        case .json:
-            return "{\n  \"theme\": \"dark\",\n  \"font\": \"JetBrains Mono\",\n  \"size\": 14,\n  \"ligatures\": true\n}"
-        case .shell:
-            return "#!/usr/bin/env bash\nset -euo pipefail\n\nname=\"RootFont\"\necho \"Hello, ${name}\""
-        case .css:
-            return ":root {\n  --font-main: \"JetBrains Mono\";\n  --font-size: 14px;\n}\n\n.editor {\n  font-family: var(--font-main);\n  font-size: var(--font-size);\n}"
-        }
     }
 
     private func loadFeaturePreferences(for selected: FontItem) {

@@ -184,8 +184,9 @@ struct FontCompareView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
-            .lineLimit(4)
+            .lineLimit(8)
             .padding(10)
+            .frame(minHeight: 180, alignment: .topLeading)
             .background(.background.opacity(0.75), in: RoundedRectangle(cornerRadius: 8))
         }
     }
@@ -300,11 +301,12 @@ struct FontCompareView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 Text(attributed)
                     .font(font)
-                    .lineLimit(3)
+                    .lineLimit(8)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .frame(maxWidth: .infinity)
             .padding(8)
+            .frame(minHeight: 180, alignment: .topLeading)
             .background(.background.opacity(0.7), in: RoundedRectangle(cornerRadius: 8))
         }
         .frame(maxWidth: .infinity, alignment: .leading)

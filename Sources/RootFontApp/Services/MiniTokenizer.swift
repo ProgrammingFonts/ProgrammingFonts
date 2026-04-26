@@ -20,9 +20,13 @@ struct MiniTokenizer: Sendable {
     enum Language: String, CaseIterable, Identifiable, Sendable {
         case swift
         case typescript
+        case javascript
         case python
         case rust
         case go
+        case java
+        case kotlin
+        case sql
         case json
         case shell
         case css
@@ -71,6 +75,8 @@ struct MiniTokenizer: Sendable {
         switch language {
         case .python, .shell:
             return #"#.*$"#
+        case .sql:
+            return #"--.*$"#
         case .json:
             return #"$a"# // JSON has no comments.
         default:
@@ -84,12 +90,20 @@ struct MiniTokenizer: Sendable {
             return ["let", "var", "if", "else", "for", "in", "func", "return", "guard", "switch", "case", "import"]
         case .typescript:
             return ["const", "let", "if", "else", "for", "in", "function", "return", "import", "from", "interface"]
+        case .javascript:
+            return ["const", "let", "if", "else", "for", "in", "function", "return", "import", "from", "class"]
         case .python:
             return ["def", "if", "else", "for", "in", "return", "import", "from", "class", "with", "as"]
         case .rust:
             return ["let", "mut", "if", "else", "for", "in", "fn", "return", "match", "impl", "use"]
         case .go:
             return ["func", "var", "const", "if", "else", "for", "range", "return", "package", "import", "type"]
+        case .java:
+            return ["class", "record", "public", "private", "static", "void", "return", "if", "else", "new", "import"]
+        case .kotlin:
+            return ["data", "class", "fun", "val", "var", "return", "if", "else", "when", "object", "sealed"]
+        case .sql:
+            return ["SELECT", "FROM", "WHERE", "WITH", "JOIN", "LEFT", "RIGHT", "GROUP", "ORDER", "BY", "AS"]
         case .json:
             return ["true", "false", "null"]
         case .shell:
@@ -105,13 +119,19 @@ struct MiniTokenizer: Sendable {
             return ["String", "Int", "Double", "Bool", "Void", "Any"]
         case .typescript:
             return ["string", "number", "boolean", "void", "unknown", "Promise"]
+        case .javascript:
+            return []
         case .python:
             return ["str", "int", "float", "bool", "list", "dict"]
         case .rust:
             return ["String", "str", "i32", "u64", "bool", "Vec"]
         case .go:
             return ["string", "int", "bool", "error", "byte", "rune"]
-        case .json, .shell, .css:
+        case .java:
+            return ["String", "Integer", "Long", "Boolean", "List", "Map"]
+        case .kotlin:
+            return ["String", "Int", "Long", "Boolean", "List", "Map"]
+        case .sql, .json, .shell, .css:
             return []
         }
     }

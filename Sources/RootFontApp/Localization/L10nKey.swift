@@ -182,7 +182,22 @@ enum L10nKey {
     case previewMode
     case previewModeSample
     case previewModeCode
+    case snippetStrategy
+    case snippetStrategySemantic
+    case snippetStrategyNative
     case codeLanguage
+    case languageSwift
+    case languageTypeScript
+    case languageJavaScript
+    case languagePython
+    case languageRust
+    case languageGo
+    case languageJava
+    case languageKotlin
+    case languageSQL
+    case languageJSON
+    case languageShell
+    case languageCSS
     case featureSection
     case featureLigatures
     case featureZeroVariant
