@@ -76,3 +76,6 @@ secrets.json
 
 # Local docs drafts
 docs/
+
+# Local git worktrees
+.worktrees/
