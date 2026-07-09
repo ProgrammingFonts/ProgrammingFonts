@@ -46,6 +46,13 @@ struct ScoreManifestStore: ScoreManifestStoreProtocol, @unchecked Sendable {
     }
 
     func save(_ entries: [String: CachedScoreEntry]) {
+        lock.lock()
+        if let cachedEntries, cachedEntries == entries {
+            lock.unlock()
+            return
+        }
+        lock.unlock()
+
         let directory = manifestURL.deletingLastPathComponent()
         try? fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
         guard let data = try? JSONEncoder().encode(entries) else { return }

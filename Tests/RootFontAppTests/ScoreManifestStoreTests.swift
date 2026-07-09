@@ -50,6 +50,32 @@ final class ScoreManifestStoreTests: XCTestCase {
         XCTAssertEqual(store.load().keys.sorted(), ["Mono|1", "Mono|2"])
     }
 
+    func testSaveSkipsWriteWhenEntriesUnchanged() throws {
+        let temp = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let manifestURL = temp.appendingPathComponent("scores.json")
+        let store = ScoreManifestStore(manifestURL: manifestURL)
+
+        let entries: [String: CachedScoreEntry] = [
+            "Mono|1": CachedScoreEntry(
+                programming: ProgrammingProfile.empty.withMonospaced(true),
+                metrics: nil,
+                score: nil
+            )
+        ]
+        store.save(entries)
+
+        let attrsAfterFirstSave = try FileManager.default.attributesOfItem(atPath: manifestURL.path)
+        let mtimeAfterFirstSave = (attrsAfterFirstSave[.modificationDate] as? Date)?.timeIntervalSince1970 ?? 0
+
+        Thread.sleep(forTimeInterval: 1.1)
+        store.save(entries)
+
+        let attrsAfterSecondSave = try FileManager.default.attributesOfItem(atPath: manifestURL.path)
+        let mtimeAfterSecondSave = (attrsAfterSecondSave[.modificationDate] as? Date)?.timeIntervalSince1970 ?? 0
+        XCTAssertEqual(mtimeAfterFirstSave, mtimeAfterSecondSave, accuracy: 0.001)
+    }
+
     func testCacheKeyChangesWhenMtimeChanges() throws {
         let temp = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)

@@ -31,6 +31,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   screenshot conventions.
 - Pre-commit hook runs `optimize-screenshots.py --check` when screenshot
   PNGs are staged.
+- Warm catalog loads skip a second programming-score pass and redundant
+  score-manifest writes when every font is already cached.
+- `FontFilterEngine` builds family weight coverage only when programming
+  sidebar filters or programming-fit sort require it.
+- `FontActivationService` resolves font URLs through `FontURLIndex` for
+  O(1) lookup instead of scanning the full font list.
+- CI caches SwiftPM artifacts and skips macOS jobs for docs-only changes.
 
 ### Documentation
 - README documents full Xcode requirement, `xcode-select` verification,

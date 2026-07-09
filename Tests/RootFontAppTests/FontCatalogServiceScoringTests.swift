@@ -88,6 +88,35 @@ final class FontCatalogServiceScoringTests: XCTestCase {
         guard let contribution else { return }
         XCTAssertEqual(contribution.weightedValue, contribution.maxWeight, accuracy: 0.001)
     }
+
+    func testAttachProgrammingScoresIsIdempotentForCachedItems() {
+        let mono = FontItem(
+            id: "mono",
+            familyName: "Mono Family",
+            postScriptName: "Mono-Regular",
+            displayName: "Mono",
+            source: .user,
+            styleTags: [.regular, .monospace],
+            programming: ProgrammingProfile(
+                isMonospaced: true,
+                hasProgrammingLigatures: true,
+                availableStylisticSets: [],
+                hasZeroVariant: true,
+                hasPowerlineGlyphs: false,
+                hasNerdFontGlyphs: false,
+                hasBoxDrawing: true,
+                coverageBuckets: [.latinExtended, .cyrillic],
+                isVariableFont: false
+            ),
+            metrics: FontMetricsSample(asciiAdvanceVariance: 0.1, uniformWidth: true, confusableDistances: [.iL1: 0.8]),
+            programmingScore: ProgrammingScore(total: 72, grade: .a, breakdown: [])
+        )
+
+        let once = FontCatalogService.attachProgrammingScores([mono])
+        let twice = FontCatalogService.attachProgrammingScores(once)
+        XCTAssertEqual(once.first?.programmingScore?.total, twice.first?.programmingScore?.total)
+        XCTAssertEqual(once.first?.programmingScore?.grade, twice.first?.programmingScore?.grade)
+    }
 }
 
 private extension ProgrammingProfile {

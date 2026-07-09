@@ -3,8 +3,16 @@ name: CI
 on:
   push:
     branches: [master, main, develop]
+    paths-ignore:
+      - '**.md'
+      - 'screenshots/**'
+      - '.github/ISSUE_TEMPLATE/**'
   pull_request:
     branches: [master, main, develop]
+    paths-ignore:
+      - '**.md'
+      - 'screenshots/**'
+      - '.github/ISSUE_TEMPLATE/**'
 
 jobs:
   build-and-test:
@@ -12,6 +20,16 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Cache SwiftPM
+        uses: actions/cache@v4
+        with:
+          path: |
+            .build
+            ~/Library/Caches/org.swift.swiftpm
+          key: ${{ runner.os }}-spm-${{ hashFiles('Package.swift') }}
+          restore-keys: |
+            ${{ runner.os }}-spm-
 
       - name: Print toolchain
         run: |

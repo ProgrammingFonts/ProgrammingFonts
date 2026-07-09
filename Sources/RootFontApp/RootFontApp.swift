@@ -86,17 +86,18 @@ struct RootFontApp: App {
     }
 
     private func showAboutPanel() {
+        let managedCount = activationService.managedCount()
         let systemInfoLine = AppMetadata.systemInfoLine(
             appearance: viewModel.appearanceMode,
             language: viewModel.language,
-            managedCount: activationService.managedCount()
+            managedCount: managedCount
         )
         let aboutView = AboutPanelView(
             appName: AppMetadata.appName,
             versionText: AppMetadata.semanticVersionDisplay,
             buildText: AppMetadata.buildDisplay,
             commitShortSHA: AppMetadata.commitShortSHA,
-            diagnosticsLine: AppMetadata.diagnosticsLine(managedCount: activationService.managedCount()),
+            diagnosticsLine: AppMetadata.diagnosticsLine(managedCount: managedCount),
             systemInfoLine: systemInfoLine,
             slogan: viewModel.tr(.aboutSlogan),
             websiteURL: AppMetadata.websiteURL,

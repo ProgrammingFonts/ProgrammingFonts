@@ -59,4 +59,31 @@ final class FontFilterEngineTests: XCTestCase {
         )
         XCTAssertEqual(result.map(\.familyName), ["Alpha", "Zebra"])
     }
+
+    func testAllSidebarSkipsFamilyCoverageBuild() {
+        let fonts = [
+            FontItem.sample(id: "A", familyName: "Alpha", source: .system, styleTags: [.regular]),
+            FontItem.sample(id: "B", familyName: "Beta", source: .user, styleTags: [.monospace]),
+        ]
+        let inputs = FontFilterEngine.Inputs(
+            preparedQuery: SearchMatcher.prepare(query: ""),
+            coverageQuery: "",
+            selectedSource: nil,
+            selectedStyle: nil,
+            sidebarFilter: .all,
+            sortOption: .familyName,
+            language: .english,
+            showSystemAliasFonts: true,
+            scoreWeights: .default,
+            managedFontIDs: []
+        )
+        let result = FontFilterEngine.compute(
+            fonts: fonts,
+            searchIndex: [:],
+            favoriteIDs: [],
+            recentIDs: [],
+            inputs: inputs
+        )
+        XCTAssertEqual(result.map(\.id).sorted(), ["A", "B"])
+    }
 }

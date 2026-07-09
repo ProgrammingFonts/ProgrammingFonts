@@ -34,6 +34,8 @@ struct FontActivationService: FontActivationServiceProtocol, @unchecked Sendable
     private let appSupportManifestURL: URL
     private let userInstallDirectoryURL: URL
     private let availableFontURLsProvider: @Sendable () -> [URL]
+    private let usesInjectedFontURLs: Bool
+    private let fontURLIndex: FontURLIndex
     private let registerAction: @Sendable ([URL], CTFontManagerScope) throws -> Void
     private let unregisterAction: @Sendable ([URL], CTFontManagerScope) throws -> Void
     private let lock = NSLock()
@@ -44,6 +46,7 @@ struct FontActivationService: FontActivationServiceProtocol, @unchecked Sendable
         manifestURL: URL? = nil,
         userInstallDirectoryURL: URL? = nil,
         availableFontURLsProvider: (@Sendable () -> [URL])? = nil,
+        fontURLIndex: FontURLIndex = .shared,
         registerAction: (@Sendable ([URL], CTFontManagerScope) throws -> Void)? = nil,
         unregisterAction: (@Sendable ([URL], CTFontManagerScope) throws -> Void)? = nil
     ) {
@@ -55,8 +58,10 @@ struct FontActivationService: FontActivationServiceProtocol, @unchecked Sendable
             .appendingPathComponent("activated-fonts.json")
         self.userInstallDirectoryURL = userInstallDirectoryURL ?? fileManager.homeDirectoryForCurrentUser
             .appendingPathComponent("Library/Fonts/RootFont", isDirectory: true)
+        self.usesInjectedFontURLs = availableFontURLsProvider != nil
+        self.fontURLIndex = fontURLIndex
         self.availableFontURLsProvider = availableFontURLsProvider ?? {
-            FontURLIndex.shared.urls
+            fontURLIndex.urls
         }
         self.registerAction = registerAction ?? { urls, scope in
             try Self.defaultRegister(urls: urls, scope: scope)
@@ -147,8 +152,14 @@ struct FontActivationService: FontActivationServiceProtocol, @unchecked Sendable
     }
 
     private func resolveURL(for fontID: String) throws -> URL {
-        let urls = availableFontURLsProvider()
-        guard let url = urls.first(where: { $0.deletingPathExtension().lastPathComponent == fontID }) else {
+        if usesInjectedFontURLs {
+            let urls = availableFontURLsProvider()
+            guard let url = urls.first(where: { $0.deletingPathExtension().lastPathComponent == fontID }) else {
+                throw FontActivationError.fontNotFound
+            }
+            return url
+        }
+        guard let url = fontURLIndex.url(forPostScriptName: fontID) else {
             throw FontActivationError.fontNotFound
         }
         return url

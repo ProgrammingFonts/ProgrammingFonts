@@ -34,7 +34,9 @@ enum FontFilterEngine {
         inputs: Inputs
     ) -> [FontItem] {
         let scoreEngine = ProgrammingScoreEngine(weights: inputs.scoreWeights)
-        let familyCoverage = FamilyWeightCoverage.build(from: fonts)
+        let familyCoverage = needsFamilyCoverage(inputs: inputs)
+            ? FamilyWeightCoverage.build(from: fonts)
+            : nil
         let filtered = fonts.filter { item in
             if !inputs.preparedQuery.isEmpty,
                !matches(item: item, index: searchIndex[item.id], query: inputs.preparedQuery) {
@@ -69,8 +71,10 @@ enum FontFilterEngine {
             case .recents:
                 return recentIDs.contains(item.id)
             case .recommendedForCode:
+                guard let familyCoverage else { return false }
                 return isRecommendedForCode(item, coverage: familyCoverage, scoreEngine: scoreEngine)
             case .avoidForCode:
+                guard let familyCoverage else { return false }
                 return isAvoidForCode(item, coverage: familyCoverage, scoreEngine: scoreEngine)
             case .managed:
                 return inputs.managedFontIDs.contains(item.id)
@@ -87,6 +91,17 @@ enum FontFilterEngine {
             coverage: familyCoverage,
             scoreEngine: scoreEngine
         )
+    }
+
+    private static func needsFamilyCoverage(inputs: Inputs) -> Bool {
+        switch inputs.sidebarFilter {
+        case .recommendedForCode, .avoidForCode:
+            return true
+        case .recents:
+            return false
+        default:
+            return inputs.sortOption == .programmingFit
+        }
     }
 
     // MARK: Matching
@@ -116,7 +131,7 @@ enum FontFilterEngine {
         _ fonts: [FontItem],
         inputs: Inputs,
         recentIDs: [String],
-        coverage: FamilyWeightCoverage,
+        coverage: FamilyWeightCoverage?,
         scoreEngine: ProgrammingScoreEngine
     ) -> [FontItem] {
         switch inputs.sidebarFilter {
@@ -143,6 +158,13 @@ enum FontFilterEngine {
                         == .orderedAscending
                 }
             case .programmingFit:
+                guard let coverage else {
+                    return fonts.sorted {
+                        $0.familyName(for: language)
+                            .localizedCaseInsensitiveCompare($1.familyName(for: language))
+                            == .orderedAscending
+                    }
+                }
                 return fonts.sorted { lhs, rhs in
                     let lScore = scoreEngine.score(item: lhs, familyCoverage: coverage)?.total ?? -1
                     let rScore = scoreEngine.score(item: rhs, familyCoverage: coverage)?.total ?? -1

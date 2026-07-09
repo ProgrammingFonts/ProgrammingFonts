@@ -51,24 +51,23 @@ struct FontCatalogService: FontCatalogServiceProtocol {
 
         var seen = Set<String>()
         var items: [FontItem] = []
-        var urlByPostScriptName: [String: URL] = [:]
+        var cacheKeyByPostScriptName: [String: String] = [:]
         var pendingEnrichmentIndices: [Int] = []
         let cachedEntries = scoreManifestStore.load()
         var nextCache: [String: CachedScoreEntry] = [:]
         items.reserveCapacity(descriptors.count)
-        urlByPostScriptName.reserveCapacity(descriptors.count)
 
         for url in descriptors {
             let postScriptName = url.deletingPathExtension().lastPathComponent
             guard !postScriptName.isEmpty else { continue }
             guard !seen.contains(postScriptName) else { continue }
             seen.insert(postScriptName)
-            urlByPostScriptName[postScriptName] = url
 
             let nsFont = NSFont(name: postScriptName, size: 16) ?? NSFont.systemFont(ofSize: 16)
             let source: FontSource = url.path.contains("/System/Library/Fonts") ? .system : .user
             let styles = styleResolver.resolveStyleTags(for: nsFont)
             let cacheKey = scoreManifestStore.cacheKey(for: postScriptName, fileURL: url)
+            cacheKeyByPostScriptName[postScriptName] = cacheKey
             let cached = cachedEntries[cacheKey]
 
             let ctFont = CTFontCreateWithName(postScriptName as CFString, 16, nil)
@@ -134,10 +133,19 @@ struct FontCatalogService: FontCatalogServiceProtocol {
             }
         }
 
-        let scoredItems = Self.attachProgrammingScores(items, scoreEngine: scoreEngine)
+        let scoredItems: [FontItem]
+        if pendingEnrichmentIndices.isEmpty {
+            scoredItems = partialScored
+        } else {
+            let coverage = FamilyWeightCoverage.build(from: items)
+            scoredItems = Self.attachProgrammingScores(
+                items,
+                familyCoverage: coverage,
+                scoreEngine: scoreEngine
+            )
+        }
         for item in scoredItems {
-            if let url = urlByPostScriptName[item.postScriptName] {
-                let key = scoreManifestStore.cacheKey(for: item.postScriptName, fileURL: url)
+            if let key = cacheKeyByPostScriptName[item.postScriptName] {
                 nextCache[key] = CachedScoreEntry(
                     programming: item.programming,
                     metrics: item.metrics,
