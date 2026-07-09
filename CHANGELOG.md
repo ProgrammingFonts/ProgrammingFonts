@@ -19,12 +19,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - `applyFilters()` reuses cached `managedFontIDs` instead of re-reading the
   activation manifest from disk on every filter pass.
+- `FontActivationService` keeps the activation manifest in memory and
+  refreshes the cache on save, avoiding repeated disk reads from
+  `isManaged`, `managedCount`, and `managedFontIDs`.
+- Catalog reload refreshes managed-font IDs at the start of `load()`.
 - GitHub Actions CI triggers on pushes and PRs to `master` (in addition to
-  `main` and `develop`) and prints toolchain info at job start.
+  `main` and `develop`), prints toolchain info at job start, and validates
+  screenshot conventions.
 
 ### Documentation
 - README documents full Xcode requirement, `xcode-select` verification,
-  XCTest troubleshooting, `build-app.sh`, and bug-report guidance.
+  XCTest troubleshooting, `build-app.sh`, bug-report guidance, and CI /
+  license badges.
 - CONTRIBUTING, screenshot conventions, and issue/PR templates aligned with
   the `master` default branch and v0.3.0-alpha paths.
 

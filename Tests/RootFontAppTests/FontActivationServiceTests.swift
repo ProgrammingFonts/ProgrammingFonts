@@ -75,6 +75,31 @@ final class FontActivationServiceTests: XCTestCase {
         XCTAssertEqual(service.managedCount(), 0)
     }
 
+    func testUninstallUpdatesManagedStateWithoutStaleCache() throws {
+        let sandbox = try makeSandbox()
+        defer { try? FileManager.default.removeItem(at: sandbox) }
+        let sourceFont = sandbox.appendingPathComponent("Source/Fira.ttf")
+        try FileManager.default.createDirectory(at: sourceFont.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try Data("font".utf8).write(to: sourceFont)
+
+        let service = FontActivationService(
+            manifestURL: sandbox.appendingPathComponent("manifest.json"),
+            userInstallDirectoryURL: sandbox.appendingPathComponent("UserFonts", isDirectory: true),
+            availableFontURLsProvider: { [sourceFont] },
+            registerAction: { _, _ in },
+            unregisterAction: { _, _ in }
+        )
+
+        try service.installForUser(fontID: "Fira")
+        XCTAssertTrue(service.isManaged(fontID: "Fira"))
+        XCTAssertEqual(service.managedFontIDs(), ["Fira"])
+
+        try service.uninstall(fontID: "Fira")
+        XCTAssertFalse(service.isManaged(fontID: "Fira"))
+        XCTAssertEqual(service.managedCount(), 0)
+        XCTAssertTrue(service.managedFontIDs().isEmpty)
+    }
+
     private func makeSandbox() throws -> URL {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)

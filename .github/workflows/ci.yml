@@ -30,3 +30,6 @@ jobs:
 
       - name: Check version metadata
         run: python3 scripts/check-version.py
+
+      - name: Check screenshot conventions
+        run: python3 scripts/optimize-screenshots.py --check

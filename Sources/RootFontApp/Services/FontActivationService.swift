@@ -36,6 +36,8 @@ struct FontActivationService: FontActivationServiceProtocol, @unchecked Sendable
     private let availableFontURLsProvider: @Sendable () -> [URL]
     private let registerAction: @Sendable ([URL], CTFontManagerScope) throws -> Void
     private let unregisterAction: @Sendable ([URL], CTFontManagerScope) throws -> Void
+    private let lock = NSLock()
+    private var cachedManifest: [String: ActivatedFontEntry]?
 
     init(
         fileManager: FileManager = .default,
@@ -181,6 +183,17 @@ struct FontActivationService: FontActivationServiceProtocol, @unchecked Sendable
     }
 
     private func loadManifest() -> [String: ActivatedFontEntry] {
+        lock.lock()
+        defer { lock.unlock() }
+        if let cachedManifest {
+            return cachedManifest
+        }
+        let manifest = readManifestFromDisk()
+        cachedManifest = manifest
+        return manifest
+    }
+
+    private func readManifestFromDisk() -> [String: ActivatedFontEntry] {
         guard let data = try? Data(contentsOf: appSupportManifestURL),
               let decoded = try? JSONDecoder().decode([String: ActivatedFontEntry].self, from: data) else {
             return [:]
@@ -193,5 +206,8 @@ struct FontActivationService: FontActivationServiceProtocol, @unchecked Sendable
         try? fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
         guard let data = try? JSONEncoder().encode(manifest) else { return }
         try? data.write(to: appSupportManifestURL, options: .atomic)
+        lock.lock()
+        cachedManifest = manifest
+        lock.unlock()
     }
 }

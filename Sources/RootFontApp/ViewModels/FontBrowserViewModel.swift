@@ -305,6 +305,7 @@ final class FontBrowserViewModel: ObservableObject {
     func load() {
         guard !isLoading else { return }
         FontURLIndex.shared.invalidate()
+        managedFontIDs = activationService.managedFontIDs()
         isLoading = true
         loadProgress = 0
         loadErrorMessage = nil
