@@ -4,6 +4,10 @@ Please include a summary of the change and which issue is fixed. Include relevan
 
 Fixes # (issue)
 
+> **Note:** `Fixes #N`, `Closes #N`, or `Resolves #N` in a commit message or PR
+> description will **automatically close** the linked issue when merged into
+> `master`. Use `Related to #N` if the issue should stay open until verified.
+
 ## Type of change
 
 Please delete options that are not relevant.
@@ -29,6 +33,8 @@ Please delete options that are not relevant.
 - [ ] New and existing unit tests pass locally with my changes
 - [ ] Any dependent changes have been merged and published in downstream modules
 - [ ] I have updated the CHANGELOG.md (if applicable)
+- [ ] I ran `python3 scripts/check-version.py` when version or README metadata changed
+- [ ] I ran `python3 scripts/check-l10n.py` when localization files changed
 
 ## License Agreement
 

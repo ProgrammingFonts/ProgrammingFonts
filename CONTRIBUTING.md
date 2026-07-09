@@ -9,7 +9,7 @@ Xcode project file to build or run it.
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/rootfont.git
+   git clone https://github.com/rootfont/rootfont.git
    cd rootfont
    ```
 
@@ -41,6 +41,11 @@ Xcode project file to build or run it.
    ```
    opens the package directly in Xcode. Do not commit a generated
    `*.xcodeproj` — the package manifest is the source of truth.
+
+5. **Toolchain (required for tests)**
+   RootFont requires the **full Xcode** app, not Command Line Tools alone.
+   See [README.md](README.md#toolchain-setup) for `xcode-select` setup and
+   XCTest verification (`xcrun swift -e 'import XCTest; print("XCTest OK")'`).
 
 ## Code Style
 
@@ -80,6 +85,7 @@ Xcode project file to build or run it.
    python3 scripts/check-l10n.py
    python3 scripts/check-version.py
    ```
+   Merges to `master` run the same checks in GitHub Actions on `macos-14`.
 
 4. **Commit**
    - Keep commit subjects in imperative mood (`Add X`, `Fix Y`).
@@ -91,7 +97,7 @@ Xcode project file to build or run it.
    ```
 
 5. **Push and open a PR**
-   - Push to your fork and open a PR against `main`.
+   - Push to your fork and open a PR against `master`.
    - Fill out the PR template.
 
 ## Testing
@@ -116,7 +122,7 @@ rather than inside the SwiftUI view layer.
 ## Screenshots
 
 - Place screenshots under `screenshots/v<version>/NN-<slug>.png`.
-  Example: `screenshots/v0.2.0-beta/01-main-dark.png`.
+  Example: `screenshots/v0.3.0-alpha/01-main-dark.png`.
 - Run `python3 scripts/optimize-screenshots.py --check` before
   committing. Pass `--compress` (requires `pngquant`) to shrink PNGs
   in place if they exceed the recommended size.

@@ -24,11 +24,13 @@ A clear and concise description of what you expected to happen.
 If applicable, add screenshots to help explain your problem.
 
 ## Environment
-- **RootFont Version:** [e.g. 1.0.0]
-- **macOS Version:** [e.g. macOS 15.0]
-- **Xcode Version:** [e.g. 16.0]
-- **Swift Version:** [e.g. 6.0]
-- **Device:** [e.g. MacBook Pro M3]
+- **RootFont Version:** [e.g. 0.3.0-alpha (5)]
+- **macOS Version:** [e.g. macOS 15.7.4]
+- **Device:** [e.g. MacBook Air M1]
+- **Swift Version:** paste output of `swift --version`
+- **Xcode toolchain:** paste output of `xcode-select -p`
+  (must be `/Applications/Xcode.app/Contents/Developer` for `swift test`)
+- **About diagnostics:** paste **About → Copy System Info** output
 
 ## Additional Context
 Add any other context about the problem here.

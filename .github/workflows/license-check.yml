@@ -4,9 +4,9 @@ on:
   # Temporarily disabled CI/CD
   workflow_dispatch:
   # push:
-  #   branches: [ main, develop ]
+  #   branches: [ master, main, develop ]
   # pull_request:
-  #   branches: [ main ]
+  #   branches: [ master, main ]
   # schedule:
   #   # Run weekly on Monday at 9am UTC
   #   - cron: '0 9 * * 1'

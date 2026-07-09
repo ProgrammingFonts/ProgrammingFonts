@@ -23,6 +23,42 @@ struct MockCatalogService: FontCatalogServiceProtocol {
     }
 }
 
+final class MockActivationService: FontActivationServiceProtocol, @unchecked Sendable {
+    var managedIDs: Set<String> = []
+    private(set) var managedFontIDsCallCount = 0
+
+    func activateForProcess(fontID: String) throws {
+        managedIDs.insert(fontID)
+    }
+
+    func installForUser(fontID: String) throws {
+        managedIDs.insert(fontID)
+    }
+
+    func uninstall(fontID: String) throws {
+        managedIDs.remove(fontID)
+    }
+
+    func reconcile() throws {}
+
+    func isManaged(fontID: String) -> Bool {
+        managedIDs.contains(fontID)
+    }
+
+    func managedCount() -> Int {
+        managedIDs.count
+    }
+
+    func managedFontIDs() -> Set<String> {
+        managedFontIDsCallCount += 1
+        return managedIDs
+    }
+
+    func managedFontsDirectoryURL() -> URL {
+        URL(fileURLWithPath: "/tmp/rootfont-test-managed-fonts")
+    }
+}
+
 final class InMemoryPreferencesStore: PreferencesStoreProtocol {
     var favoriteIDs: Set<String> = []
     var recentFontIDs: [String] = []

@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Swift 6.2+ `SendingRisksDataRace` in `FontBrowserViewModel.load()` and
+  `applyFilters()`: font load and filter work stay on `Task.detached` with
+  Sendable inputs; UI updates run from `@MainActor` tasks without sending
+  `self` across isolation boundaries (related to issue #56).
+- `FontBrowserViewModelTests` now use async `waitForLoad` with
+  `Task.yield` instead of `RunLoop` polling so `swift test` reliably waits
+  for MainActor-scheduled catalog loads.
+
+### Changed
+- `applyFilters()` reuses cached `managedFontIDs` instead of re-reading the
+  activation manifest from disk on every filter pass.
+- GitHub Actions CI triggers on pushes and PRs to `master` (in addition to
+  `main` and `develop`) and prints toolchain info at job start.
+
+### Documentation
+- README documents full Xcode requirement, `xcode-select` verification,
+  XCTest troubleshooting, `build-app.sh`, and bug-report guidance.
+- CONTRIBUTING, screenshot conventions, and issue/PR templates aligned with
+  the `master` default branch and v0.3.0-alpha paths.
+
 ## [0.3.0-alpha] - 2026-06-16
 
 ### Added

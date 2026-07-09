@@ -82,7 +82,10 @@ RootFont v0.3.0-alpha is the programming-font release on top of v0.2.0-beta. Thi
   [developer.apple.com/xcode](https://developer.apple.com/xcode/)
 - **Swift 6.0+** (`Package.swift` uses `swift-tools-version: 6.0`). Swift
   **6.2+** is recommended; newer toolchains apply stricter Swift
-  concurrency checks (see [issue #56](https://github.com/rootfont/rootfont/issues/56)).
+  concurrency checks. A `SendingRisksDataRace` build failure in
+  `FontBrowserViewModel` was fixed on `master` (see
+  [issue #56](https://github.com/rootfont/rootfont/issues/56)); open a
+  new issue if you still hit it on the latest commit.
 
 RootFont is a **macOS-only** SwiftPM project. Building, running, and testing
 on Linux or with Command Line Tools alone is **not supported**.
@@ -116,6 +119,15 @@ once to finish component installation.
 swift run RootFontApp
 ```
 
+### Build .app bundle
+
+```bash
+bash scripts/build-app.sh
+```
+
+Produces `.build/app/RootFont.app` with version, build number, and git
+short SHA embedded in `Info.plist`.
+
 ### Run Tests
 
 ```bash
@@ -129,6 +141,15 @@ bash scripts/install-git-hooks.sh
 ```
 
 Hooks run localization and version-metadata checks on commit when relevant files are staged.
+
+## Reporting bugs
+
+Open an [issue](https://github.com/rootfont/rootfont/issues) with:
+
+- RootFont version and build (from **About → Copy Version**)
+- **About → Copy System Info** output
+- `swift --version` and `xcode-select -p`
+- Steps to reproduce and expected vs actual behavior
 
 ## Contributing
 

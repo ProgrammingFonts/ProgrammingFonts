@@ -513,7 +513,6 @@ final class FontBrowserViewModel: ObservableObject {
     }
 
     func applyFilters() {
-        managedFontIDs = activationService.managedFontIDs()
         let signature = currentFilterSignature()
 
         if let cached = filterResultCache[signature] {

@@ -529,6 +529,46 @@ final class FontBrowserViewModelTests: XCTestCase {
         XCTAssertEqual(FontBrowserViewModel.PreviewPreset.japanese.title(language: .english), "Japanese")
         XCTAssertEqual(FontBrowserViewModel.PreviewPreset.korean.title(language: .korean), "한국어")
     }
+
+    func testApplyFiltersDoesNotReloadManagedFontManifest() async {
+        let activation = MockActivationService()
+        activation.managedIDs = ["Managed"]
+        let managed = FontItem.sample(
+            id: "Managed",
+            familyName: "Managed",
+            source: .user,
+            styleTags: [.regular]
+        )
+        let other = FontItem.sample(
+            id: "Other",
+            familyName: "Other",
+            source: .user,
+            styleTags: [.regular]
+        )
+        let viewModel = FontBrowserViewModel(
+            catalogService: MockCatalogService(fonts: [managed, other]),
+            preferencesStore: InMemoryPreferencesStore(),
+            activationService: activation
+        )
+
+        viewModel.load()
+        await waitForLoad(viewModel)
+        let countAfterInit = activation.managedFontIDsCallCount
+
+        viewModel.applyFilters()
+        viewModel.updateSearchQuery("oth")
+        XCTAssertEqual(activation.managedFontIDsCallCount, countAfterInit)
+
+        viewModel.updateSidebarFilter(.managed)
+        XCTAssertEqual(viewModel.filteredFonts.map(\.id), ["Managed"])
+
+        activation.managedIDs.insert("Other")
+        XCTAssertEqual(viewModel.filteredFonts.map(\.id), ["Managed"])
+
+        viewModel.refreshManagedFontState()
+        XCTAssertEqual(activation.managedFontIDsCallCount, countAfterInit + 1)
+        XCTAssertEqual(viewModel.filteredFonts.map(\.id).sorted(), ["Managed", "Other"])
+    }
 }
 
 private extension ProgrammingProfile {
