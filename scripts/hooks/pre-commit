@@ -20,6 +20,7 @@ CHANGED="$(staged_files || true)"
 
 needs_l10n=0
 needs_version=0
+needs_screenshots=0
 
 for file in $CHANGED; do
     case "$file" in
@@ -28,6 +29,9 @@ for file in $CHANGED; do
             ;;
         Sources/RootFontApp/Resources/AppVersion.json|README.md|Sources/RootFontApp/Models/AppMetadata.swift|CHANGELOG.md)
             needs_version=1
+            ;;
+        screenshots/*/*.png)
+            needs_screenshots=1
             ;;
     esac
 done
@@ -40,6 +44,11 @@ fi
 if [ "$needs_version" -eq 1 ]; then
     echo "pre-commit: running check-version.py"
     python3 scripts/check-version.py
+fi
+
+if [ "$needs_screenshots" -eq 1 ]; then
+    echo "pre-commit: running optimize-screenshots.py --check"
+    python3 scripts/optimize-screenshots.py --check
 fi
 
 exit 0

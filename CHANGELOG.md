@@ -23,9 +23,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   refreshes the cache on save, avoiding repeated disk reads from
   `isManaged`, `managedCount`, and `managedFontIDs`.
 - Catalog reload refreshes managed-font IDs at the start of `load()`.
+- `ScoreManifestStore` caches score manifest entries in memory and updates
+  the cache on save, avoiding repeated reads of `scores.json` during a
+  single catalog session.
 - GitHub Actions CI triggers on pushes and PRs to `master` (in addition to
   `main` and `develop`), prints toolchain info at job start, and validates
   screenshot conventions.
+- Pre-commit hook runs `optimize-screenshots.py --check` when screenshot
+  PNGs are staged.
 
 ### Documentation
 - README documents full Xcode requirement, `xcode-select` verification,

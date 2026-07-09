@@ -22,6 +22,34 @@ final class ScoreManifestStoreTests: XCTestCase {
         XCTAssertEqual(loaded, entries)
     }
 
+    func testRepeatedLoadsUseUpdatedCacheAfterSave() throws {
+        let temp = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let manifestURL = temp.appendingPathComponent("scores.json")
+        let store = ScoreManifestStore(manifestURL: manifestURL)
+
+        let initial: [String: CachedScoreEntry] = [
+            "Mono|1": CachedScoreEntry(
+                programming: ProgrammingProfile.empty.withMonospaced(true),
+                metrics: nil,
+                score: nil
+            )
+        ]
+        store.save(initial)
+        XCTAssertEqual(store.load().keys.sorted(), ["Mono|1"])
+
+        let updated: [String: CachedScoreEntry] = [
+            "Mono|1": initial["Mono|1"]!,
+            "Mono|2": CachedScoreEntry(
+                programming: ProgrammingProfile.empty.withMonospaced(true),
+                metrics: nil,
+                score: nil
+            )
+        ]
+        store.save(updated)
+        XCTAssertEqual(store.load().keys.sorted(), ["Mono|1", "Mono|2"])
+    }
+
     func testCacheKeyChangesWhenMtimeChanges() throws {
         let temp = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)

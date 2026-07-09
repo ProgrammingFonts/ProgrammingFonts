@@ -15,6 +15,8 @@ struct CachedScoreEntry: Codable, Sendable, Hashable {
 struct ScoreManifestStore: ScoreManifestStoreProtocol, @unchecked Sendable {
     private let fileManager: FileManager
     private let manifestURL: URL
+    private let lock = NSLock()
+    private var cachedEntries: [String: CachedScoreEntry]?
 
     init(
         fileManager: FileManager = .default,
@@ -33,10 +35,14 @@ struct ScoreManifestStore: ScoreManifestStoreProtocol, @unchecked Sendable {
     }
 
     func load() -> [String: CachedScoreEntry] {
-        guard let data = try? Data(contentsOf: manifestURL) else {
-            return [:]
+        lock.lock()
+        defer { lock.unlock() }
+        if let cachedEntries {
+            return cachedEntries
         }
-        return (try? JSONDecoder().decode([String: CachedScoreEntry].self, from: data)) ?? [:]
+        let entries = readEntriesFromDisk()
+        cachedEntries = entries
+        return entries
     }
 
     func save(_ entries: [String: CachedScoreEntry]) {
@@ -44,6 +50,16 @@ struct ScoreManifestStore: ScoreManifestStoreProtocol, @unchecked Sendable {
         try? fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
         guard let data = try? JSONEncoder().encode(entries) else { return }
         try? data.write(to: manifestURL, options: .atomic)
+        lock.lock()
+        cachedEntries = entries
+        lock.unlock()
+    }
+
+    private func readEntriesFromDisk() -> [String: CachedScoreEntry] {
+        guard let data = try? Data(contentsOf: manifestURL) else {
+            return [:]
+        }
+        return (try? JSONDecoder().decode([String: CachedScoreEntry].self, from: data)) ?? [:]
     }
 
     func cacheKey(for postScriptName: String, fileURL: URL) -> String {

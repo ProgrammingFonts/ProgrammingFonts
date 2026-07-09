@@ -25,6 +25,11 @@ If you have ideas about how to implement this feature, please describe them here
 ## Additional Context
 Add any other context, mockups, or screenshots about the feature request here.
 
+## Environment (if UI-related)
+- **RootFont Version:** [e.g. 0.3.0-alpha (5)]
+- **macOS Version:** [e.g. macOS 15.x]
+- **Swift / Xcode:** `swift --version`, `xcode-select -p`
+
 ## Priority
 How important is this feature for you?
 - [ ] Critical (blocking my work)

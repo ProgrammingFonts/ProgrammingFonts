@@ -21,6 +21,7 @@ Xcode project file to build or run it.
    - `scripts/check-l10n.py` when a localization file is staged.
    - `scripts/check-version.py` when `AppVersion.json`, `README.md`,
      `AppMetadata.swift`, or `CHANGELOG.md` is staged.
+   - `scripts/optimize-screenshots.py --check` when a screenshot PNG is staged.
 
 3. **Build or run**
    ```bash
@@ -84,6 +85,7 @@ Xcode project file to build or run it.
    swift test
    python3 scripts/check-l10n.py
    python3 scripts/check-version.py
+   python3 scripts/optimize-screenshots.py --check
    ```
    Merges to `master` run the same checks in GitHub Actions on `macos-14`.
 
