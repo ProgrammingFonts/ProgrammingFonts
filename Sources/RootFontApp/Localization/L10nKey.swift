@@ -91,6 +91,15 @@ enum L10nKey {
     case filterGlyphCoverage
     case smartCollections
     case smartCollectionNamePlaceholder
+    case manualCollections
+    case manualCollectionNamePlaceholder
+    case fontTags
+    case fontTagNamePlaceholder
+    case addToCollection
+    case tagSelectedFont
+    case filterCollection
+    case filterTag
+    case noManualCollectionsYet
     case save
     case previewMonospacedNumeralsStyle
     case previewExpandedLetterSpacing

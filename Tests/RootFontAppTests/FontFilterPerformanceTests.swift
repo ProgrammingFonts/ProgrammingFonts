@@ -29,7 +29,9 @@ final class FontFilterPerformanceTests: XCTestCase {
             language: .english,
             showSystemAliasFonts: true,
             scoreWeights: .default,
-            managedFontIDs: []
+            managedFontIDs: [],
+            manualCollectionFontIDs: nil,
+            tagFilterFontIDs: nil
         )
 
         measure {

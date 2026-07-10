@@ -75,6 +75,8 @@ final class InMemoryPreferencesStore: PreferencesStoreProtocol {
     var displayMode: String = "grid"
     var densityMode: String = "compact"
     var smartCollectionsData: Data?
+    var manualCollectionsData: Data?
+    var fontTagsData: Data?
     var scoreWeightsData: Data?
     var fontFeaturePrefsData: Data?
 

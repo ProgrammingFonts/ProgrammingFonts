@@ -60,6 +60,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed duplicate appearance application at window `onAppear` (init
   already applies stored appearance).
 
+### Added
+- Manual collections: create named font lists, filter by collection in the
+  sidebar, and add or remove fonts via context menus.
+- Font tags: tag the selected font from the sidebar, filter by tag, and
+  toggle tags on fonts from context menus. Assignments persist in
+  UserDefaults.
+
 ### Documentation
 - README documents full Xcode requirement, `xcode-select` verification,
   XCTest troubleshooting, `build-app.sh`, bug-report guidance, and CI /

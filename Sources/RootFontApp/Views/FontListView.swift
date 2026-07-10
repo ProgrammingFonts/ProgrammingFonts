@@ -89,6 +89,9 @@ struct FontListView: View {
                                         } onToggleFavorite: {
                                             viewModel.toggleFavorite(item)
                                         }
+                                        .contextMenu {
+                                            FontOrganizationMenus(viewModel: viewModel, item: item)
+                                        }
                                     }
                                 }
                                 .padding(.horizontal)
@@ -142,6 +145,9 @@ struct FontListView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.vertical, 4)
                             .contentShape(Rectangle())
+                            .contextMenu {
+                                FontOrganizationMenus(viewModel: viewModel, item: item)
+                            }
                             .listRowInsets(EdgeInsets(top: 3, leading: 10, bottom: 3, trailing: 10))
                         }
                         .listStyle(.inset)
@@ -627,6 +633,47 @@ private func scoreChip(grade: ProgrammingGrade, language: AppLanguage) -> some V
         }
     }())
     .accessibilityLabel(L10n.tr(gradeL10nKey(grade), language: language))
+}
+
+private struct FontOrganizationMenus: View {
+    @ObservedObject var viewModel: FontBrowserViewModel
+    let item: FontItem
+
+    var body: some View {
+        Menu(viewModel.tr(.addToCollection)) {
+            if viewModel.manualCollections.isEmpty {
+                Text(viewModel.tr(.noManualCollectionsYet))
+            } else {
+                ForEach(viewModel.manualCollections) { collection in
+                    Button {
+                        viewModel.toggleFont(item, inCollection: collection.id)
+                    } label: {
+                        Label(
+                            collection.name,
+                            systemImage: viewModel.isFont(item, inCollection: collection.id)
+                                ? "checkmark"
+                                : "folder"
+                        )
+                    }
+                }
+            }
+        }
+
+        if !viewModel.userTagNames.isEmpty {
+            Menu(viewModel.tr(.fontTags)) {
+                ForEach(viewModel.userTagNames, id: \.self) { tag in
+                    Button {
+                        viewModel.toggleTag(tag, on: item)
+                    } label: {
+                        Label(
+                            tag,
+                            systemImage: viewModel.hasTag(tag, on: item) ? "checkmark" : "tag"
+                        )
+                    }
+                }
+            }
+        }
+    }
 }
 
 private func gradeText(_ grade: ProgrammingGrade) -> String {

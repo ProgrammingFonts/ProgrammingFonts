@@ -3,6 +3,8 @@ import SwiftUI
 struct SidebarView: View {
     @ObservedObject var viewModel: FontBrowserViewModel
     @State private var smartCollectionName = ""
+    @State private var manualCollectionName = ""
+    @State private var fontTagName = ""
     @State private var coverageInput = ""
     @State private var coverageDebounceTask: Task<Void, Never>?
 
@@ -73,6 +75,37 @@ struct SidebarView: View {
                     .padding(.vertical, 2)
                     .contentShape(Rectangle())
                     .tag(FontBrowserViewModel.SidebarFilter.managed)
+            }
+
+            Section(viewModel.tr(.manualCollections)) {
+                HStack(spacing: 6) {
+                    TextField(viewModel.tr(.manualCollectionNamePlaceholder), text: $manualCollectionName)
+                    Button(viewModel.tr(.save)) {
+                        viewModel.createManualCollection(named: manualCollectionName)
+                        manualCollectionName = ""
+                    }
+                    .disabled(manualCollectionName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+                ForEach(viewModel.manualCollections) { collection in
+                    manualCollectionRow(collection)
+                }
+            }
+
+            Section(viewModel.tr(.fontTags)) {
+                HStack(spacing: 6) {
+                    TextField(viewModel.tr(.fontTagNamePlaceholder), text: $fontTagName)
+                    Button(viewModel.tr(.tagSelectedFont)) {
+                        viewModel.createTag(named: fontTagName)
+                        fontTagName = ""
+                    }
+                    .disabled(
+                        fontTagName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                            || viewModel.selectedFont == nil
+                    )
+                }
+                ForEach(viewModel.userTagNames, id: \.self) { tag in
+                    tagRow(tag)
+                }
             }
 
             Section {
@@ -248,5 +281,61 @@ struct SidebarView: View {
         .buttonStyle(.plain)
         .accessibilityLabel(title)
         .accessibilityAddTraits(viewModel.workspaceModule == module ? .isSelected : [])
+    }
+
+    @ViewBuilder
+    private func manualCollectionRow(_ collection: ManualCollection) -> some View {
+        HStack {
+            Button {
+                if viewModel.activeManualCollectionID == collection.id {
+                    viewModel.clearManualCollectionFilter()
+                } else {
+                    viewModel.selectManualCollection(collection)
+                }
+            } label: {
+                HStack {
+                    Label(
+                        "\(collection.name) (\(collection.fontIDs.count))",
+                        systemImage: "folder"
+                    )
+                    Spacer()
+                    if viewModel.activeManualCollectionID == collection.id {
+                        Image(systemName: "checkmark")
+                            .foregroundStyle(.tint)
+                    }
+                }
+            }
+            .buttonStyle(.plain)
+            Button(role: .destructive) {
+                viewModel.removeManualCollection(collection)
+            } label: {
+                Image(systemName: "trash")
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    @ViewBuilder
+    private func tagRow(_ tag: String) -> some View {
+        Button {
+            if viewModel.activeTagName == tag {
+                viewModel.clearTagFilter()
+            } else {
+                viewModel.selectTag(tag)
+            }
+        } label: {
+            HStack {
+                Label(tag, systemImage: "tag")
+                Spacer()
+                if viewModel.activeTagName == tag {
+                    Image(systemName: "checkmark")
+                        .foregroundStyle(.tint)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.vertical, 2)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 }

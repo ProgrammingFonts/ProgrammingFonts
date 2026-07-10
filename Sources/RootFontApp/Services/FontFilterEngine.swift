@@ -24,6 +24,8 @@ enum FontFilterEngine {
         let showSystemAliasFonts: Bool
         let scoreWeights: ScoreWeights
         let managedFontIDs: Set<String>
+        let manualCollectionFontIDs: Set<String>?
+        let tagFilterFontIDs: Set<String>?
     }
 
     static func compute(
@@ -39,6 +41,16 @@ enum FontFilterEngine {
             : nil
         let recentIDSet = Set(recentIDs)
         let filtered = fonts.filter { item in
+            if let collectionIDs = inputs.manualCollectionFontIDs,
+               !collectionIDs.contains(item.id) {
+                return false
+            }
+
+            if let tagIDs = inputs.tagFilterFontIDs,
+               !tagIDs.contains(item.id) {
+                return false
+            }
+
             if !inputs.preparedQuery.isEmpty,
                !matches(item: item, index: searchIndex[item.id], query: inputs.preparedQuery) {
                 return false

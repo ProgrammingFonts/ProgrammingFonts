@@ -21,7 +21,9 @@ final class FontFilterEngineTests: XCTestCase {
             language: .english,
             showSystemAliasFonts: true,
             scoreWeights: .default,
-            managedFontIDs: []
+            managedFontIDs: [],
+            manualCollectionFontIDs: nil,
+            tagFilterFontIDs: nil
         )
         let result = FontFilterEngine.compute(
             fonts: fonts,
@@ -48,7 +50,9 @@ final class FontFilterEngineTests: XCTestCase {
             language: .english,
             showSystemAliasFonts: true,
             scoreWeights: .default,
-            managedFontIDs: []
+            managedFontIDs: [],
+            manualCollectionFontIDs: nil,
+            tagFilterFontIDs: nil
         )
         let result = FontFilterEngine.compute(
             fonts: fonts,
@@ -75,7 +79,9 @@ final class FontFilterEngineTests: XCTestCase {
             language: .english,
             showSystemAliasFonts: true,
             scoreWeights: .default,
-            managedFontIDs: []
+            managedFontIDs: [],
+            manualCollectionFontIDs: nil,
+            tagFilterFontIDs: nil
         )
         let result = FontFilterEngine.compute(
             fonts: fonts,
@@ -85,5 +91,63 @@ final class FontFilterEngineTests: XCTestCase {
             inputs: inputs
         )
         XCTAssertEqual(result.map(\.id).sorted(), ["A", "B"])
+    }
+
+    func testFiltersByManualCollectionMembership() {
+        let fonts = [
+            FontItem.sample(id: "A", familyName: "Alpha", source: .user, styleTags: [.regular]),
+            FontItem.sample(id: "B", familyName: "Beta", source: .user, styleTags: [.regular]),
+        ]
+        let inputs = FontFilterEngine.Inputs(
+            preparedQuery: SearchMatcher.prepare(query: ""),
+            coverageQuery: "",
+            selectedSource: nil,
+            selectedStyle: nil,
+            sidebarFilter: .all,
+            sortOption: .familyName,
+            language: .english,
+            showSystemAliasFonts: true,
+            scoreWeights: .default,
+            managedFontIDs: [],
+            manualCollectionFontIDs: ["A"],
+            tagFilterFontIDs: nil
+        )
+        let result = FontFilterEngine.compute(
+            fonts: fonts,
+            searchIndex: [:],
+            favoriteIDs: [],
+            recentIDs: [],
+            inputs: inputs
+        )
+        XCTAssertEqual(result.map(\.id), ["A"])
+    }
+
+    func testFiltersByTagMembership() {
+        let fonts = [
+            FontItem.sample(id: "A", familyName: "Alpha", source: .user, styleTags: [.regular]),
+            FontItem.sample(id: "B", familyName: "Beta", source: .user, styleTags: [.regular]),
+        ]
+        let inputs = FontFilterEngine.Inputs(
+            preparedQuery: SearchMatcher.prepare(query: ""),
+            coverageQuery: "",
+            selectedSource: nil,
+            selectedStyle: nil,
+            sidebarFilter: .all,
+            sortOption: .familyName,
+            language: .english,
+            showSystemAliasFonts: true,
+            scoreWeights: .default,
+            managedFontIDs: [],
+            manualCollectionFontIDs: nil,
+            tagFilterFontIDs: ["B"]
+        )
+        let result = FontFilterEngine.compute(
+            fonts: fonts,
+            searchIndex: [:],
+            favoriteIDs: [],
+            recentIDs: [],
+            inputs: inputs
+        )
+        XCTAssertEqual(result.map(\.id), ["B"])
     }
 }

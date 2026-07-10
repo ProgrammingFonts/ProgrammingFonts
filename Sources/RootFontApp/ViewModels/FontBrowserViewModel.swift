@@ -43,6 +43,8 @@ final class FontBrowserViewModel: ObservableObject {
         let workspaceModule: WorkspaceModule
         let managedSignature: Int
         let scoreWeightsSignature: Int
+        let manualCollectionSignature: Int
+        let tagFilterSignature: Int
     }
 
     enum PreviewPreset: String, CaseIterable, Identifiable {
@@ -126,6 +128,10 @@ final class FontBrowserViewModel: ObservableObject {
     @Published private(set) var appearanceMode: AppAppearanceMode
     @Published private(set) var showSystemAliasFonts: Bool
     @Published private(set) var smartCollections: [SmartCollection] = []
+    @Published private(set) var manualCollections: [ManualCollection] = []
+    @Published private(set) var fontTagAssignments: [String: [String]] = [:]
+    @Published var activeManualCollectionID: String?
+    @Published var activeTagName: String?
     @Published private(set) var workspaceModule: WorkspaceModule = .library
     @Published private(set) var scoreWeights: ScoreWeights = .default
     @Published private(set) var scoreWeightPreset: ScoreWeightPreset = .default
@@ -153,6 +159,8 @@ final class FontBrowserViewModel: ObservableObject {
         self.sidebarFilter = SidebarFilter(rawValue: preferencesStore.sidebarFilter) ?? .all
         self.sortOption = SortOption(rawValue: preferencesStore.sortOption) ?? .familyName
         self.smartCollections = Self.decodeSmartCollections(preferencesStore.smartCollectionsData)
+        self.manualCollections = Self.decodeManualCollections(preferencesStore.manualCollectionsData)
+        self.fontTagAssignments = Self.decodeFontTagAssignments(preferencesStore.fontTagsData)
         if let data = preferencesStore.scoreWeightsData,
            let decoded = try? JSONDecoder().decode(ScoreWeights.self, from: data) {
             self.scoreWeights = decoded
@@ -213,6 +221,8 @@ final class FontBrowserViewModel: ObservableObject {
     }
 
     func applySmartCollection(_ collection: SmartCollection) {
+        activeManualCollectionID = nil
+        activeTagName = nil
         searchQuery = collection.searchQuery
         glyphCoverageQuery = collection.glyphCoverageQuery
         selectedSource = collection.selectedSource
@@ -228,6 +238,109 @@ final class FontBrowserViewModel: ObservableObject {
         persistSmartCollections()
     }
 
+    var userTagNames: [String] {
+        Set(fontTagAssignments.values.flatMap { $0 }).sorted()
+    }
+
+    func createManualCollection(named name: String) {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        var fontIDs: [String] = []
+        if let selectedFont {
+            fontIDs = [selectedFont.id]
+        }
+        let collection = ManualCollection(name: trimmed, fontIDs: fontIDs)
+        manualCollections.insert(collection, at: 0)
+        persistManualCollections()
+    }
+
+    func removeManualCollection(_ collection: ManualCollection) {
+        manualCollections.removeAll(where: { $0.id == collection.id })
+        if activeManualCollectionID == collection.id {
+            activeManualCollectionID = nil
+            applyFilters()
+        }
+        persistManualCollections()
+    }
+
+    func selectManualCollection(_ collection: ManualCollection) {
+        activeManualCollectionID = collection.id
+        activeTagName = nil
+        applyFilters()
+    }
+
+    func clearManualCollectionFilter() {
+        guard activeManualCollectionID != nil else { return }
+        activeManualCollectionID = nil
+        applyFilters()
+    }
+
+    func selectTag(_ tagName: String) {
+        activeTagName = tagName
+        activeManualCollectionID = nil
+        applyFilters()
+    }
+
+    func clearTagFilter() {
+        guard activeTagName != nil else { return }
+        activeTagName = nil
+        applyFilters()
+    }
+
+    func isFont(_ item: FontItem, inCollection collectionID: String) -> Bool {
+        manualCollections.first(where: { $0.id == collectionID })?.fontIDs.contains(item.id) ?? false
+    }
+
+    func toggleFont(_ item: FontItem, inCollection collectionID: String) {
+        guard let index = manualCollections.firstIndex(where: { $0.id == collectionID }) else { return }
+        if manualCollections[index].fontIDs.contains(item.id) {
+            manualCollections[index].fontIDs.removeAll { $0 == item.id }
+        } else {
+            manualCollections[index].fontIDs.append(item.id)
+        }
+        persistManualCollections()
+        if activeManualCollectionID == collectionID {
+            applyFilters()
+        }
+    }
+
+    func hasTag(_ tag: String, on item: FontItem) -> Bool {
+        fontTagAssignments[item.id]?.contains(tag) ?? false
+    }
+
+    func toggleTag(_ tag: String, on item: FontItem) {
+        var tags = fontTagAssignments[item.id] ?? []
+        if let index = tags.firstIndex(of: tag) {
+            tags.remove(at: index)
+        } else {
+            tags.append(tag)
+        }
+        if tags.isEmpty {
+            fontTagAssignments.removeValue(forKey: item.id)
+        } else {
+            fontTagAssignments[item.id] = tags.sorted()
+        }
+        persistFontTags()
+        if activeTagName == tag {
+            applyFilters()
+        }
+    }
+
+    func createTag(named name: String) {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        if let selectedFont {
+            var tags = fontTagAssignments[selectedFont.id] ?? []
+            guard !tags.contains(trimmed) else { return }
+            tags.append(trimmed)
+            fontTagAssignments[selectedFont.id] = tags.sorted()
+            persistFontTags()
+            if activeTagName == trimmed {
+                applyFilters()
+            }
+        }
+    }
+
     func updateSortOption(_ value: SortOption) {
         sortOption = value
         preferencesStore.sortOption = value.rawValue
@@ -235,6 +348,8 @@ final class FontBrowserViewModel: ObservableObject {
     }
 
     func updateSidebarFilter(_ value: SidebarFilter) {
+        activeManualCollectionID = nil
+        activeTagName = nil
         sidebarFilter = value
         preferencesStore.sidebarFilter = value.rawValue
         applyFilters()
@@ -412,6 +527,12 @@ final class FontBrowserViewModel: ObservableObject {
         if !glyphCoverageQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             parts.append(tr(.filterGlyphCoverage))
         }
+        if activeManualCollectionID != nil {
+            parts.append(tr(.filterCollection))
+        }
+        if activeTagName != nil {
+            parts.append(tr(.filterTag))
+        }
         return parts.isEmpty ? tr(.noFilters) : "\(tr(.filtersEnabledPrefix)) \(parts.joined(separator: " · "))"
     }
 
@@ -422,6 +543,8 @@ final class FontBrowserViewModel: ObservableObject {
         sidebarFilter = .all
         sortOption = .familyName
         glyphCoverageQuery = ""
+        activeManualCollectionID = nil
+        activeTagName = nil
         preferencesStore.searchQuery = ""
         preferencesStore.sidebarFilter = SidebarFilter.all.rawValue
         preferencesStore.sortOption = SortOption.familyName.rawValue
@@ -594,8 +717,27 @@ final class FontBrowserViewModel: ObservableObject {
             language: language,
             showSystemAliasFonts: showSystemAliasFonts,
             scoreWeights: scoreWeights,
-            managedFontIDs: managedFontIDs
+            managedFontIDs: managedFontIDs,
+            manualCollectionFontIDs: activeManualCollectionFontIDs(),
+            tagFilterFontIDs: activeTagFilterFontIDs()
         )
+    }
+
+    private func activeManualCollectionFontIDs() -> Set<String>? {
+        guard let id = activeManualCollectionID,
+              let collection = manualCollections.first(where: { $0.id == id }) else {
+            return nil
+        }
+        return Set(collection.fontIDs)
+    }
+
+    private func activeTagFilterFontIDs() -> Set<String>? {
+        guard let tag = activeTagName else { return nil }
+        var ids = Set<String>()
+        for (fontID, tags) in fontTagAssignments where tags.contains(tag) {
+            ids.insert(fontID)
+        }
+        return ids
     }
 
     private func currentFilterSignature() -> FilterSignature {
@@ -613,7 +755,9 @@ final class FontBrowserViewModel: ObservableObject {
             recentsSignature: sidebarFilter == .recents ? recentFontIDs.hashValue : 0,
             workspaceModule: workspaceModule,
             managedSignature: sidebarFilter == .managed ? managedFontIDs.hashValue : 0,
-            scoreWeightsSignature: filterUsesScoreWeights() ? scoreWeights.hashValue : 0
+            scoreWeightsSignature: filterUsesScoreWeights() ? scoreWeights.hashValue : 0,
+            manualCollectionSignature: activeManualCollectionID?.hashValue ?? 0,
+            tagFilterSignature: activeTagName?.hashValue ?? 0
         )
     }
 
@@ -708,9 +852,27 @@ final class FontBrowserViewModel: ObservableObject {
         preferencesStore.smartCollectionsData = try? JSONEncoder().encode(smartCollections)
     }
 
+    private func persistManualCollections() {
+        preferencesStore.manualCollectionsData = try? JSONEncoder().encode(manualCollections)
+    }
+
+    private func persistFontTags() {
+        preferencesStore.fontTagsData = try? JSONEncoder().encode(fontTagAssignments)
+    }
+
     private static func decodeSmartCollections(_ data: Data?) -> [SmartCollection] {
         guard let data else { return [] }
         return (try? JSONDecoder().decode([SmartCollection].self, from: data)) ?? []
+    }
+
+    private static func decodeManualCollections(_ data: Data?) -> [ManualCollection] {
+        guard let data else { return [] }
+        return (try? JSONDecoder().decode([ManualCollection].self, from: data)) ?? []
+    }
+
+    private static func decodeFontTagAssignments(_ data: Data?) -> [String: [String]] {
+        guard let data else { return [:] }
+        return (try? JSONDecoder().decode([String: [String]].self, from: data)) ?? [:]
     }
 
     private func recalculateProgrammingScores() {

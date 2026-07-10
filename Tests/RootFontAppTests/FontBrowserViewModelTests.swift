@@ -627,6 +627,55 @@ final class FontBrowserViewModelTests: XCTestCase {
         XCTAssertNotNil(scoreAfter)
         XCTAssertNotEqual(scoreBefore, scoreAfter)
     }
+
+    func testManualCollectionPersistsAndFiltersFonts() async {
+        let fonts = [
+            FontItem.sample(id: "A", familyName: "Alpha", source: .user, styleTags: [.regular]),
+            FontItem.sample(id: "B", familyName: "Beta", source: .user, styleTags: [.regular]),
+        ]
+        let store = InMemoryPreferencesStore()
+        let viewModel = FontBrowserViewModel(
+            catalogService: MockCatalogService(fonts: fonts),
+            preferencesStore: store
+        )
+
+        viewModel.load()
+        await waitForLoad(viewModel)
+        viewModel.selectFont(fonts[0])
+        viewModel.createManualCollection(named: "Work")
+        XCTAssertNotNil(store.manualCollectionsData)
+
+        guard let collection = viewModel.manualCollections.first else {
+            return XCTFail("Expected manual collection")
+        }
+        XCTAssertEqual(collection.fontIDs, ["A"])
+
+        viewModel.toggleFont(fonts[1], inCollection: collection.id)
+        viewModel.selectManualCollection(collection)
+        XCTAssertEqual(viewModel.filteredFonts.map(\.id).sorted(), ["A", "B"])
+    }
+
+    func testFontTagsPersistAndFilter() async {
+        let fonts = [
+            FontItem.sample(id: "A", familyName: "Alpha", source: .user, styleTags: [.regular]),
+            FontItem.sample(id: "B", familyName: "Beta", source: .user, styleTags: [.regular]),
+        ]
+        let store = InMemoryPreferencesStore()
+        let viewModel = FontBrowserViewModel(
+            catalogService: MockCatalogService(fonts: fonts),
+            preferencesStore: store
+        )
+
+        viewModel.load()
+        await waitForLoad(viewModel)
+        viewModel.selectFont(fonts[0])
+        viewModel.createTag(named: "coding")
+        XCTAssertNotNil(store.fontTagsData)
+        XCTAssertTrue(viewModel.hasTag("coding", on: fonts[0]))
+
+        viewModel.selectTag("coding")
+        XCTAssertEqual(viewModel.filteredFonts.map(\.id), ["A"])
+    }
 }
 
 private extension ProgrammingProfile {
