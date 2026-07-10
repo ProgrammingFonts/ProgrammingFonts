@@ -3,6 +3,7 @@
 ![RootFont Logo](logo-rootfont-300x300.png)
 
 [![CI](https://github.com/rootfont/rootfont/actions/workflows/ci.yml/badge.svg)](https://github.com/rootfont/rootfont/actions/workflows/ci.yml)
+[![License Check](https://github.com/rootfont/rootfont/actions/workflows/license-check.yml/badge.svg)](https://github.com/rootfont/rootfont/actions/workflows/license-check.yml)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 The native font manager for designers and programmers on macOS.

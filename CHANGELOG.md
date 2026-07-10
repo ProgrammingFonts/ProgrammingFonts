@@ -50,6 +50,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the full catalog on every filter pass.
 - CI cancels superseded workflow runs and bumps `actions/checkout` and
   `actions/cache` to v5; Dependabot drops invalid assignee placeholder.
+- Re-enabled the `license-check` GitHub Actions workflow with weekly
+  schedule, push/PR triggers on `master`, and docs-only path ignores.
 
 ### Documentation
 - README documents full Xcode requirement, `xcode-select` verification,
