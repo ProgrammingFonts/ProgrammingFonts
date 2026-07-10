@@ -67,6 +67,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   toggle tags on fonts from context menus. Assignments persist in
   UserDefaults.
 
+### Changed
+- CI SwiftPM cache key is scoped to `macos-15` to avoid stale artifacts
+  from older runners; build logs upload on failure for easier diagnosis.
+- License Check validates the root `LICENSE` file instead of scanning the
+  whole tree (avoids false positives from `NOTICE` and docs).
+- `SearchMatcher.PreparedQuery` and `FontItem` are explicitly `Sendable`.
+- Manual collection/tag filter cache signatures track membership content.
+
 ### Documentation
 - README documents full Xcode requirement, `xcode-select` verification,
   XCTest troubleshooting, `build-app.sh`, bug-report guidance, and CI /

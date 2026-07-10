@@ -293,11 +293,13 @@ final class FontBrowserViewModel: ObservableObject {
 
     func toggleFont(_ item: FontItem, inCollection collectionID: String) {
         guard let index = manualCollections.firstIndex(where: { $0.id == collectionID }) else { return }
-        if manualCollections[index].fontIDs.contains(item.id) {
-            manualCollections[index].fontIDs.removeAll { $0 == item.id }
+        var updated = manualCollections[index]
+        if updated.fontIDs.contains(item.id) {
+            updated.fontIDs.removeAll { $0 == item.id }
         } else {
-            manualCollections[index].fontIDs.append(item.id)
+            updated.fontIDs.append(item.id)
         }
+        manualCollections[index] = updated
         persistManualCollections()
         if activeManualCollectionID == collectionID {
             applyFilters()
@@ -756,8 +758,8 @@ final class FontBrowserViewModel: ObservableObject {
             workspaceModule: workspaceModule,
             managedSignature: sidebarFilter == .managed ? managedFontIDs.hashValue : 0,
             scoreWeightsSignature: filterUsesScoreWeights() ? scoreWeights.hashValue : 0,
-            manualCollectionSignature: activeManualCollectionID?.hashValue ?? 0,
-            tagFilterSignature: activeTagName?.hashValue ?? 0
+            manualCollectionSignature: activeManualCollectionFontIDs()?.hashValue ?? 0,
+            tagFilterSignature: activeTagFilterFontIDs()?.hashValue ?? 0
         )
     }
 

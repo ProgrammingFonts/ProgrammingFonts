@@ -14,7 +14,7 @@ import Foundation
 /// The matcher can also return the matching *ranges* of the original
 /// haystack for UI highlighting (see `highlight(haystack:query:)`).
 enum SearchMatcher {
-    struct PreparedQuery {
+    struct PreparedQuery: Sendable {
         let trimmed: String
         let normalized: String
         let choseong: String

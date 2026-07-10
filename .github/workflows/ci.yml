@@ -31,9 +31,9 @@ jobs:
           path: |
             .build
             ~/Library/Caches/org.swift.swiftpm
-          key: ${{ runner.os }}-spm-${{ hashFiles('Package.swift') }}
+          key: macos-15-spm-${{ hashFiles('Package.swift') }}
           restore-keys: |
-            ${{ runner.os }}-spm-
+            macos-15-spm-
 
       - name: Print toolchain
         run: |
@@ -41,8 +41,20 @@ jobs:
           xcode-select -p
           swift --version
 
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+
       - name: Build
-        run: swift build
+        run: |
+          set -o pipefail
+          swift build 2>&1 | tee build.log
+
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: swift-build-log
+          path: build.log
 
       - name: Test
         run: swift test

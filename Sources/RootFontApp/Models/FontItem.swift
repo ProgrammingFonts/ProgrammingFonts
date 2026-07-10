@@ -13,7 +13,7 @@ enum FontStyleTag: String, CaseIterable, Codable {
     case other
 }
 
-struct FontItem: Identifiable, Hashable, Codable {
+struct FontItem: Identifiable, Hashable, Codable, Sendable {
     let id: String
     let familyName: String
     let postScriptName: String
