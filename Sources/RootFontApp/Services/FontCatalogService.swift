@@ -109,7 +109,12 @@ struct FontCatalogService: FontCatalogServiceProtocol {
             }
         }
 
-        let partialScored = Self.attachProgrammingScores(items, scoreEngine: scoreEngine)
+        let partialScored: [FontItem]
+        if pendingEnrichmentIndices.isEmpty {
+            partialScored = items
+        } else {
+            partialScored = Self.attachProgrammingScores(items, scoreEngine: scoreEngine)
+        }
         let partialSorted = partialScored.sorted { lhs, rhs in
             lhs.familyName.localizedCaseInsensitiveCompare(rhs.familyName) == .orderedAscending
         }

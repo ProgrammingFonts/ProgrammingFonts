@@ -38,6 +38,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `FontActivationService` resolves font URLs through `FontURLIndex` for
   O(1) lookup instead of scanning the full font list.
 - CI caches SwiftPM artifacts and skips macOS jobs for docs-only changes.
+- Fully cached catalog loads skip the initial programming-score pass as well.
+- `FontActivationService` skips activation-manifest writes when content is
+  unchanged.
+- Filter-result cache signatures include score weights only when programming
+  sort or sidebar filters need them; favorite, recent, and managed
+  signatures are scoped to their active sidebar filters.
+- Selecting fonts and toggling favorites no longer refilters the list unless
+  the matching sidebar filter is active.
+- Programming workspace caches the monospaced font subset instead of filtering
+  the full catalog on every filter pass.
+- CI cancels superseded workflow runs and bumps `actions/checkout` and
+  `actions/cache` to v5; Dependabot drops invalid assignee placeholder.
 
 ### Documentation
 - README documents full Xcode requirement, `xcode-select` verification,

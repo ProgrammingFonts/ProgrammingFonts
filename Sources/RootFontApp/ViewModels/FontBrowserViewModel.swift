@@ -42,6 +42,7 @@ final class FontBrowserViewModel: ObservableObject {
         let recentsSignature: Int
         let workspaceModule: WorkspaceModule
         let managedSignature: Int
+        let scoreWeightsSignature: Int
     }
 
     enum PreviewPreset: String, CaseIterable, Identifiable {
@@ -102,6 +103,7 @@ final class FontBrowserViewModel: ObservableObject {
     private var activeFilterTask: Task<Void, Never>?
     private var filterResultCache: [FilterSignature: [FontItem]] = [:]
     private var filterResultCacheOrder: [FilterSignature] = []
+    private var monospacedFonts: [FontItem] = []
 
     @Published private(set) var allFonts: [FontItem] = []
     @Published private(set) var filteredFonts: [FontItem] = []
@@ -468,13 +470,17 @@ final class FontBrowserViewModel: ObservableObject {
     func clearRecents() {
         recentFontIDs = []
         preferencesStore.recentFontIDs = []
-        applyFilters()
+        if sidebarFilter == .recents {
+            applyFilters()
+        }
     }
 
     func clearFavorites() {
         favoriteIDs = []
         preferencesStore.favoriteIDs = []
-        applyFilters()
+        if sidebarFilter == .favorites {
+            applyFilters()
+        }
     }
 
     func selectFirstIfNeeded() {
@@ -600,11 +606,23 @@ final class FontBrowserViewModel: ObservableObject {
             language: language,
             showSystemAliasFonts: showSystemAliasFonts,
             catalogEpoch: catalogEpoch,
-            favoritesSignature: favoriteIDs.hashValue,
-            recentsSignature: recentFontIDs.hashValue,
+            favoritesSignature: sidebarFilter == .favorites ? favoriteIDs.hashValue : 0,
+            recentsSignature: sidebarFilter == .recents ? recentFontIDs.hashValue : 0,
             workspaceModule: workspaceModule,
-            managedSignature: managedFontIDs.hashValue
+            managedSignature: sidebarFilter == .managed ? managedFontIDs.hashValue : 0,
+            scoreWeightsSignature: filterUsesScoreWeights() ? scoreWeights.hashValue : 0
         )
+    }
+
+    private func filterUsesScoreWeights() -> Bool {
+        switch sidebarFilter {
+        case .recommendedForCode, .avoidForCode:
+            return true
+        case .recents:
+            return false
+        default:
+            return sortOption == .programmingFit
+        }
     }
 
     private func scopedFonts(for fonts: [FontItem]) -> [FontItem] {
@@ -612,7 +630,7 @@ final class FontBrowserViewModel: ObservableObject {
         case .library:
             return fonts
         case .programming:
-            return fonts.filter { $0.programming?.isMonospaced == true }
+            return monospacedFonts
         }
     }
 
@@ -658,8 +676,13 @@ final class FontBrowserViewModel: ObservableObject {
             let choseong = names.map(SearchMatcher.choseongProjection)
             return (item.id, FontFilterEngine.SearchIndexEntry(normalizedNames: normalized, choseongNames: choseong))
         })
+        rebuildMonospacedFonts()
         catalogEpoch &+= 1
         invalidateFilterResultCache()
+    }
+
+    private func rebuildMonospacedFonts() {
+        monospacedFonts = allFonts.filter { $0.programming?.isMonospaced == true }
     }
 
     private func clearCoverageCache() {
@@ -690,6 +713,7 @@ final class FontBrowserViewModel: ObservableObject {
     private func recalculateProgrammingScores() {
         let engine = ProgrammingScoreEngine(weights: scoreWeights)
         allFonts = FontCatalogService.attachProgrammingScores(allFonts, scoreEngine: engine)
+        rebuildMonospacedFonts()
     }
 
     private func persistScoreWeights() {
@@ -744,7 +768,9 @@ final class FontBrowserViewModel: ObservableObject {
             favoriteIDs.insert(item.id)
         }
         preferencesStore.favoriteIDs = favoriteIDs
-        applyFilters()
+        if sidebarFilter == .favorites {
+            applyFilters()
+        }
     }
 
     func isFavorite(_ item: FontItem) -> Bool {
@@ -758,6 +784,8 @@ final class FontBrowserViewModel: ObservableObject {
             recentFontIDs = Array(recentFontIDs.prefix(maxRecents))
         }
         preferencesStore.recentFontIDs = recentFontIDs
-        applyFilters()
+        if sidebarFilter == .recents {
+            applyFilters()
+        }
     }
 }

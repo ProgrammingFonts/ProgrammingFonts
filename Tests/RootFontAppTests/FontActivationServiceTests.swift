@@ -100,6 +100,34 @@ final class FontActivationServiceTests: XCTestCase {
         XCTAssertTrue(service.managedFontIDs().isEmpty)
     }
 
+    func testSaveSkipsWriteWhenManifestUnchanged() throws {
+        let sandbox = try makeSandbox()
+        defer { try? FileManager.default.removeItem(at: sandbox) }
+        let sourceFont = sandbox.appendingPathComponent("Source/Fira.ttf")
+        try FileManager.default.createDirectory(at: sourceFont.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try Data("font".utf8).write(to: sourceFont)
+        let manifestURL = sandbox.appendingPathComponent("manifest.json")
+
+        let service = FontActivationService(
+            manifestURL: manifestURL,
+            userInstallDirectoryURL: sandbox.appendingPathComponent("UserFonts", isDirectory: true),
+            availableFontURLsProvider: { [sourceFont] },
+            registerAction: { _, _ in },
+            unregisterAction: { _, _ in }
+        )
+
+        try service.activateForProcess(fontID: "Fira")
+        let attrsAfterFirstSave = try FileManager.default.attributesOfItem(atPath: manifestURL.path)
+        let mtimeAfterFirstSave = (attrsAfterFirstSave[.modificationDate] as? Date)?.timeIntervalSince1970 ?? 0
+
+        Thread.sleep(forTimeInterval: 1.1)
+        try service.activateForProcess(fontID: "Fira")
+
+        let attrsAfterSecondSave = try FileManager.default.attributesOfItem(atPath: manifestURL.path)
+        let mtimeAfterSecondSave = (attrsAfterSecondSave[.modificationDate] as? Date)?.timeIntervalSince1970 ?? 0
+        XCTAssertEqual(mtimeAfterFirstSave, mtimeAfterSecondSave, accuracy: 0.001)
+    }
+
     private func makeSandbox() throws -> URL {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)

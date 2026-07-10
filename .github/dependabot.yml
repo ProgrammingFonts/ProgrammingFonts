@@ -15,9 +15,6 @@ updates:
       day: "monday"
     # Allow up to 10 open pull requests for dependencies
     open-pull-requests-limit: 10
-    # Assign reviewers to pull requests
-    assignees:
-      - "maintainer"
     # Add labels to pull requests
     labels:
       - "dependencies"

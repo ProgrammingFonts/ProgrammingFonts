@@ -569,6 +569,64 @@ final class FontBrowserViewModelTests: XCTestCase {
         XCTAssertEqual(activation.managedFontIDsCallCount, countAfterInit + 1)
         XCTAssertEqual(viewModel.filteredFonts.map(\.id).sorted(), ["Managed", "Other"])
     }
+
+    func testSelectFontDoesNotRefilterWhenSidebarIsAll() async {
+        let fonts = [
+            FontItem.sample(id: "A", familyName: "Alpha", source: .user, styleTags: [.regular]),
+            FontItem.sample(id: "B", familyName: "Beta", source: .user, styleTags: [.regular]),
+        ]
+        let viewModel = FontBrowserViewModel(
+            catalogService: MockCatalogService(fonts: fonts),
+            preferencesStore: InMemoryPreferencesStore()
+        )
+
+        viewModel.load()
+        await waitForLoad(viewModel)
+        let before = viewModel.filteredFonts.map(\.id)
+
+        viewModel.selectFont(fonts[1])
+        XCTAssertEqual(viewModel.filteredFonts.map(\.id), before)
+    }
+
+    func testApplyFiltersReflectsScoreWeightChanges() async {
+        let monoHigh = FontItem(
+            id: "MonoHigh",
+            familyName: "Mono",
+            postScriptName: "MonoHigh",
+            displayName: "Mono High",
+            source: .user,
+            styleTags: [.regular, .monospace],
+            programming: ProgrammingProfile(
+                isMonospaced: true,
+                hasProgrammingLigatures: true,
+                availableStylisticSets: ["ss01"],
+                hasZeroVariant: true,
+                hasPowerlineGlyphs: true,
+                hasNerdFontGlyphs: true,
+                hasBoxDrawing: true,
+                coverageBuckets: [.latinExtended, .cyrillic, .greek],
+                isVariableFont: true
+            ),
+            metrics: FontMetricsSample(asciiAdvanceVariance: 0.05, uniformWidth: true, confusableDistances: [.iL1: 0.9])
+        )
+        let viewModel = FontBrowserViewModel(
+            catalogService: MockCatalogService(fonts: [monoHigh]),
+            preferencesStore: InMemoryPreferencesStore()
+        )
+
+        viewModel.load()
+        await waitForLoad(viewModel)
+        viewModel.updateSortOption(.programmingFit)
+        viewModel.updateSidebarFilter(.all)
+
+        let scoreBefore = viewModel.allFonts.first?.programmingScore?.total
+        viewModel.applyScoreWeightPreset(.minimalist)
+        let scoreAfter = viewModel.allFonts.first?.programmingScore?.total
+
+        XCTAssertNotNil(scoreBefore)
+        XCTAssertNotNil(scoreAfter)
+        XCTAssertNotEqual(scoreBefore, scoreAfter)
+    }
 }
 
 private extension ProgrammingProfile {

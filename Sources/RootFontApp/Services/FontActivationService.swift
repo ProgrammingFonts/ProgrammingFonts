@@ -213,6 +213,13 @@ struct FontActivationService: FontActivationServiceProtocol, @unchecked Sendable
     }
 
     private func saveManifest(_ manifest: [String: ActivatedFontEntry]) {
+        lock.lock()
+        if cachedManifest == manifest {
+            lock.unlock()
+            return
+        }
+        lock.unlock()
+
         let directory = appSupportManifestURL.deletingLastPathComponent()
         try? fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
         guard let data = try? JSONEncoder().encode(manifest) else { return }
