@@ -54,6 +54,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   schedule, push/PR triggers on `master`, and docs-only path ignores.
 - Bumped GitHub Actions dependencies: `actions/checkout` v7,
   `actions/cache` v6, `fossa-contrib/fossa-action` v4.
+- CI runs on `macos-15` for a newer Swift/Xcode toolchain.
+- Filter commits track `filteredFontIDs` for O(1) selection visibility
+  checks; recent sidebar filter uses a `Set` for membership lookups.
+- Removed duplicate appearance application at window `onAppear` (init
+  already applies stored appearance).
 
 ### Documentation
 - README documents full Xcode requirement, `xcode-select` verification,

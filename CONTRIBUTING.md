@@ -87,7 +87,7 @@ Xcode project file to build or run it.
    python3 scripts/check-version.py
    python3 scripts/optimize-screenshots.py --check
    ```
-   Merges to `master` run the same checks in GitHub Actions on `macos-14`.
+   Merges to `master` run the same checks in GitHub Actions on `macos-15`.
 
 4. **Commit**
    - Keep commit subjects in imperative mood (`Add X`, `Fix Y`).

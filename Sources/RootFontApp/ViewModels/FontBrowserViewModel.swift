@@ -104,6 +104,7 @@ final class FontBrowserViewModel: ObservableObject {
     private var filterResultCache: [FilterSignature: [FontItem]] = [:]
     private var filterResultCacheOrder: [FilterSignature] = []
     private var monospacedFonts: [FontItem] = []
+    private var filteredFontIDs: Set<String> = []
 
     @Published private(set) var allFonts: [FontItem] = []
     @Published private(set) var filteredFonts: [FontItem] = []
@@ -359,6 +360,7 @@ final class FontBrowserViewModel: ObservableObject {
         if failed {
             allFonts = []
             filteredFonts = []
+            filteredFontIDs = []
             selectedFont = nil
             rebuildSearchIndex()
             clearCoverageCache()
@@ -379,7 +381,7 @@ final class FontBrowserViewModel: ObservableObject {
 
     var selectedFontVisible: Bool {
         guard let selectedFont else { return false }
-        return filteredFonts.contains(selectedFont)
+        return filteredFontIDs.contains(selectedFont.id)
     }
 
     var favoriteCount: Int {
@@ -577,6 +579,7 @@ final class FontBrowserViewModel: ObservableObject {
             storeFilterResultInCache(items, for: signature)
         }
         filteredFonts = items
+        filteredFontIDs = Set(items.map(\.id))
         selectFirstIfNeeded()
     }
 

@@ -37,6 +37,7 @@ enum FontFilterEngine {
         let familyCoverage = needsFamilyCoverage(inputs: inputs)
             ? FamilyWeightCoverage.build(from: fonts)
             : nil
+        let recentIDSet = Set(recentIDs)
         let filtered = fonts.filter { item in
             if !inputs.preparedQuery.isEmpty,
                !matches(item: item, index: searchIndex[item.id], query: inputs.preparedQuery) {
@@ -69,7 +70,7 @@ enum FontFilterEngine {
             case .favorites:
                 return favoriteIDs.contains(item.id)
             case .recents:
-                return recentIDs.contains(item.id)
+                return recentIDSet.contains(item.id)
             case .recommendedForCode:
                 guard let familyCoverage else { return false }
                 return isRecommendedForCode(item, coverage: familyCoverage, scoreEngine: scoreEngine)

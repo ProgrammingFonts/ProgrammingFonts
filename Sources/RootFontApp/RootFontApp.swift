@@ -45,7 +45,6 @@ struct RootFontApp: App {
                 )
                 .onAppear {
                     viewModel.load()
-                    AppAppearanceApplier.applyImmediately(viewModel.appearanceMode)
                 }
                 .onChange(of: viewModel.appearanceMode) { _, newValue in
                     AppAppearanceApplier.apply(newValue)

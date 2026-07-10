@@ -49,7 +49,7 @@ RootFont v0.3.0-alpha is the programming-font release on top of v0.2.0-beta. Thi
 - **FontURLIndex** caches system font URL enumeration across load, activation, and filtering.
 - **FontPreviewView** split into focused subviews; programming grade badges on grid cards.
 - Expanded hit targets in sidebar and font list for more reliable row selection.
-- GitHub Actions CI on `macos-14` (`swift build`, `swift test`, `check-l10n.py`, `check-version.py`); ~80 tests across 16 suites including scoring, activation, and compare coverage.
+- GitHub Actions CI on `macos-15` (`swift build`, `swift test`, `check-l10n.py`, `check-version.py`); ~80 tests across 16 suites including scoring, activation, and compare coverage.
 
 ## Screenshots (v0.3.0-alpha)
 
