@@ -52,6 +52,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `actions/cache` to v5; Dependabot drops invalid assignee placeholder.
 - Re-enabled the `license-check` GitHub Actions workflow with weekly
   schedule, push/PR triggers on `master`, and docs-only path ignores.
+- Bumped GitHub Actions dependencies: `actions/checkout` v7,
+  `actions/cache` v6, `fossa-contrib/fossa-action` v4.
 
 ### Documentation
 - README documents full Xcode requirement, `xcode-select` verification,
