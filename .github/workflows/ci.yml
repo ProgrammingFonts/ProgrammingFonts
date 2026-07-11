@@ -109,7 +109,13 @@ jobs:
           script: |
             const fs = require('fs');
             const log = fs.existsSync('test.log') ? fs.readFileSync('test.log', 'utf8') : '(no test.log)';
-            const body = `**CI test log** (\`${context.sha.slice(0, 7)}\`)\n\n\`\`\`text\n${log.slice(-12000)}\n\`\`\``;
+            const failureLines = log
+              .split('\n')
+              .filter((line) => /failed|error:|XCTAssert/i.test(line))
+              .slice(-40)
+              .join('\n');
+            const tail = log.slice(-8000);
+            const body = `**CI test log** (\`${context.sha.slice(0, 7)}\`)\n\n**Failures**\n\`\`\`text\n${failureLines || '(no failure lines matched)'}\n\`\`\`\n\n**Tail**\n\`\`\`text\n${tail}\n\`\`\``;
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,

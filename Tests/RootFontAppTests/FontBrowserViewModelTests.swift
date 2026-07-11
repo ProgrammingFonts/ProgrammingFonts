@@ -351,7 +351,7 @@ final class FontBrowserViewModelTests: XCTestCase {
     }
 
     func testRecommendedForCodeFilterUsesProgrammingSignals() async {
-        let recommended = FontItem(
+        var recommended = FontItem(
             id: "recommended",
             familyName: "Recommended",
             postScriptName: "Recommended-Regular",
@@ -371,7 +371,7 @@ final class FontBrowserViewModelTests: XCTestCase {
             ),
             metrics: FontMetricsSample(asciiAdvanceVariance: 0.1, uniformWidth: true, confusableDistances: [:])
         )
-        let avoid = FontItem(
+        var avoid = FontItem(
             id: "avoid",
             familyName: "Avoid",
             postScriptName: "Avoid-Regular",
@@ -381,6 +381,12 @@ final class FontBrowserViewModelTests: XCTestCase {
             programming: ProgrammingProfile.empty.withMonospaced(true),
             metrics: FontMetricsSample(asciiAdvanceVariance: 1.8, uniformWidth: false, confusableDistances: [:])
         )
+        let coverage = FamilyWeightCoverage.build(from: [recommended, avoid])
+        let engine = ProgrammingScoreEngine()
+        recommended.programmingScore = engine.score(item: recommended, familyCoverage: coverage)
+        avoid.programmingScore = engine.score(item: avoid, familyCoverage: coverage)
+        XCTAssertGreaterThanOrEqual(recommended.programmingScore?.total ?? 0, 55)
+        XCTAssertLessThan(avoid.programmingScore?.total ?? 100, 55)
         let viewModel = FontBrowserViewModel(
             catalogService: MockCatalogService(fonts: [recommended, avoid]),
             preferencesStore: InMemoryPreferencesStore()
@@ -620,12 +626,12 @@ final class FontBrowserViewModelTests: XCTestCase {
         viewModel.updateSidebarFilter(.all)
 
         let scoreBefore = viewModel.allFonts.first?.programmingScore?.total
-        viewModel.applyScoreWeightPreset(.minimalist)
+        viewModel.applyScoreWeightPreset(.terminalHeavy)
         let scoreAfter = viewModel.allFonts.first?.programmingScore?.total
 
         XCTAssertNotNil(scoreBefore)
         XCTAssertNotNil(scoreAfter)
-        XCTAssertNotEqual(scoreBefore, scoreAfter)
+        XCTAssertNotEqual(scoreBefore, scoreAfter, "Terminal-heavy weights should change the cached score total")
     }
 
     func testManualCollectionPersistsAndFiltersFonts() async {
