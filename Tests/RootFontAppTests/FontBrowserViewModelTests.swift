@@ -565,6 +565,7 @@ final class FontBrowserViewModelTests: XCTestCase {
         viewModel.updateSearchQuery("oth")
         XCTAssertEqual(activation.managedFontIDsCallCount, countAfterInit)
 
+        viewModel.updateSearchQuery("")
         viewModel.updateSidebarFilter(.managed)
         XCTAssertEqual(viewModel.filteredFonts.map(\.id), ["Managed"])
 
