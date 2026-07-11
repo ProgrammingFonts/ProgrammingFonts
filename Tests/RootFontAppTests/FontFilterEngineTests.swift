@@ -32,7 +32,7 @@ final class FontFilterEngineTests: XCTestCase {
             recentIDs: [],
             inputs: inputs
         )
-        XCTAssertEqual(result.map(\.id), ["B"])
+        XCTAssertEqual(result.fonts.map(\.id), ["B"])
     }
 
     func testSortsByFamilyName() {
@@ -61,7 +61,7 @@ final class FontFilterEngineTests: XCTestCase {
             recentIDs: [],
             inputs: inputs
         )
-        XCTAssertEqual(result.map(\.familyName), ["Alpha", "Zebra"])
+        XCTAssertEqual(result.fonts.map(\.familyName), ["Alpha", "Zebra"])
     }
 
     func testAllSidebarSkipsFamilyCoverageBuild() {
@@ -90,7 +90,7 @@ final class FontFilterEngineTests: XCTestCase {
             recentIDs: [],
             inputs: inputs
         )
-        XCTAssertEqual(result.map(\.id).sorted(), ["A", "B"])
+        XCTAssertEqual(result.fonts.map(\.id).sorted(), ["A", "B"])
     }
 
     func testFiltersByManualCollectionMembership() {
@@ -119,7 +119,7 @@ final class FontFilterEngineTests: XCTestCase {
             recentIDs: [],
             inputs: inputs
         )
-        XCTAssertEqual(result.map(\.id), ["A"])
+        XCTAssertEqual(result.fonts.map(\.id), ["A"])
     }
 
     func testFiltersByTagMembership() {
@@ -148,6 +148,6 @@ final class FontFilterEngineTests: XCTestCase {
             recentIDs: [],
             inputs: inputs
         )
-        XCTAssertEqual(result.map(\.id), ["B"])
+        XCTAssertEqual(result.fonts.map(\.id), ["B"])
     }
 }

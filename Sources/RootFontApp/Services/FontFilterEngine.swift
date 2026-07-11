@@ -26,6 +26,13 @@ enum FontFilterEngine {
         let managedFontIDs: Set<String>
         let manualCollectionFontIDs: Set<String>?
         let tagFilterFontIDs: Set<String>?
+        let familyWeightCoverage: FamilyWeightCoverage?
+        let coverageSupportCache: [String: Bool]
+    }
+
+    struct ComputeOutput: Sendable {
+        let fonts: [FontItem]
+        let coverageCacheUpdates: [String: Bool]
     }
 
     static func compute(
@@ -34,11 +41,17 @@ enum FontFilterEngine {
         favoriteIDs: Set<String>,
         recentIDs: [String],
         inputs: Inputs
-    ) -> [FontItem] {
+    ) -> ComputeOutput {
         let scoreEngine = ProgrammingScoreEngine(weights: inputs.scoreWeights)
-        let familyCoverage = needsFamilyCoverage(inputs: inputs)
-            ? FamilyWeightCoverage.build(from: fonts)
-            : nil
+        let familyCoverage: FamilyWeightCoverage?
+        if needsFamilyCoverage(inputs: inputs) {
+            familyCoverage = inputs.familyWeightCoverage
+                ?? FamilyWeightCoverage.build(from: fonts)
+        } else {
+            familyCoverage = nil
+        }
+        var coverageCache = inputs.coverageSupportCache
+        var coverageCacheUpdates: [String: Bool] = [:]
         let recentIDSet = Set(recentIDs)
         let filtered = fonts.filter { item in
             if let collectionIDs = inputs.manualCollectionFontIDs,
@@ -64,12 +77,24 @@ enum FontFilterEngine {
                 return false
             }
 
-            if !inputs.coverageQuery.isEmpty,
-               !fontSupportsAllCharacters(
-                    postScriptName: item.postScriptName,
-                    text: inputs.coverageQuery
-               ) {
-                return false
+            if !inputs.coverageQuery.isEmpty {
+                let cacheKey = "\(item.postScriptName)|\(inputs.coverageQuery)"
+                let supported: Bool
+                if let cached = coverageCache[cacheKey] {
+                    supported = cached
+                } else {
+                    supported = fontSupportsAllCharacters(
+                        postScriptName: item.postScriptName,
+                        text: inputs.coverageQuery
+                    )
+                    coverageCache[cacheKey] = supported
+                    if inputs.coverageSupportCache[cacheKey] != supported {
+                        coverageCacheUpdates[cacheKey] = supported
+                    }
+                }
+                if !supported {
+                    return false
+                }
             }
 
             switch inputs.sidebarFilter {
@@ -97,13 +122,14 @@ enum FontFilterEngine {
         let presentation = inputs.showSystemAliasFonts
             ? filtered
             : collapseSystemAliasFonts(in: filtered)
-        return sort(
+        let sorted = sort(
             presentation,
             inputs: inputs,
             recentIDs: recentIDs,
             coverage: familyCoverage,
             scoreEngine: scoreEngine
         )
+        return ComputeOutput(fonts: sorted, coverageCacheUpdates: coverageCacheUpdates)
     }
 
     private static func needsFamilyCoverage(inputs: Inputs) -> Bool {
@@ -245,9 +271,8 @@ enum FontFilterEngine {
 
     // MARK: Glyph coverage
 
-    /// Thread-safe coverage check — intentionally does NOT consult the
-    /// MainActor-bound coverage cache, which keeps this function usable
-    /// from detached tasks. CoreText glyph queries are thread-safe.
+    /// CoreText glyph queries are thread-safe. Filter passes snapshot the
+    /// MainActor coverage cache via `Inputs.coverageSupportCache`.
     static func fontSupportsAllCharacters(postScriptName: String, text: String) -> Bool {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty { return true }

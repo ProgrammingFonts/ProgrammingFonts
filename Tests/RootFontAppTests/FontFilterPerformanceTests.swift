@@ -35,13 +35,13 @@ final class FontFilterPerformanceTests: XCTestCase {
         )
 
         measure {
-            _ = FontFilterEngine.compute(
-                fonts: fonts,
-                searchIndex: index,
-                favoriteIDs: [],
-                recentIDs: [],
-                inputs: inputs
-            )
+        _ = FontFilterEngine.compute(
+            fonts: fonts,
+            searchIndex: index,
+            favoriteIDs: [],
+            recentIDs: [],
+            inputs: inputs
+        ).fonts
         }
     }
 }

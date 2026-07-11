@@ -23,7 +23,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   for MainActor-scheduled catalog loads.
 
 ### Changed
-- `applyFilters()` reuses cached `managedFontIDs` instead of re-reading the
+- `FontFilterEngine` reuses precomputed `FamilyWeightCoverage` and glyph
+  coverage cache snapshots so programming-mode filters and detached filter
+  tasks avoid rebuilding weight tiers or re-querying CoreText per pass.
+- Catalog load skips rescoring and score-manifest writes when every font is
+  already cached and default score weights are in effect.
+- `FontCatalogService` returns early on fully cached loads without
+  rebuilding the score manifest dictionary.
+- Search query normalization is prepared once per keystroke and reused for
+  filtering and list highlighting.
+- CI SwiftPM cache is re-enabled; diagnostic cache wipes removed now that
+  builds are stable.
   activation manifest from disk on every filter pass.
 - `FontActivationService` keeps the activation manifest in memory and
   refreshes the cache on save, avoiding repeated disk reads from

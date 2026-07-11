@@ -54,7 +54,6 @@ struct FontCatalogService: FontCatalogServiceProtocol {
         var cacheKeyByPostScriptName: [String: String] = [:]
         var pendingEnrichmentIndices: [Int] = []
         let cachedEntries = scoreManifestStore.load()
-        var nextCache: [String: CachedScoreEntry] = [:]
         items.reserveCapacity(descriptors.count)
 
         for url in descriptors {
@@ -138,17 +137,18 @@ struct FontCatalogService: FontCatalogServiceProtocol {
             }
         }
 
-        let scoredItems: [FontItem]
         if pendingEnrichmentIndices.isEmpty {
-            scoredItems = partialScored
-        } else {
-            let coverage = FamilyWeightCoverage.build(from: items)
-            scoredItems = Self.attachProgrammingScores(
-                items,
-                familyCoverage: coverage,
-                scoreEngine: scoreEngine
-            )
+            reportProgress?(1.0)
+            return partialSorted
         }
+
+        let coverage = FamilyWeightCoverage.build(from: items)
+        let scoredItems = Self.attachProgrammingScores(
+            items,
+            familyCoverage: coverage,
+            scoreEngine: scoreEngine
+        )
+        var nextCache: [String: CachedScoreEntry] = [:]
         for item in scoredItems {
             if let key = cacheKeyByPostScriptName[item.postScriptName] {
                 nextCache[key] = CachedScoreEntry(
