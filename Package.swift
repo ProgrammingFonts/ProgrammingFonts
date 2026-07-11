@@ -19,12 +19,18 @@ let package = Package(
             ],
             resources: [
                 .process("Resources")
+            ],
+            swiftSettings: [
+                .unsafeFlags(["-Xfrontend", "-strict-concurrency=minimal"])
             ]
         ),
         .testTarget(
             name: "RootFontAppTests",
             dependencies: ["RootFontApp"],
-            path: "Tests/RootFontAppTests"
+            path: "Tests/RootFontAppTests",
+            swiftSettings: [
+                .unsafeFlags(["-Xfrontend", "-strict-concurrency=minimal"])
+            ]
         )
     ]
 )

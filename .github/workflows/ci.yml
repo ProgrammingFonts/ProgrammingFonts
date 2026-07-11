@@ -48,6 +48,14 @@ jobs:
         run: |
           set -o pipefail
           swift build 2>&1 | tee build.log
+          BUILD_STATUS=${PIPESTATUS[0]}
+          if [ "$BUILD_STATUS" -ne 0 ]; then
+            echo "=== swift build failed (exit $BUILD_STATUS) ==="
+            grep "error:" build.log | head -40 | while IFS= read -r line; do
+              echo "::error title=swift build::$line"
+            done
+            exit "$BUILD_STATUS"
+          fi
 
       - name: Upload build log on failure
         if: failure()
