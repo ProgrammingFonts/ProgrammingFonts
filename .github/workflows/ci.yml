@@ -85,12 +85,16 @@ jobs:
           DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
         shell: bash
         run: |
-          swift test 2>&1 | tee test.log
+          swift test --parallel 2>&1 | tee test.log
           status=${PIPESTATUS[0]}
           if [ "$status" -ne 0 ]; then
             echo "=== swift test failed (exit $status) ==="
             tail -80 test.log
             exit "$status"
+          fi
+          if grep -E "testFilterLargeCatalogCompletesWithinBudget|Executed .* tests" test.log > /dev/null; then
+            echo "## Performance gate" >> "$GITHUB_STEP_SUMMARY"
+            grep "testFilterLargeCatalogCompletesWithinBudget" test.log >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
           fi
 
       - name: Upload test log on failure
