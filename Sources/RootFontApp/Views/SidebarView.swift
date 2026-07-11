@@ -31,17 +31,17 @@ struct SidebarView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 2)
                     .contentShape(Rectangle())
-                    .tag(FontBrowserViewModel.SidebarFilter.all)
+                    .tag(SidebarFilter.all)
                 Label(viewModel.tr(.systemFonts), systemImage: "desktopcomputer")
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 2)
                     .contentShape(Rectangle())
-                    .tag(FontBrowserViewModel.SidebarFilter.system)
+                    .tag(SidebarFilter.system)
                 Label(viewModel.tr(.userFonts), systemImage: "person")
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 2)
                     .contentShape(Rectangle())
-                    .tag(FontBrowserViewModel.SidebarFilter.user)
+                    .tag(SidebarFilter.user)
             }
 
             if viewModel.workspaceModule == .programming {
@@ -50,12 +50,12 @@ struct SidebarView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.vertical, 2)
                         .contentShape(Rectangle())
-                        .tag(FontBrowserViewModel.SidebarFilter.recommendedForCode)
+                        .tag(SidebarFilter.recommendedForCode)
                     Label(viewModel.tr(.avoidForCode), systemImage: "exclamationmark.triangle")
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.vertical, 2)
                         .contentShape(Rectangle())
-                        .tag(FontBrowserViewModel.SidebarFilter.avoidForCode)
+                        .tag(SidebarFilter.avoidForCode)
                 }
             }
 
@@ -64,17 +64,17 @@ struct SidebarView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 2)
                     .contentShape(Rectangle())
-                    .tag(FontBrowserViewModel.SidebarFilter.favorites)
+                    .tag(SidebarFilter.favorites)
                 Label("\(viewModel.tr(.recents)) (\(viewModel.recentCount))", systemImage: "clock")
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 2)
                     .contentShape(Rectangle())
-                    .tag(FontBrowserViewModel.SidebarFilter.recents)
+                    .tag(SidebarFilter.recents)
                 Label(viewModel.tr(.managedByRootFont), systemImage: "externaldrive.badge.checkmark")
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 2)
                     .contentShape(Rectangle())
-                    .tag(FontBrowserViewModel.SidebarFilter.managed)
+                    .tag(SidebarFilter.managed)
             }
 
             Section(viewModel.tr(.manualCollections)) {
@@ -261,7 +261,7 @@ struct SidebarView: View {
     private func moduleRow(
         title: String,
         systemImage: String,
-        module: FontBrowserViewModel.WorkspaceModule
+        module: WorkspaceModule
     ) -> some View {
         Button {
             viewModel.updateWorkspaceModule(module)

@@ -1,6 +1,6 @@
 import Foundation
 
-enum AppLanguage: String, CaseIterable, Codable, Identifiable {
+enum AppLanguage: String, CaseIterable, Codable, Identifiable, Sendable {
     case english = "en"
     case simplifiedChinese = "zh-Hans"
     case traditionalChinese = "zh-Hant"

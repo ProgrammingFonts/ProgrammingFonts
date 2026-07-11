@@ -1,11 +1,11 @@
 import Foundation
 
-enum FontSource: String, CaseIterable, Codable {
+enum FontSource: String, CaseIterable, Codable, Sendable {
     case system
     case user
 }
 
-enum FontStyleTag: String, CaseIterable, Codable {
+enum FontStyleTag: String, CaseIterable, Codable, Sendable {
     case regular
     case bold
     case italic

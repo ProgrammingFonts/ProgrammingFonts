@@ -4,30 +4,6 @@ import Foundation
 
 @MainActor
 final class FontBrowserViewModel: ObservableObject {
-    enum WorkspaceModule: String, CaseIterable, Sendable {
-        case library
-        case programming
-    }
-
-    enum SidebarFilter: String, CaseIterable, Sendable {
-        case all
-        case system
-        case user
-        case favorites
-        case recents
-        case recommendedForCode
-        case avoidForCode
-        case managed
-    }
-
-    enum SortOption: String, CaseIterable, Identifiable, Sendable {
-        case familyName
-        case displayName
-        case programmingFit
-
-        var id: Self { self }
-    }
-
     private struct FilterSignature: Hashable {
         let searchQuery: String
         let coverageQuery: String

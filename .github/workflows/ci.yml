@@ -56,6 +56,14 @@ jobs:
           name: swift-build-log
           path: build.log
 
+      - name: Summarize build log
+        if: failure()
+        run: |
+          echo "## Swift build log (last 100 lines)" >> "$GITHUB_STEP_SUMMARY"
+          echo '```text' >> "$GITHUB_STEP_SUMMARY"
+          tail -100 build.log >> "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
       - name: Test
         run: swift test
 

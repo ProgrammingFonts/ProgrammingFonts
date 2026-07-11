@@ -18,8 +18,8 @@ enum FontFilterEngine {
         let coverageQuery: String
         let selectedSource: FontSource?
         let selectedStyle: FontStyleTag?
-        let sidebarFilter: FontBrowserViewModel.SidebarFilter
-        let sortOption: FontBrowserViewModel.SortOption
+        let sidebarFilter: SidebarFilter
+        let sortOption: SortOption
         let language: AppLanguage
         let showSystemAliasFonts: Bool
         let scoreWeights: ScoreWeights

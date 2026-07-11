@@ -131,8 +131,8 @@ final class FontBrowserViewModelTests: XCTestCase {
     func testRestoresFilterStateFromStore() {
         let store = InMemoryPreferencesStore()
         store.searchQuery = "noto"
-        store.sidebarFilter = FontBrowserViewModel.SidebarFilter.user.rawValue
-        store.sortOption = FontBrowserViewModel.SortOption.displayName.rawValue
+        store.sidebarFilter = SidebarFilter.user.rawValue
+        store.sortOption = SortOption.displayName.rawValue
 
         let viewModel = FontBrowserViewModel(
             catalogService: MockCatalogService(fonts: []),
@@ -156,8 +156,8 @@ final class FontBrowserViewModelTests: XCTestCase {
         viewModel.updateSidebarFilter(.favorites)
 
         XCTAssertEqual(store.searchQuery, "sf")
-        XCTAssertEqual(store.sortOption, FontBrowserViewModel.SortOption.displayName.rawValue)
-        XCTAssertEqual(store.sidebarFilter, FontBrowserViewModel.SidebarFilter.favorites.rawValue)
+        XCTAssertEqual(store.sortOption, SortOption.displayName.rawValue)
+        XCTAssertEqual(store.sidebarFilter, SidebarFilter.favorites.rawValue)
     }
     func testUpdateAppearanceModePersistsToStore() {
         let store = InMemoryPreferencesStore()

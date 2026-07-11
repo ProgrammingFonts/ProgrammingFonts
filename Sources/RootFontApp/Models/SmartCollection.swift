@@ -16,7 +16,7 @@ struct SmartCollection: Identifiable, Codable, Hashable {
         glyphCoverageQuery: String,
         selectedSource: FontSource?,
         selectedStyle: FontStyleTag?,
-        sidebarFilter: FontBrowserViewModel.SidebarFilter
+        sidebarFilter: SidebarFilter
     ) {
         self.id = id
         self.name = name
@@ -27,7 +27,7 @@ struct SmartCollection: Identifiable, Codable, Hashable {
         self.sidebarFilterRawValue = sidebarFilter.rawValue
     }
 
-    var sidebarFilter: FontBrowserViewModel.SidebarFilter {
-        FontBrowserViewModel.SidebarFilter(rawValue: sidebarFilterRawValue) ?? .all
+    var sidebarFilter: SidebarFilter {
+        SidebarFilter(rawValue: sidebarFilterRawValue) ?? .all
     }
 }

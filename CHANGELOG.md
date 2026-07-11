@@ -74,6 +74,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   whole tree (avoids false positives from `NOTICE` and docs).
 - `SearchMatcher.PreparedQuery` and `FontItem` are explicitly `Sendable`.
 - Manual collection/tag filter cache signatures track membership content.
+- Filter enums (`SidebarFilter`, `SortOption`, `WorkspaceModule`) moved out
+  of `@MainActor` `FontBrowserViewModel` so Swift 6 treats them as
+  unconditionally `Sendable` in `FontFilterEngine` detached tasks.
 
 ### Documentation
 - README documents full Xcode requirement, `xcode-select` verification,

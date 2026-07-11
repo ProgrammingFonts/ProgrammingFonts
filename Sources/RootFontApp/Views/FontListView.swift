@@ -256,7 +256,7 @@ struct FontListView: View {
                         viewModel.updateSortOption(newValue)
                     }
                 )) {
-                    ForEach(FontBrowserViewModel.SortOption.allCases) { option in
+                    ForEach(SortOption.allCases) { option in
                         Text(viewModel.title(for: option)).tag(option)
                     }
                 }
