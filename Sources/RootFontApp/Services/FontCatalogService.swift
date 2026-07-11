@@ -132,19 +132,43 @@ struct FontCatalogService: FontCatalogServiceProtocol {
 
         if !pendingEnrichmentIndices.isEmpty {
             let total = pendingEnrichmentIndices.count
-            for (done, index) in pendingEnrichmentIndices.enumerated() {
-                var item = items[index]
-                let postScriptName = item.postScriptName
-                let programmingProfile = featureInspector.inspect(postScriptName: postScriptName)
-                let metrics = metricsProbe.measure(
-                    postScriptName: postScriptName,
-                    isMonospaced: programmingProfile.isMonospaced
-                )
-                item.programming = programmingProfile
-                item.metrics = metrics
-                items[index] = item
-                reportProgress?(0.35 + 0.55 * (Double(done + 1) / Double(total)))
+            let progressLock = NSLock()
+            var completed = 0
+            let workerCount = min(
+                ProcessInfo.processInfo.activeProcessorCount,
+                max(1, total)
+            )
+            let semaphore = DispatchSemaphore(value: workerCount)
+            let group = DispatchGroup()
+
+            for index in pendingEnrichmentIndices {
+                group.enter()
+                DispatchQueue.global(qos: .userInitiated).async {
+                    semaphore.wait()
+                    defer {
+                        semaphore.signal()
+                        group.leave()
+                    }
+
+                    let postScriptName = items[index].postScriptName
+                    let programmingProfile = self.featureInspector.inspect(postScriptName: postScriptName)
+                    let metrics = self.metricsProbe.measure(
+                        postScriptName: postScriptName,
+                        isMonospaced: programmingProfile.isMonospaced
+                    )
+
+                    progressLock.lock()
+                    var item = items[index]
+                    item.programming = programmingProfile
+                    item.metrics = metrics
+                    items[index] = item
+                    completed += 1
+                    let progress = 0.35 + 0.55 * (Double(completed) / Double(total))
+                    progressLock.unlock()
+                    reportProgress?(progress)
+                }
             }
+            group.wait()
         }
 
         if pendingEnrichmentIndices.isEmpty {
