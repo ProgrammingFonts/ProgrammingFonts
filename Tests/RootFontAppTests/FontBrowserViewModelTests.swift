@@ -599,7 +599,7 @@ final class FontBrowserViewModelTests: XCTestCase {
             programming: ProgrammingProfile(
                 isMonospaced: true,
                 hasProgrammingLigatures: true,
-                availableStylisticSets: ["ss01"],
+                availableStylisticSets: [StylisticSet(tag: "ss01", name: "Alt")],
                 hasZeroVariant: true,
                 hasPowerlineGlyphs: true,
                 hasNerdFontGlyphs: true,
