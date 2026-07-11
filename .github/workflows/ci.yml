@@ -50,15 +50,21 @@ jobs:
           rm -rf .build
           rm -rf ~/Library/Caches/org.swift.swiftpm
 
+      - name: Resolve package
+        run: swift package resolve -v
+
       - name: Build
         shell: bash
+        env:
+          DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
         run: |
-          swift build > build.log 2>&1
+          swift build -v > build.log 2>&1
           status=$?
+          echo "build_log_bytes=$(wc -c < build.log | tr -d ' ')"
           if [ "$status" -ne 0 ]; then
             echo "=== swift build failed (exit $status) ==="
             cat build.log
-            grep -E "error:|fatal error:|SendingRisksDataRace|Undefined symbols|ld:" build.log | head -50 | while IFS= read -r line; do
+            grep -Ei "error:|fatal error:|SendingRisksDataRace|Undefined symbols|ld:|cannot find|invalid manifest|failed" build.log | head -60 | while IFS= read -r line; do
               echo "::error title=swift build::$line"
             done
             exit "$status"

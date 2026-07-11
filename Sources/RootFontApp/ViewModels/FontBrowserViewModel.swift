@@ -2,24 +2,24 @@ import AppKit
 import CoreText
 import Foundation
 
-@MainActor
-final class FontBrowserViewModel: ObservableObject {
-    /// Routes catalog load callbacks back to the main actor without capturing
-    /// `FontBrowserViewModel` in `@Sendable` closures passed to `Task.detached`.
-    nonisolated private final class CatalogLoadBridge: @unchecked Sendable {
-        weak var owner: FontBrowserViewModel?
+/// Routes catalog load callbacks back to the main actor without capturing
+/// `FontBrowserViewModel` in `@Sendable` closures passed to `Task.detached`.
+private final class CatalogLoadBridge: @unchecked Sendable {
+    weak var owner: FontBrowserViewModel?
 
-        @MainActor
-        func handlePartial(_ fonts: [FontItem]) {
-            owner?.applyPartialLoadResult(fonts: fonts)
-        }
-
-        @MainActor
-        func handleProgress(_ progress: Double) {
-            owner?.loadProgress = progress
-        }
+    @MainActor
+    func handlePartial(_ fonts: [FontItem]) {
+        owner?.deliverPartialLoad(fonts)
     }
 
+    @MainActor
+    func handleProgress(_ progress: Double) {
+        owner?.deliverLoadProgress(progress)
+    }
+}
+
+@MainActor
+final class FontBrowserViewModel: ObservableObject {
     private struct FilterSignature: Hashable {
         let searchQuery: String
         let coverageQuery: String
@@ -454,6 +454,14 @@ final class FontBrowserViewModel: ObservableObject {
 
             self.applyLoadResult(fonts: outcome.fonts, failed: outcome.failed)
         }
+    }
+
+    fileprivate func deliverPartialLoad(_ fonts: [FontItem]) {
+        applyPartialLoadResult(fonts: fonts)
+    }
+
+    fileprivate func deliverLoadProgress(_ progress: Double) {
+        loadProgress = progress
     }
 
     private func applyPartialLoadResult(fonts: [FontItem]) {
