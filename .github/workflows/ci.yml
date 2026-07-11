@@ -44,20 +44,24 @@ jobs:
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
 
+      - name: Clean build directory
+        run: rm -rf .build
+
       - name: Build
+        shell: bash
         run: |
           set -o pipefail
-          swift build 2>&1 | tee build.log
-          BUILD_STATUS=${PIPESTATUS[0]}
-          if [ "$BUILD_STATUS" -ne 0 ]; then
-            echo "=== swift build failed (exit $BUILD_STATUS) ==="
-            TAIL=$(tail -40 build.log | tr '\n' ' ' | head -c 4000)
-            echo "::error title=swift build tail::$TAIL"
+          swift build > build.log 2>&1
+          status=$?
+          if [ "$status" -ne 0 ]; then
+            echo "=== swift build failed (exit $status) ==="
+            cat build.log
             grep -E "error:|fatal error:" build.log | head -40 | while IFS= read -r line; do
               echo "::error title=swift build::$line"
             done
-            exit "$BUILD_STATUS"
+            exit "$status"
           fi
+          cat build.log
 
       - name: Upload build log on failure
         if: failure()
