@@ -77,8 +77,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Filter enums (`SidebarFilter`, `SortOption`, `WorkspaceModule`) moved out
   of `@MainActor` `FontBrowserViewModel` so Swift 6 treats them as
   unconditionally `Sendable` in `FontFilterEngine` detached tasks.
-- SwiftPM targets compile with `-strict-concurrency=minimal` to align CI
-  with local Xcode toolchains while concurrency fixes land.
+- SwiftPM targets compile in Swift 5 language mode under the Swift 6
+  toolchain so CI matches typical Xcode project settings.
 
 ### Documentation
 - README documents full Xcode requirement, `xcode-select` verification,

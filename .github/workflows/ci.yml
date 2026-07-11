@@ -51,7 +51,9 @@ jobs:
           BUILD_STATUS=${PIPESTATUS[0]}
           if [ "$BUILD_STATUS" -ne 0 ]; then
             echo "=== swift build failed (exit $BUILD_STATUS) ==="
-            grep "error:" build.log | head -40 | while IFS= read -r line; do
+            TAIL=$(tail -40 build.log | tr '\n' ' ' | head -c 4000)
+            echo "::error title=swift build tail::$TAIL"
+            grep -E "error:|fatal error:" build.log | head -40 | while IFS= read -r line; do
               echo "::error title=swift build::$line"
             done
             exit "$BUILD_STATUS"
