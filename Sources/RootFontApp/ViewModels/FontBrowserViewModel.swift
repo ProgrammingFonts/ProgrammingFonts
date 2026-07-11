@@ -656,6 +656,7 @@ final class FontBrowserViewModel: ObservableObject {
     }
 
     func applyFilters() {
+        preparedSearchQuery = SearchMatcher.prepare(query: searchQuery)
         let signature = currentFilterSignature()
 
         if let cached = filterResultCache[signature] {
