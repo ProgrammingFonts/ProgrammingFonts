@@ -72,18 +72,23 @@ struct FontListView: View {
                                     spacing: gridSpacing
                                 ) {
                                     ForEach(viewModel.filteredFonts) { item in
-                                        let display = viewModel.preferredSearchDisplay(for: item)
+                                        let display = viewModel.searchQuery.isEmpty
+                                            ? (
+                                                item.familyName(for: viewModel.language),
+                                                item.displayName(for: viewModel.language)
+                                            )
+                                            : viewModel.preferredSearchDisplay(for: item)
                                         FontGridCard(
                                             item: item,
-                                            primaryTitle: display.primary,
-                                            secondaryTitle: display.secondary,
+                                            primaryTitle: display.0,
+                                            secondaryTitle: display.1,
                                             isSelected: viewModel.selectedFont?.id == item.id,
                                             isFavorite: viewModel.isFavorite(item),
                                             previewText: viewModel.previewText,
                                             previewSize: listPreviewSize,
                                             densityMode: densityMode,
                                             language: viewModel.language,
-                                            searchQuery: viewModel.searchQuery
+                                            preparedSearchQuery: viewModel.preparedQueryForHighlight
                                         ) {
                                             viewModel.selectFont(item)
                                         } onToggleFavorite: {
@@ -112,16 +117,21 @@ struct FontListView: View {
                                 viewModel.selectFont(item)
                             }
                         )) { item in
-                            let display = viewModel.preferredSearchDisplay(for: item)
+                            let display = viewModel.searchQuery.isEmpty
+                                ? (
+                                    item.familyName(for: viewModel.language),
+                                    item.displayName(for: viewModel.language)
+                                )
+                                : viewModel.preferredSearchDisplay(for: item)
                             HStack(spacing: 10) {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text.highlighted(
-                                        display.primary,
-                                        query: viewModel.searchQuery
+                                        display.0,
+                                        preparedQuery: viewModel.preparedQueryForHighlight
                                     ).font(.system(size: listPreviewSize, weight: .semibold))
                                     Text.highlighted(
-                                        display.secondary,
-                                        query: viewModel.searchQuery
+                                        display.1,
+                                        preparedQuery: viewModel.preparedQueryForHighlight
                                     ).font(.system(size: max(11, listPreviewSize - 2))).foregroundStyle(.secondary)
                                 }
                                 Spacer()
@@ -442,16 +452,17 @@ private struct FontGridCard: View {
     let previewSize: Double
     let densityMode: FontListView.DensityMode
     let language: AppLanguage
-    let searchQuery: String
+    let preparedSearchQuery: SearchMatcher.PreparedQuery
     let onSelect: () -> Void
     let onToggleFavorite: () -> Void
 
     @State private var isHovering = false
+    @State private var resolvedNSFont: NSFont?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top, spacing: 8) {
-                Text.highlighted(primaryTitle, query: searchQuery)
+                Text.highlighted(primaryTitle, preparedQuery: preparedSearchQuery)
                     .font(.headline)
                     .lineLimit(1)
                     .truncationMode(.tail)
@@ -466,7 +477,7 @@ private struct FontGridCard: View {
                 .accessibilityLabel(L10n.tr(isFavorite ? .favoriteRemove : .favoriteAdd, language: language))
             }
 
-            Text.highlighted(secondaryTitle, query: searchQuery)
+            Text.highlighted(secondaryTitle, preparedQuery: preparedSearchQuery)
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
@@ -508,6 +519,15 @@ private struct FontGridCard: View {
             }
         }
         .onTapGesture(perform: onSelect)
+        .onAppear { refreshResolvedFont() }
+        .onChange(of: item.postScriptName) { _, _ in refreshResolvedFont() }
+        .onChange(of: previewSize) { _, _ in refreshResolvedFont() }
+        .onChange(of: densityMode) { _, _ in refreshResolvedFont() }
+    }
+
+    private func refreshResolvedFont() {
+        let size = densityMode == .compact ? CGFloat(previewSize) : CGFloat(previewSize + 4)
+        resolvedNSFont = NSFont(name: item.postScriptName, size: size)
     }
 
     private func tag(text: String) -> some View {
@@ -582,7 +602,7 @@ private struct FontGridCard: View {
 
     private var previewFont: Font {
         let size = densityMode == .compact ? CGFloat(previewSize) : CGFloat(previewSize + 4)
-        if let font = NSFont(name: item.postScriptName, size: size) {
+        if let font = resolvedNSFont {
             return Font(font)
         }
         return .system(size: size)

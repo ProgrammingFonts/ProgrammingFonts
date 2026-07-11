@@ -95,6 +95,10 @@ final class FontBrowserViewModel: ObservableObject {
     private var coverageCacheOrder: [String] = []
     private var familyWeightCoverage: FamilyWeightCoverage?
     private var preparedSearchQuery = SearchMatcher.prepare(query: "")
+    private var trimmedCoverageQuery = ""
+    private var tagToFontIDs: [String: Set<String>] = [:]
+    private var sortedUserTagNames: [String] = []
+    private var indexedFontIDs: Set<String> = []
     private var catalogEpoch: Int = 0
     private var activeFilterTask: Task<Void, Never>?
     private var filterResultCache: [FilterSignature: [FontItem]] = [:]
@@ -156,6 +160,8 @@ final class FontBrowserViewModel: ObservableObject {
         self.smartCollections = Self.decodeSmartCollections(preferencesStore.smartCollectionsData)
         self.manualCollections = Self.decodeManualCollections(preferencesStore.manualCollectionsData)
         self.fontTagAssignments = Self.decodeFontTagAssignments(preferencesStore.fontTagsData)
+        self.rebuildTagIndex()
+        self.trimmedCoverageQuery = ""
         if let data = preferencesStore.scoreWeightsData,
            let decoded = try? JSONDecoder().decode(ScoreWeights.self, from: data) {
             self.scoreWeights = decoded
@@ -198,6 +204,7 @@ final class FontBrowserViewModel: ObservableObject {
 
     func updateGlyphCoverageQuery(_ value: String) {
         glyphCoverageQuery = value
+        trimmedCoverageQuery = value.trimmingCharacters(in: .whitespacesAndNewlines)
         applyFilters()
     }
 
@@ -222,6 +229,7 @@ final class FontBrowserViewModel: ObservableObject {
         searchQuery = collection.searchQuery
         preparedSearchQuery = SearchMatcher.prepare(query: collection.searchQuery)
         glyphCoverageQuery = collection.glyphCoverageQuery
+        trimmedCoverageQuery = collection.glyphCoverageQuery.trimmingCharacters(in: .whitespacesAndNewlines)
         selectedSource = collection.selectedSource
         selectedStyle = collection.selectedStyle
         sidebarFilter = collection.sidebarFilter
@@ -236,7 +244,7 @@ final class FontBrowserViewModel: ObservableObject {
     }
 
     var userTagNames: [String] {
-        Set(fontTagAssignments.values.flatMap { $0 }).sorted()
+        sortedUserTagNames
     }
 
     func createManualCollection(named name: String) {
@@ -319,6 +327,7 @@ final class FontBrowserViewModel: ObservableObject {
         } else {
             fontTagAssignments[item.id] = tags.sorted()
         }
+        rebuildTagIndex()
         persistFontTags()
         if activeTagName == tag {
             applyFilters()
@@ -333,6 +342,7 @@ final class FontBrowserViewModel: ObservableObject {
             guard !tags.contains(trimmed) else { return }
             tags.append(trimmed)
             fontTagAssignments[selectedFont.id] = tags.sorted()
+            rebuildTagIndex()
             persistFontTags()
             if activeTagName == trimmed {
                 applyFilters()
@@ -471,8 +481,7 @@ final class FontBrowserViewModel: ObservableObject {
 
     private func applyPartialLoadResult(fonts: [FontItem]) {
         allFonts = fonts
-        rebuildSearchIndex()
-        clearCoverageCache()
+        rebuildSearchIndex(force: false)
         applyFilters()
         if selectedFont == nil {
             selectedFont = filteredFonts.first
@@ -485,16 +494,25 @@ final class FontBrowserViewModel: ObservableObject {
             filteredFonts = []
             filteredFontIDs = []
             selectedFont = nil
-            rebuildSearchIndex()
+            rebuildSearchIndex(force: true)
             clearCoverageCache()
             loadErrorMessage = tr(.catalogReadFailed)
         } else if let fonts {
+            let sameIDs = Set(fonts.map(\.id)) == indexedFontIDs
             allFonts = fonts
-            if scoreWeights != .default || fonts.contains(where: { $0.programmingScore == nil }) {
+            let needsRescore = scoreWeights != .default || fonts.contains(where: { $0.programmingScore == nil })
+            if needsRescore {
                 recalculateProgrammingScores()
             }
-            rebuildSearchIndex()
-            clearCoverageCache()
+            if sameIDs {
+                // Names/localizations did not change during enrichment — only
+                // monospaced subset may have changed after scoring.
+                rebuildMonospacedFonts()
+                catalogEpoch &+= 1
+                invalidateFilterResultCache()
+            } else {
+                rebuildSearchIndex(force: true)
+            }
             applyFilters()
             if selectedFont == nil {
                 selectedFont = filteredFonts.first
@@ -534,7 +552,7 @@ final class FontBrowserViewModel: ObservableObject {
         if sidebarFilter != .all {
             parts.append(tr(.filterSidebar))
         }
-        if !glyphCoverageQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        if !trimmedCoverageQuery.isEmpty {
             parts.append(tr(.filterGlyphCoverage))
         }
         if activeManualCollectionID != nil {
@@ -554,6 +572,7 @@ final class FontBrowserViewModel: ObservableObject {
         sidebarFilter = .all
         sortOption = .familyName
         glyphCoverageQuery = ""
+        trimmedCoverageQuery = ""
         activeManualCollectionID = nil
         activeTagName = nil
         preferencesStore.searchQuery = ""
@@ -656,8 +675,32 @@ final class FontBrowserViewModel: ObservableObject {
     }
 
     func applyFilters() {
-        preparedSearchQuery = SearchMatcher.prepare(query: searchQuery)
-        let signature = currentFilterSignature()
+        // Keep prepared query in sync when callers set `searchQuery` directly
+        // (tests); hot paths already update `preparedSearchQuery` themselves.
+        if preparedSearchQuery.trimmed != searchQuery.trimmingCharacters(in: .whitespacesAndNewlines) {
+            preparedSearchQuery = SearchMatcher.prepare(query: searchQuery)
+        }
+
+        let manualIDs = activeManualCollectionFontIDs()
+        let tagIDs = activeTagFilterFontIDs()
+        let signature = FilterSignature(
+            searchQuery: searchQuery,
+            coverageQuery: trimmedCoverageQuery,
+            selectedSource: selectedSource,
+            selectedStyle: selectedStyle,
+            sidebarFilter: sidebarFilter,
+            sortOption: sortOption,
+            language: language,
+            showSystemAliasFonts: showSystemAliasFonts,
+            catalogEpoch: catalogEpoch,
+            favoritesSignature: sidebarFilter == .favorites ? favoriteIDs.hashValue : 0,
+            recentsSignature: sidebarFilter == .recents ? recentFontIDs.hashValue : 0,
+            workspaceModule: workspaceModule,
+            managedSignature: sidebarFilter == .managed ? managedFontIDs.hashValue : 0,
+            scoreWeightsSignature: filterUsesScoreWeights() ? scoreWeights.hashValue : 0,
+            manualCollectionSignature: manualIDs?.hashValue ?? 0,
+            tagFilterSignature: tagIDs?.hashValue ?? 0
+        )
 
         if let cached = filterResultCache[signature] {
             commitFilterResult(cached, signature: signature, fromCache: true)
@@ -666,7 +709,22 @@ final class FontBrowserViewModel: ObservableObject {
 
         activeFilterTask?.cancel()
 
-        let inputs = currentFilterInputs()
+        let inputs = FontFilterEngine.Inputs(
+            preparedQuery: preparedSearchQuery,
+            coverageQuery: trimmedCoverageQuery,
+            selectedSource: selectedSource,
+            selectedStyle: selectedStyle,
+            sidebarFilter: sidebarFilter,
+            sortOption: sortOption,
+            language: language,
+            showSystemAliasFonts: showSystemAliasFonts,
+            scoreWeights: scoreWeights,
+            managedFontIDs: managedFontIDs,
+            manualCollectionFontIDs: manualIDs,
+            tagFilterFontIDs: tagIDs,
+            familyWeightCoverage: familyWeightCoverage,
+            coverageSupportCache: coverageSupportCache
+        )
 
         let filteredByModule = scopedFonts(for: allFonts)
         if filteredByModule.count <= backgroundFilterThreshold {
@@ -701,7 +759,7 @@ final class FontBrowserViewModel: ObservableObject {
             }.value
 
             guard !Task.isCancelled else { return }
-            guard self.currentFilterSignature() == signature else { return }
+            guard self.matchesFilterSignature(signature) else { return }
             self.mergeCoverageCacheUpdates(output.coverageCacheUpdates)
             self.commitFilterResult(output.fonts, signature: signature, fromCache: false)
         }
@@ -723,7 +781,7 @@ final class FontBrowserViewModel: ObservableObject {
     private func currentFilterInputs() -> FontFilterEngine.Inputs {
         FontFilterEngine.Inputs(
             preparedQuery: preparedSearchQuery,
-            coverageQuery: glyphCoverageQuery.trimmingCharacters(in: .whitespacesAndNewlines),
+            coverageQuery: trimmedCoverageQuery,
             selectedSource: selectedSource,
             selectedStyle: selectedStyle,
             sidebarFilter: sidebarFilter,
@@ -749,17 +807,17 @@ final class FontBrowserViewModel: ObservableObject {
 
     private func activeTagFilterFontIDs() -> Set<String>? {
         guard let tag = activeTagName else { return nil }
-        var ids = Set<String>()
-        for (fontID, tags) in fontTagAssignments where tags.contains(tag) {
-            ids.insert(fontID)
-        }
-        return ids
+        return tagToFontIDs[tag]
+    }
+
+    private func matchesFilterSignature(_ signature: FilterSignature) -> Bool {
+        currentFilterSignature() == signature
     }
 
     private func currentFilterSignature() -> FilterSignature {
         FilterSignature(
             searchQuery: searchQuery,
-            coverageQuery: glyphCoverageQuery.trimmingCharacters(in: .whitespacesAndNewlines),
+            coverageQuery: trimmedCoverageQuery,
             selectedSource: selectedSource,
             selectedStyle: selectedStyle,
             sidebarFilter: sidebarFilter,
@@ -832,7 +890,15 @@ final class FontBrowserViewModel: ObservableObject {
         return supported
     }
 
-    private func rebuildSearchIndex() {
+    private func rebuildSearchIndex(force: Bool = true) {
+        let nextIDs = Set(allFonts.map(\.id))
+        if !force, nextIDs == indexedFontIDs, !searchIndexByFontID.isEmpty {
+            rebuildMonospacedFonts()
+            catalogEpoch &+= 1
+            invalidateFilterResultCache()
+            return
+        }
+
         searchIndexByFontID = Dictionary(uniqueKeysWithValues: allFonts.map { item in
             let names = item.searchableNames
             let normalized = names.map(SearchMatcher.normalize)
@@ -840,9 +906,21 @@ final class FontBrowserViewModel: ObservableObject {
             return (item.id, FontFilterEngine.SearchIndexEntry(normalizedNames: normalized, choseongNames: choseong))
         })
         familyWeightCoverage = FamilyWeightCoverage.build(from: allFonts)
+        indexedFontIDs = nextIDs
         rebuildMonospacedFonts()
         catalogEpoch &+= 1
         invalidateFilterResultCache()
+    }
+
+    private func rebuildTagIndex() {
+        var inverted: [String: Set<String>] = [:]
+        for (fontID, tags) in fontTagAssignments {
+            for tag in tags {
+                inverted[tag, default: []].insert(fontID)
+            }
+        }
+        tagToFontIDs = inverted
+        sortedUserTagNames = inverted.keys.sorted()
     }
 
     private func mergeCoverageCacheUpdates(_ updates: [String: Bool]) {
@@ -939,6 +1017,11 @@ final class FontBrowserViewModel: ObservableObject {
             return (alias, secondaryDefault)
         }
         return (primaryDefault, secondaryDefault)
+    }
+
+    /// Exposed for list/grid highlighting so cells reuse the same prepared query.
+    var preparedQueryForHighlight: SearchMatcher.PreparedQuery {
+        preparedSearchQuery
     }
 
     private func supportsAllCharacters(font: NSFont, text: String) -> Bool {

@@ -205,8 +205,8 @@ enum FontFilterEngine {
                     }
                 }
                 return fonts.sorted { lhs, rhs in
-                    let lScore = scoreEngine.score(item: lhs, familyCoverage: coverage)?.total ?? -1
-                    let rScore = scoreEngine.score(item: rhs, familyCoverage: coverage)?.total ?? -1
+                    let lScore = programmingTotal(for: lhs, coverage: coverage, scoreEngine: scoreEngine)
+                    let rScore = programmingTotal(for: rhs, coverage: coverage, scoreEngine: scoreEngine)
                     if lScore == rScore {
                         return lhs.familyName(for: language)
                             .localizedCaseInsensitiveCompare(rhs.familyName(for: language)) == .orderedAscending
@@ -217,13 +217,25 @@ enum FontFilterEngine {
         }
     }
 
+    /// Prefer the score attached at catalog load / weight changes; fall back
+    /// to a fresh `scoreEngine` pass only when the item has no cached total.
+    private static func programmingTotal(
+        for item: FontItem,
+        coverage: FamilyWeightCoverage,
+        scoreEngine: ProgrammingScoreEngine
+    ) -> Int {
+        if let cached = item.programmingScore?.total {
+            return cached
+        }
+        return scoreEngine.score(item: item, familyCoverage: coverage)?.total ?? -1
+    }
+
     private static func isRecommendedForCode(
         _ item: FontItem,
         coverage: FamilyWeightCoverage,
         scoreEngine: ProgrammingScoreEngine
     ) -> Bool {
-        guard let score = scoreEngine.score(item: item, familyCoverage: coverage) else { return false }
-        return score.total >= 55
+        programmingTotal(for: item, coverage: coverage, scoreEngine: scoreEngine) >= 55
     }
 
     private static func isAvoidForCode(
@@ -231,8 +243,7 @@ enum FontFilterEngine {
         coverage: FamilyWeightCoverage,
         scoreEngine: ProgrammingScoreEngine
     ) -> Bool {
-        guard let score = scoreEngine.score(item: item, familyCoverage: coverage) else { return true }
-        return score.total < 55
+        programmingTotal(for: item, coverage: coverage, scoreEngine: scoreEngine) < 55
     }
 
     // MARK: Alias collapsing

@@ -45,14 +45,14 @@ jobs:
           swift --version
 
       - name: Resolve package
-        run: swift package resolve -v
+        run: swift package resolve
 
       - name: Build
         shell: bash
         env:
           DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
         run: |
-          swift build -v > build.log 2>&1
+          swift build > build.log 2>&1
           status=$?
           echo "build_log_bytes=$(wc -c < build.log | tr -d ' ')"
           if [ "$status" -ne 0 ]; then
@@ -80,7 +80,7 @@ jobs:
       - name: Test
         env:
           DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
-        run: swift test
+        run: swift test --parallel
 
       - name: Check localization
         run: python3 scripts/check-l10n.py

@@ -23,6 +23,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   for MainActor-scheduled catalog loads.
 
 ### Changed
+- Programming-fit sort and recommended/avoid filters reuse cached
+  `programmingScore` totals instead of recomputing score breakdowns each pass.
+- Tag filtering uses an inverted `tag → fontIDs` index; sidebar tag names are
+  cached; filter signatures and inputs share one collection/tag snapshot.
+- Staged catalog loads skip a second full search-index / weight-coverage
+  rebuild when font IDs are unchanged after enrichment.
+- Coverage query trimming and search prepare happen only when those inputs
+  change; list/grid highlighting reuses the prepared query and caches
+  `NSFont` on grid cards.
+- CI runs `swift test --parallel` and drops verbose package resolve/build
+  logging now that builds are stable.
 - `FontFilterEngine` reuses precomputed `FamilyWeightCoverage` and glyph
   coverage cache snapshots so programming-mode filters and detached filter
   tasks avoid rebuilding weight tiers or re-querying CoreText per pass.
