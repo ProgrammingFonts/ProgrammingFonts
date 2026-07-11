@@ -289,7 +289,7 @@ enum FontFilterEngine {
     static func fontSupportsAllCharacters(postScriptName: String, text: String) -> Bool {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty { return true }
-        guard let font = NSFont(name: postScriptName, size: 16) else { return false }
+        guard let font = NSFontResolveCache.shared.font(postScriptName: postScriptName, size: 16) else { return false }
         let filteredScalars = trimmed.unicodeScalars.filter {
             !$0.properties.isWhitespace && !CharacterSet.controlCharacters.contains($0)
         }

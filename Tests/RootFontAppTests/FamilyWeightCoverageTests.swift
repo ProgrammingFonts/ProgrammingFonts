@@ -50,6 +50,24 @@ final class FamilyWeightCoverageTests: XCTestCase {
         XCTAssertFalse(coverage.hasWeightVariety(familyName: "Alpha Mono"))
         XCTAssertTrue(coverage.hasWeightVariety(familyName: "Beta Mono"))
     }
+
+    func testBuildPrefersCachedWeightTierOnFontItem() {
+        let fonts = [
+            FontItem(
+                id: "a-regular",
+                familyName: "Alpha Mono",
+                postScriptName: "Alpha-Mono-Regular",
+                displayName: "Alpha Mono Regular",
+                source: .user,
+                styleTags: [.regular, .monospace],
+                weightTier: .medium
+            )
+        ]
+        let resolver = MockWeightTierResolver(map: ["Alpha-Mono-Regular": .thin])
+
+        let coverage = FamilyWeightCoverage.build(from: fonts, resolver: resolver)
+        XCTAssertEqual(coverage.tiers(forFamilyName: "Alpha Mono"), Set([.medium]))
+    }
 }
 
 private struct MockWeightTierResolver: FontWeightTierResolving {

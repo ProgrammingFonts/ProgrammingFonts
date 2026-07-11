@@ -80,6 +80,8 @@ struct FontCatalogService: FontCatalogServiceProtocol {
             let defaultDisplay = nsFont.displayName ?? postScriptName
             let localizedFamily = nativeLocalizedName(for: ctFont, nameID: kCTFontFamilyNameKey, fallback: defaultFamily)
             let localizedDisplay = nativeLocalizedName(for: ctFont, nameID: kCTFontFullNameKey, fallback: defaultDisplay)
+            let weightTier = cached?.metadata?.weightTier
+                ?? FontWeightTierResolver().resolveWeightTier(postScriptName: postScriptName)
 
             if let cached {
                 items.append(
@@ -94,7 +96,8 @@ struct FontCatalogService: FontCatalogServiceProtocol {
                         localizedDisplayNames: localizedDisplay,
                         programming: cached.programming,
                         metrics: cached.metrics,
-                        programmingScore: cached.score
+                        programmingScore: cached.score,
+                        weightTier: weightTier
                     )
                 )
             } else {
@@ -108,7 +111,8 @@ struct FontCatalogService: FontCatalogServiceProtocol {
                         source: source,
                         styleTags: styles,
                         localizedFamilyNames: localizedFamily,
-                        localizedDisplayNames: localizedDisplay
+                        localizedDisplayNames: localizedDisplay,
+                        weightTier: weightTier
                     )
                 )
             }

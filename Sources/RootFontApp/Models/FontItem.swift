@@ -30,6 +30,8 @@ struct FontItem: Identifiable, Hashable, Codable, Sendable {
     var metrics: FontMetricsSample?
     /// Cached in-memory suitability score for coding use.
     var programmingScore: ProgrammingScore?
+    /// Resolved weight tier cached for family coverage scoring.
+    var weightTier: WeightTier?
 
     init(
         id: String,
@@ -42,7 +44,8 @@ struct FontItem: Identifiable, Hashable, Codable, Sendable {
         localizedDisplayNames: [String: String] = [:],
         programming: ProgrammingProfile? = nil,
         metrics: FontMetricsSample? = nil,
-        programmingScore: ProgrammingScore? = nil
+        programmingScore: ProgrammingScore? = nil,
+        weightTier: WeightTier? = nil
     ) {
         self.id = id
         self.familyName = familyName
@@ -55,6 +58,7 @@ struct FontItem: Identifiable, Hashable, Codable, Sendable {
         self.programming = programming
         self.metrics = metrics
         self.programmingScore = programmingScore
+        self.weightTier = weightTier
     }
 
     /// Preferred family name for the given language, falling back to the

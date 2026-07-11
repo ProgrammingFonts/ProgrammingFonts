@@ -28,6 +28,10 @@ enum SearchMatcher {
             || query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
+    static func matches(haystack: String, preparedQuery: PreparedQuery) -> Bool {
+        preparedQuery.isEmpty || !highlight(haystack: haystack, preparedQuery: preparedQuery).isEmpty
+    }
+
     static func prepare(query: String) -> PreparedQuery {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         let choseong = trimmed.filter { !$0.isWhitespace }
@@ -44,20 +48,35 @@ enum SearchMatcher {
     /// query itself is empty, in which case callers should treat the
     /// haystack as matching but with nothing to highlight.
     static func highlight(haystack: String, query: String) -> [Range<String.Index>] {
-        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return [] }
+        highlight(haystack: haystack, preparedQuery: prepare(query: query))
+    }
 
-        if let range = normalizedRange(in: haystack, query: trimmed) {
+    static func highlight(haystack: String, preparedQuery: PreparedQuery) -> [Range<String.Index>] {
+        guard !preparedQuery.isEmpty else { return [] }
+
+        if let range = normalizedRange(in: haystack, query: preparedQuery.trimmed) {
             return [range]
         }
 
-        if isAllChoseong(trimmed) {
-            if let range = choseongRange(in: haystack, query: trimmed) {
+        if preparedQuery.isChoseongOnly {
+            if let range = choseongRange(in: haystack, query: preparedQuery.trimmed) {
                 return [range]
             }
         }
 
         return []
+    }
+
+    /// Character-offset highlight ranges for reuse across list/grid cells.
+    static func highlightCharacterRanges(
+        haystack: String,
+        preparedQuery: PreparedQuery
+    ) -> [Range<Int>] {
+        highlight(haystack: haystack, preparedQuery: preparedQuery).map { range in
+            let start = haystack.distance(from: haystack.startIndex, to: range.lowerBound)
+            let end = haystack.distance(from: haystack.startIndex, to: range.upperBound)
+            return start..<end
+        }
     }
 
     // MARK: - Normalized matching with back-mapping

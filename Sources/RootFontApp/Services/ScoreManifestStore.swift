@@ -13,6 +13,7 @@ struct CachedCatalogMetadata: Codable, Sendable, Hashable {
     var styleTags: Set<FontStyleTag>
     var localizedFamilyNames: [String: String]
     var localizedDisplayNames: [String: String]
+    var weightTier: WeightTier?
 }
 
 struct CachedScoreEntry: Codable, Sendable, Hashable {
@@ -35,12 +36,14 @@ struct CachedScoreEntry: Codable, Sendable, Hashable {
             localizedDisplayNames: metadata.localizedDisplayNames,
             programming: programming,
             metrics: metrics,
-            programmingScore: score
+            programmingScore: score,
+            weightTier: metadata.weightTier
         )
     }
 
     static func from(item: FontItem) -> CachedScoreEntry {
-        CachedScoreEntry(
+        let tier = item.weightTier ?? FontWeightTierResolver().resolveWeightTier(postScriptName: item.postScriptName)
+        return CachedScoreEntry(
             programming: item.programming,
             metrics: item.metrics,
             score: item.programmingScore,
@@ -50,7 +53,8 @@ struct CachedScoreEntry: Codable, Sendable, Hashable {
                 source: item.source,
                 styleTags: item.styleTags,
                 localizedFamilyNames: item.localizedFamilyNames,
-                localizedDisplayNames: item.localizedDisplayNames
+                localizedDisplayNames: item.localizedDisplayNames,
+                weightTier: tier
             )
         )
     }

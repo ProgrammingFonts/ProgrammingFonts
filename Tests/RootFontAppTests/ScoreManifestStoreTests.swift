@@ -97,6 +97,22 @@ final class ScoreManifestStoreTests: XCTestCase {
         XCTAssertEqual(item?.localizedFamilyNames["ja"], "モノ")
         XCTAssertEqual(item?.programmingScore?.total, 65)
 
+        let withTier = CachedScoreEntry(
+            programming: entry.programming,
+            metrics: entry.metrics,
+            score: entry.score,
+            metadata: CachedCatalogMetadata(
+                familyName: metadata.familyName,
+                displayName: metadata.displayName,
+                source: metadata.source,
+                styleTags: metadata.styleTags,
+                localizedFamilyNames: metadata.localizedFamilyNames,
+                localizedDisplayNames: metadata.localizedDisplayNames,
+                weightTier: .bold
+            )
+        )
+        XCTAssertEqual(withTier.fontItem(postScriptName: "Mono-Regular")?.weightTier, .bold)
+
         let encoded = try JSONEncoder().encode(entry)
         let decoded = try JSONDecoder().decode(CachedScoreEntry.self, from: encoded)
         XCTAssertEqual(decoded, entry)

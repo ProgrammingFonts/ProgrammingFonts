@@ -14,8 +14,14 @@ protocol FontWeightTierResolving: Sendable {
 }
 
 struct FontWeightTierResolver: FontWeightTierResolving {
+    private let fontCache: NSFontResolveCache
+
+    init(fontCache: NSFontResolveCache = .shared) {
+        self.fontCache = fontCache
+    }
+
     func resolveWeightTier(postScriptName: String) -> WeightTier {
-        guard let font = NSFont(name: postScriptName, size: 13) else {
+        guard let font = fontCache.font(postScriptName: postScriptName, size: 13) else {
             return .regular
         }
         let weight = NSFontManager.shared.weight(of: font)
@@ -45,7 +51,7 @@ struct FamilyWeightCoverage: Sendable {
         for item in fonts {
             let familyKey = item.familyName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
             guard !familyKey.isEmpty else { continue }
-            let tier = resolver.resolveWeightTier(postScriptName: item.postScriptName)
+            let tier = item.weightTier ?? resolver.resolveWeightTier(postScriptName: item.postScriptName)
             map[familyKey, default: []].insert(tier)
         }
         return FamilyWeightCoverage(buckets: map)
