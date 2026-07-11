@@ -527,16 +527,18 @@ struct FontPreviewView: View {
     }
 
     private func previewFont(for item: FontItem, size: Double, monospacedNumerals: Bool) -> Font {
-        if let baseFont = NSFont(name: item.postScriptName, size: size) {
-            let bound = featureBinder.bind(
-                base: baseFont,
-                options: OpenTypeFeatureOptions(
-                    ligaturesEnabled: ligaturesEnabled,
-                    zeroVariantEnabled: zeroVariantEnabled,
-                    stylisticSetTags: enabledStylisticSetTags
-                )
-            )
-            return Font(bound)
+        let options = OpenTypeFeatureOptions(
+            ligaturesEnabled: ligaturesEnabled,
+            zeroVariantEnabled: zeroVariantEnabled,
+            stylisticSetTags: enabledStylisticSetTags
+        )
+        if let cached = PreviewFontCache.shared.font(
+            postScriptName: item.postScriptName,
+            size: size,
+            options: options,
+            binder: featureBinder
+        ) {
+            return cached
         }
         if monospacedNumerals && previewSurface == .sample {
             return .system(size: size, design: .monospaced)

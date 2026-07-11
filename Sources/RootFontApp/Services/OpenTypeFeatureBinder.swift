@@ -2,7 +2,7 @@ import AppKit
 import CoreText
 import Foundation
 
-struct OpenTypeFeatureOptions: Sendable {
+struct OpenTypeFeatureOptions: Sendable, Hashable {
     var ligaturesEnabled: Bool
     var zeroVariantEnabled: Bool
     var stylisticSetTags: Set<String>
