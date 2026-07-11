@@ -23,7 +23,9 @@ final class FontFilterEngineTests: XCTestCase {
             scoreWeights: .default,
             managedFontIDs: [],
             manualCollectionFontIDs: nil,
-            tagFilterFontIDs: nil
+            tagFilterFontIDs: nil,
+            familyWeightCoverage: nil,
+            coverageSupportCache: [:]
         )
         let result = FontFilterEngine.compute(
             fonts: fonts,
@@ -52,7 +54,9 @@ final class FontFilterEngineTests: XCTestCase {
             scoreWeights: .default,
             managedFontIDs: [],
             manualCollectionFontIDs: nil,
-            tagFilterFontIDs: nil
+            tagFilterFontIDs: nil,
+            familyWeightCoverage: nil,
+            coverageSupportCache: [:]
         )
         let result = FontFilterEngine.compute(
             fonts: fonts,
@@ -81,7 +85,9 @@ final class FontFilterEngineTests: XCTestCase {
             scoreWeights: .default,
             managedFontIDs: [],
             manualCollectionFontIDs: nil,
-            tagFilterFontIDs: nil
+            tagFilterFontIDs: nil,
+            familyWeightCoverage: nil,
+            coverageSupportCache: [:]
         )
         let result = FontFilterEngine.compute(
             fonts: fonts,
@@ -110,7 +116,9 @@ final class FontFilterEngineTests: XCTestCase {
             scoreWeights: .default,
             managedFontIDs: [],
             manualCollectionFontIDs: ["A"],
-            tagFilterFontIDs: nil
+            tagFilterFontIDs: nil,
+            familyWeightCoverage: nil,
+            coverageSupportCache: [:]
         )
         let result = FontFilterEngine.compute(
             fonts: fonts,
@@ -139,7 +147,9 @@ final class FontFilterEngineTests: XCTestCase {
             scoreWeights: .default,
             managedFontIDs: [],
             manualCollectionFontIDs: nil,
-            tagFilterFontIDs: ["B"]
+            tagFilterFontIDs: ["B"],
+            familyWeightCoverage: nil,
+            coverageSupportCache: [:]
         )
         let result = FontFilterEngine.compute(
             fonts: fonts,

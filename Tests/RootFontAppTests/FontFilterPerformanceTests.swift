@@ -31,7 +31,9 @@ final class FontFilterPerformanceTests: XCTestCase {
             scoreWeights: .default,
             managedFontIDs: [],
             manualCollectionFontIDs: nil,
-            tagFilterFontIDs: nil
+            tagFilterFontIDs: nil,
+            familyWeightCoverage: nil,
+            coverageSupportCache: [:]
         )
 
         measure {
