@@ -635,6 +635,34 @@ final class FontBrowserViewModelTests: XCTestCase {
         XCTAssertNotEqual(scoreBefore, scoreAfter, "Terminal-heavy weights should change the cached score total")
     }
 
+    func testUpdateScoreWeightDefersRescoreUntilApplied() async {
+        let mono = FontItem(
+            id: "Mono",
+            familyName: "Mono",
+            postScriptName: "Mono-Regular",
+            displayName: "Mono",
+            source: .user,
+            styleTags: [.regular, .monospace],
+            programming: ProgrammingProfile.empty.withMonospaced(true),
+            metrics: FontMetricsSample(asciiAdvanceVariance: 0.1, uniformWidth: true, confusableDistances: [:])
+        )
+        let viewModel = FontBrowserViewModel(
+            catalogService: MockCatalogService(fonts: [mono]),
+            preferencesStore: InMemoryPreferencesStore()
+        )
+
+        viewModel.load()
+        await waitForLoad(viewModel)
+        let before = viewModel.allFonts.first?.programmingScore?.total
+
+        viewModel.updateScoreWeight(\.monospaceBaseline, value: 5)
+        XCTAssertEqual(viewModel.allFonts.first?.programmingScore?.total, before)
+
+        viewModel.applyPendingScoreWeightRefresh()
+        let after = viewModel.allFonts.first?.programmingScore?.total
+        XCTAssertNotEqual(before, after)
+    }
+
     func testManualCollectionPersistsAndFiltersFonts() async {
         let fonts = [
             FontItem.sample(id: "A", familyName: "Alpha", source: .user, styleTags: [.regular]),

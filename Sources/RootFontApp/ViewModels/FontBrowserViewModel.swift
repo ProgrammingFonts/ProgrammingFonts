@@ -105,6 +105,7 @@ final class FontBrowserViewModel: ObservableObject {
     private var filterResultCacheOrder: [FilterSignature] = []
     private var monospacedFonts: [FontItem] = []
     private var filteredFontIDs: Set<String> = []
+    private var scoreWeightRefreshTask: Task<Void, Never>?
 
     @Published private(set) var allFonts: [FontItem] = []
     @Published private(set) var filteredFonts: [FontItem] = []
@@ -394,8 +395,26 @@ final class FontBrowserViewModel: ObservableObject {
         scoreWeights[keyPath: keyPath] = value
         scoreWeightPreset = Self.bestMatchingPreset(for: scoreWeights)
         persistScoreWeights()
+        scheduleScoreWeightRefresh()
+    }
+
+    /// Applies a pending debounced score refresh immediately (tests and preset flows).
+    func applyPendingScoreWeightRefresh() {
+        scoreWeightRefreshTask?.cancel()
+        scoreWeightRefreshTask = nil
         recalculateProgrammingScores()
         applyFilters()
+    }
+
+    private func scheduleScoreWeightRefresh() {
+        scoreWeightRefreshTask?.cancel()
+        scoreWeightRefreshTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 220_000_000)
+            guard !Task.isCancelled, let self else { return }
+            self.scoreWeightRefreshTask = nil
+            self.recalculateProgrammingScores()
+            self.applyFilters()
+        }
     }
 
     func featurePreferences(forFontID fontID: String) -> FontFeaturePreferences? {
