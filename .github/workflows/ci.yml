@@ -18,6 +18,10 @@ on:
       - 'screenshots/**'
       - '.github/ISSUE_TEMPLATE/**'
 
+permissions:
+  contents: read
+  issues: write
+
 jobs:
   build-and-test:
     runs-on: macos-15
@@ -64,12 +68,24 @@ jobs:
           if [ "$status" -ne 0 ]; then
             echo "=== swift build failed (exit $status) ==="
             cat build.log
-            grep -Ei "error:|fatal error:|SendingRisksDataRace|Undefined symbols|ld:|cannot find|invalid manifest|failed" build.log | head -60 | while IFS= read -r line; do
-              echo "::error title=swift build::$line"
-            done
             exit "$status"
           fi
           cat build.log
+
+      - name: Publish build log to issue #56
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const log = fs.readFileSync('build.log', 'utf8');
+            const body = `**CI build log** (\`${context.sha.slice(0, 7)}\` / [run ${context.runId}](${context.payload.repository.html_url}/actions/runs/${context.runId}))\n\n\`\`\`text\n${log.slice(-12000)}\n\`\`\``;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: 56,
+              body
+            });
 
       - name: Upload build log on failure
         if: failure()
