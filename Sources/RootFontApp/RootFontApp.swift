@@ -77,7 +77,7 @@ struct RootFontApp: App {
                 .keyboardShortcut("1", modifiers: [.command, .option])
             }
             CommandGroup(replacing: .appInfo) {
-                Button("About \(AppMetadata.appName)") {
+                Button(String(format: viewModel.tr(.aboutTitle), AppMetadata.appName)) {
                     showAboutPanel()
                 }
             }
@@ -115,7 +115,7 @@ struct RootFontApp: App {
             backing: .buffered,
             defer: false
         )
-        window.title = "About \(AppMetadata.appName)"
+        window.title = String(format: viewModel.tr(.aboutTitle), AppMetadata.appName)
         window.isReleasedWhenClosed = false
         window.center()
         window.contentView = NSHostingView(rootView: aboutView)

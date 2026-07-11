@@ -564,7 +564,7 @@ final class FontBrowserViewModel: ObservableObject {
     var activeFilterSummary: String {
         var parts: [String] = []
         if workspaceModule == .programming {
-            parts.append("Programming")
+            parts.append(tr(.moduleProgramming))
         }
         if !searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             parts.append(tr(.filterKeyword))

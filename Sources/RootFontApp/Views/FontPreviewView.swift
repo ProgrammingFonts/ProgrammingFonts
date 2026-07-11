@@ -155,7 +155,7 @@ struct FontPreviewView: View {
                     }
                 }
             }
-            Button("Cancel", role: .cancel) { }
+            Button(viewModel.tr(.cancel), role: .cancel) { }
         } message: {
             Text(viewModel.tr(.installConfirmMessage))
         }

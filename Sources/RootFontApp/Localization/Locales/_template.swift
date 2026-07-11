@@ -75,6 +75,8 @@ enum L10nTemplate {
         .selectFontTitle: "RootFont",
         .selectFontHint: "Select a font from the list to start preview.",
         .selectFontTip: "Tip: Compact grid mode is closer to a font-wall view.",
-        .catalogReadFailed: "Failed to read font catalog. Please retry."
+        .catalogReadFailed: "Failed to read font catalog. Please retry.",
+        .cancel: "Cancel",
+        .aboutTitle: "About %@"
     ]
 }

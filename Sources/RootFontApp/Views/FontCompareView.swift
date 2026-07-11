@@ -332,13 +332,13 @@ struct FontCompareView: View {
     private func bucketTitle(_ bucket: CoverageBucket) -> String {
         switch bucket {
         case .latinExtended:
-            return "LatinExt"
+            return tr(.coverageBucketLatinExtended)
         case .cyrillic:
-            return "Cyrillic"
+            return tr(.coverageBucketCyrillic)
         case .greek:
-            return "Greek"
+            return tr(.coverageBucketGreek)
         case .cjk:
-            return "CJK"
+            return tr(.coverageBucketCJK)
         }
     }
 

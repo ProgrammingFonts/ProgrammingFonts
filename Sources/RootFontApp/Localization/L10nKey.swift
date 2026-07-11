@@ -80,6 +80,8 @@ enum L10nKey {
     case selectFontHint
     case selectFontTip
     case catalogReadFailed
+    case cancel
+    case aboutTitle
     case aboutWebsite
     case aboutGitHub
     case aboutSlogan
@@ -250,6 +252,10 @@ enum L10nKey {
     case coverageOnlyBaseline
     case coverageOnlyCandidate
     case coverageBoth
+    case coverageBucketLatinExtended
+    case coverageBucketCyrillic
+    case coverageBucketGreek
+    case coverageBucketCJK
     case whyMeasurementTitle
     case whyImpactTitle
     case whyExampleTitle
