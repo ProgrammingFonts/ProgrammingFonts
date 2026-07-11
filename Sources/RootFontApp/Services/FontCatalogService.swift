@@ -62,12 +62,18 @@ struct FontCatalogService: FontCatalogServiceProtocol {
             guard !seen.contains(postScriptName) else { continue }
             seen.insert(postScriptName)
 
-            let nsFont = NSFont(name: postScriptName, size: 16) ?? NSFont.systemFont(ofSize: 16)
-            let source: FontSource = url.path.contains("/System/Library/Fonts") ? .system : .user
-            let styles = styleResolver.resolveStyleTags(for: nsFont)
             let cacheKey = scoreManifestStore.cacheKey(for: postScriptName, fileURL: url)
             cacheKeyByPostScriptName[postScriptName] = cacheKey
             let cached = cachedEntries[cacheKey]
+
+            if let cached, let warmItem = cached.fontItem(postScriptName: postScriptName) {
+                items.append(warmItem)
+                continue
+            }
+
+            let nsFont = NSFont(name: postScriptName, size: 16) ?? NSFont.systemFont(ofSize: 16)
+            let source: FontSource = url.path.contains("/System/Library/Fonts") ? .system : .user
+            let styles = styleResolver.resolveStyleTags(for: nsFont)
 
             let ctFont = CTFontCreateWithName(postScriptName as CFString, 16, nil)
             let defaultFamily = nsFont.familyName ?? postScriptName
@@ -156,11 +162,7 @@ struct FontCatalogService: FontCatalogServiceProtocol {
         var nextCache = cachedEntries
         for item in scoredItems {
             if let key = cacheKeyByPostScriptName[item.postScriptName] {
-                nextCache[key] = CachedScoreEntry(
-                    programming: item.programming,
-                    metrics: item.metrics,
-                    score: item.programmingScore
-                )
+                nextCache[key] = CachedScoreEntry.from(item: item)
             }
         }
         scoreManifestStore.save(nextCache)

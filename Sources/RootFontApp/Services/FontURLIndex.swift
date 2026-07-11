@@ -11,6 +11,12 @@ final class FontURLIndex: @unchecked Sendable {
 
     private init() {}
 
+    /// Seeds a fixed URL list for unit tests without touching CoreText.
+    init(prefetchedURLs: [URL]) {
+        cachedURLs = prefetchedURLs
+        cachedURLByPostScriptName = Self.buildIndex(from: prefetchedURLs)
+    }
+
     var urls: [URL] {
         lock.lock()
         defer { lock.unlock() }

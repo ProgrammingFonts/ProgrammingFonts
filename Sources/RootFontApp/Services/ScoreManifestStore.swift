@@ -6,10 +6,54 @@ protocol ScoreManifestStoreProtocol: Sendable {
     func cacheKey(for postScriptName: String, fileURL: URL) -> String
 }
 
+struct CachedCatalogMetadata: Codable, Sendable, Hashable {
+    var familyName: String
+    var displayName: String
+    var source: FontSource
+    var styleTags: Set<FontStyleTag>
+    var localizedFamilyNames: [String: String]
+    var localizedDisplayNames: [String: String]
+}
+
 struct CachedScoreEntry: Codable, Sendable, Hashable {
     var programming: ProgrammingProfile?
     var metrics: FontMetricsSample?
     var score: ProgrammingScore?
+    /// Static catalog fields captured on save so warm loads can skip CoreText.
+    var metadata: CachedCatalogMetadata?
+
+    func fontItem(postScriptName: String) -> FontItem? {
+        guard let metadata else { return nil }
+        return FontItem(
+            id: postScriptName,
+            familyName: metadata.familyName,
+            postScriptName: postScriptName,
+            displayName: metadata.displayName,
+            source: metadata.source,
+            styleTags: metadata.styleTags,
+            localizedFamilyNames: metadata.localizedFamilyNames,
+            localizedDisplayNames: metadata.localizedDisplayNames,
+            programming: programming,
+            metrics: metrics,
+            programmingScore: score
+        )
+    }
+
+    static func from(item: FontItem) -> CachedScoreEntry {
+        CachedScoreEntry(
+            programming: item.programming,
+            metrics: item.metrics,
+            score: item.programmingScore,
+            metadata: CachedCatalogMetadata(
+                familyName: item.familyName,
+                displayName: item.displayName,
+                source: item.source,
+                styleTags: item.styleTags,
+                localizedFamilyNames: item.localizedFamilyNames,
+                localizedDisplayNames: item.localizedDisplayNames
+            )
+        )
+    }
 }
 
 struct ScoreManifestStore: ScoreManifestStoreProtocol, @unchecked Sendable {

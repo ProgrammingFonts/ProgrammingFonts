@@ -76,6 +76,42 @@ final class ScoreManifestStoreTests: XCTestCase {
         XCTAssertEqual(mtimeAfterFirstSave, mtimeAfterSecondSave, accuracy: 0.001)
     }
 
+    func testCachedMetadataRoundTripsThroughManifest() throws {
+        let metadata = CachedCatalogMetadata(
+            familyName: "Mono",
+            displayName: "Mono Regular",
+            source: .user,
+            styleTags: [.regular, .monospace],
+            localizedFamilyNames: ["ja": "モノ"],
+            localizedDisplayNames: ["ja": "モノ レギュラー"]
+        )
+        let entry = CachedScoreEntry(
+            programming: ProgrammingProfile.empty.withMonospaced(true),
+            metrics: nil,
+            score: ProgrammingScore(total: 65, grade: .b, breakdown: []),
+            metadata: metadata
+        )
+
+        let item = entry.fontItem(postScriptName: "Mono-Regular")
+        XCTAssertEqual(item?.familyName, "Mono")
+        XCTAssertEqual(item?.localizedFamilyNames["ja"], "モノ")
+        XCTAssertEqual(item?.programmingScore?.total, 65)
+
+        let encoded = try JSONEncoder().encode(entry)
+        let decoded = try JSONDecoder().decode(CachedScoreEntry.self, from: encoded)
+        XCTAssertEqual(decoded, entry)
+        XCTAssertNil(decoded.fontItem(postScriptName: "Legacy-Regular"))
+    }
+
+    func testLegacyEntryWithoutMetadataDecodes() throws {
+        let legacyJSON = """
+        {"programming":{"isMonospaced":true,"hasProgrammingLigatures":false,"availableStylisticSets":[],"hasZeroVariant":false,"hasPowerlineGlyphs":false,"hasNerdFontGlyphs":false,"hasBoxDrawing":false,"coverageBuckets":[],"isVariableFont":false},"metrics":null,"score":null}
+        """.data(using: .utf8)!
+        let decoded = try JSONDecoder().decode(CachedScoreEntry.self, from: legacyJSON)
+        XCTAssertNil(decoded.metadata)
+        XCTAssertNil(decoded.fontItem(postScriptName: "Mono-Regular"))
+    }
+
     func testCacheKeyChangesWhenMtimeChanges() throws {
         let temp = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
