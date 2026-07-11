@@ -80,7 +80,22 @@ jobs:
       - name: Test
         env:
           DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
-        run: swift test --parallel
+        shell: bash
+        run: |
+          swift test 2>&1 | tee test.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            echo "=== swift test failed (exit $status) ==="
+            tail -80 test.log
+            exit "$status"
+          fi
+
+      - name: Upload test log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: swift-test-log
+          path: test.log
 
       - name: Check localization
         run: python3 scripts/check-l10n.py
