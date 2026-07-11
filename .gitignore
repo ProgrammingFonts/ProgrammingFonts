@@ -78,4 +78,4 @@ secrets.json
 docs/
 
 # Local git worktrees
-.worktrees/
+.worktrees/swift-build-log.zip
