@@ -32,9 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ScoreManifestStore` caches score manifest entries in memory and updates
   the cache on save, avoiding repeated reads of `scores.json` during a
   single catalog session.
-- GitHub Actions CI triggers on pushes and PRs to `master` (in addition to
-  `main` and `develop`), prints toolchain info at job start, and validates
-  screenshot conventions.
+- GitHub Actions CI uploads `swift-build-log` on failure, prints the full
+  log in the job summary, and sets `DEVELOPER_DIR` for build/test steps.
 - Pre-commit hook runs `optimize-screenshots.py --check` when screenshot
   PNGs are staged.
 - Warm catalog loads skip a second programming-score pass and redundant

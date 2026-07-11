@@ -18,10 +18,6 @@ on:
       - 'screenshots/**'
       - '.github/ISSUE_TEMPLATE/**'
 
-permissions:
-  contents: read
-  issues: write
-
 jobs:
   build-and-test:
     runs-on: macos-15
