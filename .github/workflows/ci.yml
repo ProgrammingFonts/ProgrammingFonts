@@ -26,6 +26,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Cache SwiftPM
+        if: false
         uses: actions/cache@v6
         with:
           path: |
@@ -35,28 +36,29 @@ jobs:
           restore-keys: |
             macos-15-spm-
 
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+
       - name: Print toolchain
         run: |
           sw_vers
           xcode-select -p
           swift --version
 
-      - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
-
-      - name: Clean build directory
-        run: rm -rf .build
+      - name: Clean build caches
+        run: |
+          rm -rf .build
+          rm -rf ~/Library/Caches/org.swift.swiftpm
 
       - name: Build
         shell: bash
         run: |
-          set -o pipefail
           swift build > build.log 2>&1
           status=$?
           if [ "$status" -ne 0 ]; then
             echo "=== swift build failed (exit $status) ==="
             cat build.log
-            grep -E "error:|fatal error:" build.log | head -40 | while IFS= read -r line; do
+            grep -E "error:|fatal error:|SendingRisksDataRace|Undefined symbols|ld:" build.log | head -50 | while IFS= read -r line; do
               echo "::error title=swift build::$line"
             done
             exit "$status"
@@ -73,9 +75,9 @@ jobs:
       - name: Summarize build log
         if: failure()
         run: |
-          echo "## Swift build log (last 100 lines)" >> "$GITHUB_STEP_SUMMARY"
+          echo "## Swift build log" >> "$GITHUB_STEP_SUMMARY"
           echo '```text' >> "$GITHUB_STEP_SUMMARY"
-          tail -100 build.log >> "$GITHUB_STEP_SUMMARY" || true
+          cat build.log >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "(build.log missing)" >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Test

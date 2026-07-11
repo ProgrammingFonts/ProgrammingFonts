@@ -21,7 +21,8 @@ let package = Package(
                 .process("Resources")
             ],
             swiftSettings: [
-                .swiftLanguageMode(.v5)
+                .swiftLanguageMode(.v5),
+                .unsafeFlags(["-strict-concurrency=minimal"])
             ]
         ),
         .testTarget(
@@ -29,7 +30,8 @@ let package = Package(
             dependencies: ["RootFontApp"],
             path: "Tests/RootFontAppTests",
             swiftSettings: [
-                .swiftLanguageMode(.v5)
+                .swiftLanguageMode(.v5),
+                .unsafeFlags(["-strict-concurrency=minimal"])
             ]
         )
     ]

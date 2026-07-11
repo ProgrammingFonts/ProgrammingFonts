@@ -4,6 +4,22 @@ import Foundation
 
 @MainActor
 final class FontBrowserViewModel: ObservableObject {
+    /// Routes catalog load callbacks back to the main actor without capturing
+    /// `FontBrowserViewModel` in `@Sendable` closures passed to `Task.detached`.
+    nonisolated private final class CatalogLoadBridge: @unchecked Sendable {
+        weak var owner: FontBrowserViewModel?
+
+        @MainActor
+        func handlePartial(_ fonts: [FontItem]) {
+            owner?.applyPartialLoadResult(fonts: fonts)
+        }
+
+        @MainActor
+        func handleProgress(_ progress: Double) {
+            owner?.loadProgress = progress
+        }
+    }
+
     private struct FilterSignature: Hashable {
         let searchQuery: String
         let coverageQuery: String
@@ -410,16 +426,17 @@ final class FontBrowserViewModel: ObservableObject {
         Task { @MainActor [weak self] in
             guard let self else { return }
 
-            // Build @Sendable callbacks on the main actor so detached work never
-            // captures `self` directly (Swift 6.2 SendingRisksDataRace).
-            let onPartial: @Sendable ([FontItem]) -> Void = { [weak self] partial in
+            let bridge = CatalogLoadBridge()
+            bridge.owner = self
+
+            let onPartial: @Sendable ([FontItem]) -> Void = { partial in
                 Task { @MainActor in
-                    self?.applyPartialLoadResult(fonts: partial)
+                    bridge.handlePartial(partial)
                 }
             }
-            let reportProgress: @Sendable (Double) -> Void = { [weak self] progress in
+            let reportProgress: @Sendable (Double) -> Void = { progress in
                 Task { @MainActor in
-                    self?.loadProgress = progress
+                    bridge.handleProgress(progress)
                 }
             }
 

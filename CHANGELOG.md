@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `applyFilters()`: font load and filter work stay on `Task.detached` with
   Sendable inputs; UI updates run from `@MainActor` tasks without sending
   `self` across isolation boundaries (related to issue #56).
+- Catalog load progress/partial callbacks use a `CatalogLoadBridge` so
+  `@Sendable` closures passed to `Task.detached` never capture
+  `FontBrowserViewModel` directly.
 - `FontBrowserViewModelTests` now use async `waitForLoad` with
   `Task.yield` instead of `RunLoop` polling so `swift test` reliably waits
   for MainActor-scheduled catalog loads.
