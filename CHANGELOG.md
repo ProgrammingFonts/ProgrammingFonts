@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Catalog load progress/partial callbacks use a `CatalogLoadBridge` so
   `@Sendable` closures passed to `Task.detached` never capture
   `FontBrowserViewModel` directly.
+- Swift 6 compile errors in `FontActivationService` and
+  `ScoreManifestStore` by storing in-memory caches in locked reference
+  types instead of mutating `struct` state from non-`mutating` methods.
 - `FontBrowserViewModelTests` now use async `waitForLoad` with
   `Task.yield` instead of `RunLoop` polling so `swift test` reliably waits
   for MainActor-scheduled catalog loads.

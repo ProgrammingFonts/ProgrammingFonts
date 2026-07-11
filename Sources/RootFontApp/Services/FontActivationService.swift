@@ -30,6 +30,23 @@ protocol FontActivationServiceProtocol: Sendable {
 }
 
 struct FontActivationService: FontActivationServiceProtocol, @unchecked Sendable {
+    private final class ManifestMemoryCache: @unchecked Sendable {
+        private let lock = NSLock()
+        private var manifest: [String: ActivatedFontEntry]?
+
+        func read() -> [String: ActivatedFontEntry]? {
+            lock.lock()
+            defer { lock.unlock() }
+            return manifest
+        }
+
+        func write(_ value: [String: ActivatedFontEntry]) {
+            lock.lock()
+            defer { lock.unlock() }
+            manifest = value
+        }
+    }
+
     private let fileManager: FileManager
     private let appSupportManifestURL: URL
     private let userInstallDirectoryURL: URL
@@ -38,8 +55,7 @@ struct FontActivationService: FontActivationServiceProtocol, @unchecked Sendable
     private let fontURLIndex: FontURLIndex
     private let registerAction: @Sendable ([URL], CTFontManagerScope) throws -> Void
     private let unregisterAction: @Sendable ([URL], CTFontManagerScope) throws -> Void
-    private let lock = NSLock()
-    private var cachedManifest: [String: ActivatedFontEntry]?
+    private let manifestCache = ManifestMemoryCache()
 
     init(
         fileManager: FileManager = .default,
@@ -194,13 +210,11 @@ struct FontActivationService: FontActivationServiceProtocol, @unchecked Sendable
     }
 
     private func loadManifest() -> [String: ActivatedFontEntry] {
-        lock.lock()
-        defer { lock.unlock() }
-        if let cachedManifest {
+        if let cachedManifest = manifestCache.read() {
             return cachedManifest
         }
         let manifest = readManifestFromDisk()
-        cachedManifest = manifest
+        manifestCache.write(manifest)
         return manifest
     }
 
@@ -213,19 +227,14 @@ struct FontActivationService: FontActivationServiceProtocol, @unchecked Sendable
     }
 
     private func saveManifest(_ manifest: [String: ActivatedFontEntry]) {
-        lock.lock()
-        if cachedManifest == manifest {
-            lock.unlock()
+        if manifestCache.read() == manifest {
             return
         }
-        lock.unlock()
 
         let directory = appSupportManifestURL.deletingLastPathComponent()
         try? fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
         guard let data = try? JSONEncoder().encode(manifest) else { return }
         try? data.write(to: appSupportManifestURL, options: .atomic)
-        lock.lock()
-        cachedManifest = manifest
-        lock.unlock()
+        manifestCache.write(manifest)
     }
 }

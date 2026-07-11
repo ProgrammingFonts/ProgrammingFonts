@@ -13,10 +13,26 @@ struct CachedScoreEntry: Codable, Sendable, Hashable {
 }
 
 struct ScoreManifestStore: ScoreManifestStoreProtocol, @unchecked Sendable {
+    private final class ScoreMemoryCache: @unchecked Sendable {
+        private let lock = NSLock()
+        private var entries: [String: CachedScoreEntry]?
+
+        func read() -> [String: CachedScoreEntry]? {
+            lock.lock()
+            defer { lock.unlock() }
+            return entries
+        }
+
+        func write(_ value: [String: CachedScoreEntry]) {
+            lock.lock()
+            defer { lock.unlock() }
+            entries = value
+        }
+    }
+
     private let fileManager: FileManager
     private let manifestURL: URL
-    private let lock = NSLock()
-    private var cachedEntries: [String: CachedScoreEntry]?
+    private let entryCache = ScoreMemoryCache()
 
     init(
         fileManager: FileManager = .default,
@@ -35,31 +51,24 @@ struct ScoreManifestStore: ScoreManifestStoreProtocol, @unchecked Sendable {
     }
 
     func load() -> [String: CachedScoreEntry] {
-        lock.lock()
-        defer { lock.unlock() }
-        if let cachedEntries {
+        if let cachedEntries = entryCache.read() {
             return cachedEntries
         }
         let entries = readEntriesFromDisk()
-        cachedEntries = entries
+        entryCache.write(entries)
         return entries
     }
 
     func save(_ entries: [String: CachedScoreEntry]) {
-        lock.lock()
-        if let cachedEntries, cachedEntries == entries {
-            lock.unlock()
+        if entryCache.read() == entries {
             return
         }
-        lock.unlock()
 
         let directory = manifestURL.deletingLastPathComponent()
         try? fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
         guard let data = try? JSONEncoder().encode(entries) else { return }
         try? data.write(to: manifestURL, options: .atomic)
-        lock.lock()
-        cachedEntries = entries
-        lock.unlock()
+        entryCache.write(entries)
     }
 
     private func readEntriesFromDisk() -> [String: CachedScoreEntry] {
