@@ -26,8 +26,8 @@ enum FontFilterEngine {
         let managedFontIDs: Set<String>
         let manualCollectionFontIDs: Set<String>?
         let tagFilterFontIDs: Set<String>?
-        let familyWeightCoverage: FamilyWeightCoverage?
-        let coverageSupportCache: [String: Bool]
+        let familyWeightCoverage: FamilyWeightCoverage? = nil
+        let coverageSupportCache: [String: Bool] = [:]
     }
 
     struct ComputeOutput: Sendable {

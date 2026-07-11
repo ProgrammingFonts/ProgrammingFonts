@@ -101,6 +101,21 @@ jobs:
           name: swift-test-log
           path: test.log
 
+      - name: Publish test log to issue #56
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const log = fs.existsSync('test.log') ? fs.readFileSync('test.log', 'utf8') : '(no test.log)';
+            const body = `**CI test log** (\`${context.sha.slice(0, 7)}\`)\n\n\`\`\`text\n${log.slice(-12000)}\n\`\`\``;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: 56,
+              body
+            });
+
       - name: Check localization
         run: python3 scripts/check-l10n.py
 
