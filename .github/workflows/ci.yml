@@ -20,7 +20,6 @@ on:
 
 permissions:
   contents: read
-  issues: write
 
 jobs:
   build-and-test:
@@ -56,7 +55,7 @@ jobs:
         env:
           DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
         run: |
-          swift build > build.log 2>&1
+          swift build --build-tests > build.log 2>&1
           status=$?
           echo "build_log_bytes=$(wc -c < build.log | tr -d ' ')"
           if [ "$status" -ne 0 ]; then
@@ -82,7 +81,6 @@ jobs:
           echo '```' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Test
-        id: test
         env:
           DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
         shell: bash
@@ -101,27 +99,6 @@ jobs:
         with:
           name: swift-test-log
           path: test.log
-
-      - name: Publish test log to issue #56
-        if: failure() && steps.test.outcome == 'failure'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const log = fs.existsSync('test.log') ? fs.readFileSync('test.log', 'utf8') : '(no test.log)';
-            const failureLines = log
-              .split('\n')
-              .filter((line) => /failed|error:|XCTAssert/i.test(line))
-              .slice(-40)
-              .join('\n');
-            const tail = log.slice(-8000);
-            const body = `**CI test log** (\`${context.sha.slice(0, 7)}\`)\n\n**Failures**\n\`\`\`text\n${failureLines || '(no failure lines matched)'}\n\`\`\`\n\n**Tail**\n\`\`\`text\n${tail}\n\`\`\``;
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: 56,
-              body
-            });
 
       - name: Check localization
         run: python3 scripts/check-l10n.py

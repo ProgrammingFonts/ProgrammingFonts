@@ -112,10 +112,35 @@ final class FontCatalogServiceScoringTests: XCTestCase {
             programmingScore: ProgrammingScore(total: 72, grade: .a, breakdown: [])
         )
 
-        let once = FontCatalogService.attachProgrammingScores([mono])
-        let twice = FontCatalogService.attachProgrammingScores(once)
-        XCTAssertEqual(once.first?.programmingScore?.total, twice.first?.programmingScore?.total)
-        XCTAssertEqual(once.first?.programmingScore?.grade, twice.first?.programmingScore?.grade)
+        let once = FontCatalogService.attachProgrammingScores(
+            [mono],
+            preservingExistingScores: true
+        )
+        let twice = FontCatalogService.attachProgrammingScores(
+            once,
+            preservingExistingScores: true
+        )
+        XCTAssertEqual(once.first?.programmingScore?.total, 72)
+        XCTAssertEqual(twice.first?.programmingScore?.total, 72)
+        XCTAssertEqual(once.first?.programmingScore?.grade, .a)
+        XCTAssertEqual(twice.first?.programmingScore?.grade, .a)
+    }
+
+    func testAttachProgrammingScoresCanRefreshCachedItemsWhenRequested() {
+        let mono = FontItem(
+            id: "mono",
+            familyName: "Mono Family",
+            postScriptName: "Mono-Regular",
+            displayName: "Mono",
+            source: .user,
+            styleTags: [.regular, .monospace],
+            programming: ProgrammingProfile.empty.withMonospaced(true),
+            metrics: FontMetricsSample(asciiAdvanceVariance: 0.1, uniformWidth: true, confusableDistances: [:]),
+            programmingScore: ProgrammingScore(total: 1, grade: .notRecommended, breakdown: [])
+        )
+
+        let refreshed = FontCatalogService.attachProgrammingScores([mono])
+        XCTAssertNotEqual(refreshed.first?.programmingScore?.total, 1)
     }
 }
 

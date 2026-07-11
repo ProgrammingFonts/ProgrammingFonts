@@ -42,13 +42,15 @@ enum FontFilterEngine {
         recentIDs: [String],
         inputs: Inputs
     ) -> ComputeOutput {
-        let scoreEngine = ProgrammingScoreEngine(weights: inputs.scoreWeights)
         let familyCoverage: FamilyWeightCoverage?
+        let scoreEngine: ProgrammingScoreEngine?
         if needsFamilyCoverage(inputs: inputs) {
             familyCoverage = inputs.familyWeightCoverage
                 ?? FamilyWeightCoverage.build(from: fonts)
+            scoreEngine = ProgrammingScoreEngine(weights: inputs.scoreWeights)
         } else {
             familyCoverage = nil
+            scoreEngine = nil
         }
         var coverageCache = inputs.coverageSupportCache
         var coverageCacheUpdates: [String: Bool] = [:]
@@ -109,10 +111,10 @@ enum FontFilterEngine {
             case .recents:
                 return recentIDSet.contains(item.id)
             case .recommendedForCode:
-                guard let familyCoverage else { return false }
+                guard let familyCoverage, let scoreEngine else { return false }
                 return isRecommendedForCode(item, coverage: familyCoverage, scoreEngine: scoreEngine)
             case .avoidForCode:
-                guard let familyCoverage else { return false }
+                guard let familyCoverage, let scoreEngine else { return false }
                 return isAvoidForCode(item, coverage: familyCoverage, scoreEngine: scoreEngine)
             case .managed:
                 return inputs.managedFontIDs.contains(item.id)
@@ -171,7 +173,7 @@ enum FontFilterEngine {
         inputs: Inputs,
         recentIDs: [String],
         coverage: FamilyWeightCoverage?,
-        scoreEngine: ProgrammingScoreEngine
+        scoreEngine: ProgrammingScoreEngine?
     ) -> [FontItem] {
         switch inputs.sidebarFilter {
         case .recents:
@@ -197,7 +199,7 @@ enum FontFilterEngine {
                         == .orderedAscending
                 }
             case .programmingFit:
-                guard let coverage else {
+                guard let coverage, let scoreEngine else {
                     return fonts.sorted {
                         $0.familyName(for: language)
                             .localizedCaseInsensitiveCompare($1.familyName(for: language))

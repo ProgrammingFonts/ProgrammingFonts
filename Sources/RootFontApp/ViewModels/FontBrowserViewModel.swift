@@ -778,25 +778,6 @@ final class FontBrowserViewModel: ObservableObject {
         selectFirstIfNeeded()
     }
 
-    private func currentFilterInputs() -> FontFilterEngine.Inputs {
-        FontFilterEngine.Inputs(
-            preparedQuery: preparedSearchQuery,
-            coverageQuery: trimmedCoverageQuery,
-            selectedSource: selectedSource,
-            selectedStyle: selectedStyle,
-            sidebarFilter: sidebarFilter,
-            sortOption: sortOption,
-            language: language,
-            showSystemAliasFonts: showSystemAliasFonts,
-            scoreWeights: scoreWeights,
-            managedFontIDs: managedFontIDs,
-            manualCollectionFontIDs: activeManualCollectionFontIDs(),
-            tagFilterFontIDs: activeTagFilterFontIDs(),
-            familyWeightCoverage: familyWeightCoverage,
-            coverageSupportCache: coverageSupportCache
-        )
-    }
-
     private func activeManualCollectionFontIDs() -> Set<String>? {
         guard let id = activeManualCollectionID,
               let collection = manualCollections.first(where: { $0.id == id }) else {

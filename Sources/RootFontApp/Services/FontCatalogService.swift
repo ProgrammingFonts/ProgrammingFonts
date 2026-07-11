@@ -112,7 +112,11 @@ struct FontCatalogService: FontCatalogServiceProtocol {
         if pendingEnrichmentIndices.isEmpty {
             partialScored = items
         } else {
-            partialScored = Self.attachProgrammingScores(items, scoreEngine: scoreEngine)
+            partialScored = Self.attachProgrammingScores(
+                items,
+                scoreEngine: scoreEngine,
+                preservingExistingScores: true
+            )
         }
         let partialSorted = partialScored.sorted { lhs, rhs in
             lhs.familyName.localizedCaseInsensitiveCompare(rhs.familyName) == .orderedAscending
@@ -146,9 +150,10 @@ struct FontCatalogService: FontCatalogServiceProtocol {
         let scoredItems = Self.attachProgrammingScores(
             items,
             familyCoverage: coverage,
-            scoreEngine: scoreEngine
+            scoreEngine: scoreEngine,
+            preservingExistingScores: true
         )
-        var nextCache: [String: CachedScoreEntry] = [:]
+        var nextCache = cachedEntries
         for item in scoredItems {
             if let key = cacheKeyByPostScriptName[item.postScriptName] {
                 nextCache[key] = CachedScoreEntry(
@@ -168,10 +173,14 @@ struct FontCatalogService: FontCatalogServiceProtocol {
     static func attachProgrammingScores(
         _ items: [FontItem],
         familyCoverage: FamilyWeightCoverage? = nil,
-        scoreEngine: ProgrammingScoreEngine = ProgrammingScoreEngine()
+        scoreEngine: ProgrammingScoreEngine = ProgrammingScoreEngine(),
+        preservingExistingScores: Bool = false
     ) -> [FontItem] {
         let coverage = familyCoverage ?? FamilyWeightCoverage.build(from: items)
         return items.map { item in
+            if preservingExistingScores, item.programmingScore != nil {
+                return item
+            }
             var updated = item
             updated.programmingScore = scoreEngine.score(item: item, familyCoverage: coverage)
             return updated
