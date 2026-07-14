@@ -9,6 +9,34 @@ protocol FontCatalogServiceProtocol: Sendable {
     ) throws -> [FontItem]
 }
 
+/// Thread-safe collector that gathers per-index font enrichment results produced
+/// by concurrent workers, so the shared array can be mutated serially afterwards.
+private final class FontEnrichmentCollector: @unchecked Sendable {
+    struct Result {
+        let programming: ProgrammingProfile
+        let metrics: FontMetricsSample?
+    }
+
+    private let lock = NSLock()
+    private var results: [Int: Result] = [:]
+    private var completed = 0
+
+    /// Records a worker's result and returns the overall progress fraction.
+    func record(index: Int, programming: ProgrammingProfile, metrics: FontMetricsSample?, total: Int) -> Double {
+        lock.lock()
+        defer { lock.unlock() }
+        results[index] = Result(programming: programming, metrics: metrics)
+        completed += 1
+        return 0.35 + 0.55 * (Double(completed) / Double(total))
+    }
+
+    func snapshot() -> [Int: Result] {
+        lock.lock()
+        defer { lock.unlock() }
+        return results
+    }
+}
+
 extension FontCatalogServiceProtocol {
     func loadFonts() throws -> [FontItem] {
         try loadFonts(onPartial: nil, reportProgress: nil)
@@ -136,8 +164,10 @@ struct FontCatalogService: FontCatalogServiceProtocol {
 
         if !pendingEnrichmentIndices.isEmpty {
             let total = pendingEnrichmentIndices.count
-            let progressLock = NSLock()
-            var completed = 0
+            let postScriptNames = items.map(\.postScriptName)
+            let collector = FontEnrichmentCollector()
+            let featureInspector = self.featureInspector
+            let metricsProbe = self.metricsProbe
             let workerCount = min(
                 ProcessInfo.processInfo.activeProcessorCount,
                 max(1, total)
@@ -154,25 +184,28 @@ struct FontCatalogService: FontCatalogServiceProtocol {
                         group.leave()
                     }
 
-                    let postScriptName = items[index].postScriptName
-                    let programmingProfile = self.featureInspector.inspect(postScriptName: postScriptName)
-                    let metrics = self.metricsProbe.measure(
+                    let postScriptName = postScriptNames[index]
+                    let programmingProfile = featureInspector.inspect(postScriptName: postScriptName)
+                    let metrics = metricsProbe.measure(
                         postScriptName: postScriptName,
                         isMonospaced: programmingProfile.isMonospaced
                     )
 
-                    progressLock.lock()
-                    var item = items[index]
-                    item.programming = programmingProfile
-                    item.metrics = metrics
-                    items[index] = item
-                    completed += 1
-                    let progress = 0.35 + 0.55 * (Double(completed) / Double(total))
-                    progressLock.unlock()
+                    let progress = collector.record(
+                        index: index,
+                        programming: programmingProfile,
+                        metrics: metrics,
+                        total: total
+                    )
                     reportProgress?(progress)
                 }
             }
             group.wait()
+
+            for (index, result) in collector.snapshot() {
+                items[index].programming = result.programming
+                items[index].metrics = result.metrics
+            }
         }
 
         if pendingEnrichmentIndices.isEmpty {

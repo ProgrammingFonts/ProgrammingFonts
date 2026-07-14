@@ -116,7 +116,10 @@ final class ScoreManifestStoreTests: XCTestCase {
         let encoded = try JSONEncoder().encode(entry)
         let decoded = try JSONDecoder().decode(CachedScoreEntry.self, from: encoded)
         XCTAssertEqual(decoded, entry)
-        XCTAssertNil(decoded.fontItem(postScriptName: "Legacy-Regular"))
+        let roundTripped = decoded.fontItem(postScriptName: "Mono-Regular")
+        XCTAssertEqual(roundTripped?.familyName, "Mono")
+        XCTAssertEqual(roundTripped?.localizedDisplayNames["ja"], "モノ レギュラー")
+        XCTAssertEqual(roundTripped?.programmingScore?.total, 65)
     }
 
     func testLegacyEntryWithoutMetadataDecodes() throws {

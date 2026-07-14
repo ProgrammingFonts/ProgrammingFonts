@@ -20,7 +20,9 @@ final class FontSearchPresentationTests: XCTestCase {
 
         XCTAssertEqual(presentation.primary, "Helvetica Neue")
         XCTAssertFalse(presentation.primaryHighlightRanges.isEmpty)
-        XCTAssertTrue(presentation.secondaryHighlightRanges.isEmpty)
+        // "Helvetica Neue Bold" also contains the query, so the secondary line
+        // is highlighted too (matching the pre-refactor inline behavior).
+        XCTAssertFalse(presentation.secondaryHighlightRanges.isEmpty)
     }
 
     func testEmptyQueryProducesNoHighlightRanges() {

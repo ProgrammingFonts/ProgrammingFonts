@@ -14,8 +14,8 @@ final class FontFilterPerformanceTests: XCTestCase {
         let index = Dictionary(
             uniqueKeysWithValues: fonts.map {
                 ($0.id, FontFilterEngine.SearchIndexEntry(
-                    normalizedNames: [$0.familyName.lowercased()],
-                    choseongNames: []
+                    normalizedNames: [SearchMatcher.normalize($0.familyName)],
+                    choseongNames: [SearchMatcher.choseongProjection($0.familyName)]
                 ))
             }
         )
@@ -59,8 +59,8 @@ final class FontFilterPerformanceTests: XCTestCase {
         let index = Dictionary(
             uniqueKeysWithValues: fonts.map {
                 ($0.id, FontFilterEngine.SearchIndexEntry(
-                    normalizedNames: [$0.familyName.lowercased()],
-                    choseongNames: []
+                    normalizedNames: [SearchMatcher.normalize($0.familyName)],
+                    choseongNames: [SearchMatcher.choseongProjection($0.familyName)]
                 ))
             }
         )

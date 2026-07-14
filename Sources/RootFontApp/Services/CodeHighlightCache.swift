@@ -4,8 +4,8 @@ import Foundation
 /// Memoizes highlighted code attributed strings for preview + waterfall reuse.
 enum CodeHighlightCache {
     private static let lock = NSLock()
-    private static var cachedKey: String?
-    private static var cachedValue: AttributedString?
+    nonisolated(unsafe) private static var cachedKey: String?
+    nonisolated(unsafe) private static var cachedValue: AttributedString?
     private static let tokenizer = MiniTokenizer()
 
     static func attributedString(
