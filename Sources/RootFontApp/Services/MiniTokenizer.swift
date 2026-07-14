@@ -34,15 +34,39 @@ struct MiniTokenizer: Sendable {
         var id: Self { self }
     }
 
+    private struct RegexCatalog {
+        let comment: NSRegularExpression?
+        let string: NSRegularExpression
+        let number: NSRegularExpression
+        let punctuation: NSRegularExpression
+        let `operator`: NSRegularExpression
+        let keyword: NSRegularExpression?
+        let type: NSRegularExpression?
+    }
+
+    private final class CatalogStore: @unchecked Sendable {
+        let catalogs: [Language: RegexCatalog]
+
+        init() {
+            var map: [Language: RegexCatalog] = [:]
+            map.reserveCapacity(Language.allCases.count)
+            for language in Language.allCases {
+                map[language] = MiniTokenizer.makeCatalog(for: language)
+            }
+            catalogs = map
+        }
+    }
+
+    private static let catalogStore = CatalogStore()
+
     func tokenize(_ text: String, language: Language) -> [MiniToken] {
         let nsText = text as NSString
         var occupied = IndexSet()
         var tokens: [MiniToken] = []
+        let catalog = Self.catalogStore.catalogs[language] ?? Self.makeCatalog(for: language)
 
-        func capture(pattern: String, kind: MiniToken.Kind) {
-            guard let regex = try? NSRegularExpression(pattern: pattern, options: [.anchorsMatchLines]) else {
-                return
-            }
+        func capture(_ regex: NSRegularExpression?, kind: MiniToken.Kind) {
+            guard let regex else { return }
             for match in regex.matches(in: text, range: NSRange(location: 0, length: nsText.length)) {
                 let range = match.range
                 guard range.location != NSNotFound else { continue }
@@ -53,25 +77,37 @@ struct MiniTokenizer: Sendable {
             }
         }
 
-        capture(pattern: commentPattern(for: language), kind: .comment)
-        capture(pattern: #""(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'"#, kind: .string)
-        capture(pattern: #"\b\d+(?:\.\d+)?\b"#, kind: .number)
-        capture(pattern: #"[{}()\[\],.;:]"#, kind: .punctuation)
-        capture(pattern: #"[+\-*/=<>!&|%^~]+"#, kind: .operator)
-
-        let keywords = keywordSet(for: language).joined(separator: "|")
-        if !keywords.isEmpty {
-            capture(pattern: #"\b(?:\#(keywords))\b"#, kind: .keyword)
-        }
-        let types = typeSet(for: language).joined(separator: "|")
-        if !types.isEmpty {
-            capture(pattern: #"\b(?:\#(types))\b"#, kind: .type)
-        }
+        capture(catalog.comment, kind: .comment)
+        capture(catalog.string, kind: .string)
+        capture(catalog.number, kind: .number)
+        capture(catalog.punctuation, kind: .punctuation)
+        capture(catalog.operator, kind: .operator)
+        capture(catalog.keyword, kind: .keyword)
+        capture(catalog.type, kind: .type)
 
         return tokens.sorted { $0.range.location < $1.range.location }
     }
 
-    private func commentPattern(for language: Language) -> String {
+    private static func makeCatalog(for language: Language) -> RegexCatalog {
+        let options: NSRegularExpression.Options = [.anchorsMatchLines]
+        func compile(_ pattern: String) -> NSRegularExpression? {
+            try? NSRegularExpression(pattern: pattern, options: options)
+        }
+
+        let keywords = keywordSet(for: language).joined(separator: "|")
+        let types = typeSet(for: language).joined(separator: "|")
+        return RegexCatalog(
+            comment: compile(commentPattern(for: language)),
+            string: compile(#""(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'"#)!,
+            number: compile(#"\b\d+(?:\.\d+)?\b"#)!,
+            punctuation: compile(#"[{}()\[\],.;:]"#)!,
+            operator: compile(#"[+\-*/=<>!&|%^~]+"#)!,
+            keyword: keywords.isEmpty ? nil : compile(#"\b(?:\#(keywords))\b"#),
+            type: types.isEmpty ? nil : compile(#"\b(?:\#(types))\b"#)
+        )
+    }
+
+    private static func commentPattern(for language: Language) -> String {
         switch language {
         case .python, .shell:
             return #"#.*$"#
@@ -84,7 +120,7 @@ struct MiniTokenizer: Sendable {
         }
     }
 
-    private func keywordSet(for language: Language) -> [String] {
+    private static func keywordSet(for language: Language) -> [String] {
         switch language {
         case .swift:
             return ["let", "var", "if", "else", "for", "in", "func", "return", "guard", "switch", "case", "import"]
@@ -113,7 +149,7 @@ struct MiniTokenizer: Sendable {
         }
     }
 
-    private func typeSet(for language: Language) -> [String] {
+    private static func typeSet(for language: Language) -> [String] {
         switch language {
         case .swift:
             return ["String", "Int", "Double", "Bool", "Void", "Any"]

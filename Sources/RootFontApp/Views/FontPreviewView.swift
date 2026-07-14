@@ -24,8 +24,9 @@ struct FontPreviewView: View {
     @State private var fontBookMessage: String?
     @State private var fontBookPathHint: String?
     @State private var showInstallConfirm = false
+    @State private var draftPreviewText = ""
+    @State private var previewTextDebounceTask: Task<Void, Never>?
 
-    private let miniTokenizer = MiniTokenizer()
     private var factorLabels: FontPreviewFactorLabels {
         FontPreviewFactorLabels(tr: viewModel.tr)
     }
@@ -82,7 +83,9 @@ struct FontPreviewView: View {
                                 snippetStrategy: $snippetStrategy,
                                 codeLanguage: $codeLanguage,
                                 codeSnippet: codeSnippet,
-                                highlightedCode: highlightedCode,
+                                highlightedCode: { text in
+                                    CodeHighlightCache.attributedString(for: text, language: codeLanguage)
+                                },
                                 previewFont: previewFont,
                                 codeLanguageTitle: codeLanguageTitle
                             )
@@ -97,7 +100,7 @@ struct FontPreviewView: View {
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                        } else if viewModel.hasPartialGlyphFallback(for: viewModel.previewText) {
+                        } else if viewModel.hasPartialGlyphFallback(for: draftPreviewText) {
                             Label(viewModel.tr(.fallbackPartialGlyphInfo), systemImage: "exclamationmark.circle")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
@@ -131,6 +134,34 @@ struct FontPreviewView: View {
         .onChange(of: viewModel.selectedFont?.id, initial: true) { _, _ in
             guard let selected = viewModel.selectedFont else { return }
             loadFeaturePreferences(for: selected)
+        }
+        .onAppear {
+            if draftPreviewText.isEmpty {
+                draftPreviewText = viewModel.previewText
+            }
+        }
+        .onChange(of: viewModel.previewText) { _, newValue in
+            if draftPreviewText != newValue {
+                draftPreviewText = newValue
+            }
+        }
+        .onChange(of: draftPreviewText) { _, newValue in
+            previewTextDebounceTask?.cancel()
+            previewTextDebounceTask = Task {
+                try? await Task.sleep(nanoseconds: 220_000_000)
+                guard !Task.isCancelled else { return }
+                await MainActor.run {
+                    if viewModel.previewText != newValue {
+                        viewModel.updatePreviewText(newValue)
+                    }
+                }
+            }
+        }
+        .onDisappear {
+            previewTextDebounceTask?.cancel()
+            if viewModel.previewText != draftPreviewText {
+                viewModel.updatePreviewText(draftPreviewText)
+            }
         }
         .onChange(of: ligaturesEnabled) { _, _ in
             persistFeaturePreferencesIfPossible()
@@ -185,6 +216,7 @@ struct FontPreviewView: View {
             }
             .onChange(of: previewPreset) { _, newPreset in
                 viewModel.applyPreviewPreset(newPreset)
+                draftPreviewText = newPreset.text
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -233,12 +265,9 @@ struct FontPreviewView: View {
     }
 
     private var previewTextField: some View {
-        TextField(viewModel.tr(.previewText), text: $viewModel.previewText, axis: .vertical)
+        TextField(viewModel.tr(.previewText), text: $draftPreviewText, axis: .vertical)
             .textFieldStyle(.roundedBorder)
             .lineLimit(1...4)
-            .onChange(of: viewModel.previewText) { _, _ in
-                viewModel.updatePreviewText(viewModel.previewText)
-            }
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
@@ -337,7 +366,7 @@ struct FontPreviewView: View {
     @ViewBuilder
     private func previewBlocksSection(for selected: FontItem) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            previewBlock(text: viewModel.previewText, size: viewModel.previewSize, item: selected)
+            previewBlock(text: draftPreviewText, size: viewModel.previewSize, item: selected)
             previewBlock(text: "ABCDEFGHIJKLMNOPQRSTUVWXYZ", size: max(14, viewModel.previewSize * 0.72), item: selected)
             previewBlock(text: "abcdefghijklmnopqrstuvwxyz 0123456789", size: max(12, viewModel.previewSize * 0.58), item: selected)
         }
@@ -388,7 +417,7 @@ struct FontPreviewView: View {
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
             ScrollView(.horizontal, showsIndicators: true) {
-                Text(highlightedCode(for: codeSnippet))
+                Text(CodeHighlightCache.attributedString(for: codeSnippet, language: codeLanguage))
                     .font(previewFont(for: item, size: max(12, viewModel.previewSize * 0.86), monospacedNumerals: true))
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
@@ -402,13 +431,14 @@ struct FontPreviewView: View {
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
             VStack(alignment: .leading, spacing: 6) {
+                let highlighted = CodeHighlightCache.attributedString(for: codeSnippet, language: codeLanguage)
                 ForEach([11.0, 12.0, 13.0, 14.0, 16.0, 18.0], id: \.self) { size in
                     HStack(spacing: 8) {
                         Text("\(Int(size)) pt")
                             .font(.caption2.monospacedDigit())
                             .foregroundStyle(.secondary)
                             .frame(width: 44, alignment: .leading)
-                        Text(highlightedCode(for: codeSnippet))
+                        Text(highlighted)
                             .font(previewFont(for: item, size: size, monospacedNumerals: true))
                             .lineLimit(1)
                     }
@@ -483,33 +513,6 @@ struct FontPreviewView: View {
                 }
             }
         }
-    }
-
-    private func highlightedCode(for text: String) -> AttributedString {
-        let mutable = NSMutableAttributedString(string: text)
-        let tokens = miniTokenizer.tokenize(text, language: codeLanguage)
-        for token in tokens {
-            guard token.range.location != NSNotFound else { continue }
-            let color: NSColor
-            switch token.kind {
-            case .keyword:
-                color = .systemBlue
-            case .type:
-                color = .systemMint
-            case .string:
-                color = .systemOrange
-            case .number:
-                color = .systemPurple
-            case .comment:
-                color = .secondaryLabelColor
-            case .punctuation, .operator:
-                color = .systemPink
-            case .identifier:
-                color = .labelColor
-            }
-            mutable.addAttribute(.foregroundColor, value: color, range: token.range)
-        }
-        return (try? AttributedString(NSAttributedString(attributedString: mutable), including: \.appKit)) ?? AttributedString(text)
     }
 
     @ViewBuilder

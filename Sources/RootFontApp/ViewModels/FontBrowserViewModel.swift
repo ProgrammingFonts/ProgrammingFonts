@@ -101,10 +101,11 @@ final class FontBrowserViewModel: ObservableObject {
     private var indexedFontIDs: Set<String> = []
     private var catalogEpoch: Int = 0
     private var activeFilterTask: Task<Void, Never>?
-    private var filterResultCache: [FilterSignature: [FontItem]] = [:]
+    private var filterResultCache: [FilterSignature: [String]] = [:]
     private var filterResultCacheOrder: [FilterSignature] = []
     private var searchPresentationByFontID: [String: FontSearchPresentation] = [:]
     private var monospacedFonts: [FontItem] = []
+    private var fontsByID: [String: FontItem] = [:]
     private var filteredFontIDs: Set<String> = []
     private var scoreWeightRefreshTask: Task<Void, Never>?
     private var scoreRescoreTask: Task<Void, Never>?
@@ -504,7 +505,7 @@ final class FontBrowserViewModel: ObservableObject {
     }
 
     private func applyPartialLoadResult(fonts: [FontItem]) {
-        allFonts = fonts
+        replaceAllFonts(fonts)
         rebuildSearchIndex(force: false)
         rebuildSearchPresentations()
         applyFilters()
@@ -515,7 +516,7 @@ final class FontBrowserViewModel: ObservableObject {
 
     private func applyLoadResult(fonts: [FontItem]?, failed: Bool) {
         if failed {
-            allFonts = []
+            replaceAllFonts([])
             filteredFonts = []
             filteredFontIDs = []
             selectedFont = nil
@@ -524,7 +525,7 @@ final class FontBrowserViewModel: ObservableObject {
             loadErrorMessage = tr(.catalogReadFailed)
         } else if let fonts {
             let sameIDs = Set(fonts.map(\.id)) == indexedFontIDs
-            allFonts = fonts
+            replaceAllFonts(fonts)
             let needsRescore = scoreWeights != .default || fonts.contains(where: { $0.programmingScore == nil })
             if needsRescore {
                 recalculateProgrammingScores()
@@ -729,8 +730,8 @@ final class FontBrowserViewModel: ObservableObject {
             tagFilterSignature: tagIDs?.hashValue ?? 0
         )
 
-        if let cached = filterResultCache[signature] {
-            commitFilterResult(cached, signature: signature, fromCache: true)
+        if let cachedIDs = filterResultCache[signature] {
+            commitFilterResult(fonts(matchingOrderedIDs: cachedIDs), signature: signature, fromCache: true)
             return
         }
 
@@ -754,7 +755,10 @@ final class FontBrowserViewModel: ObservableObject {
         )
 
         let filteredByModule = scopedFonts(for: allFonts)
-        if filteredByModule.count <= backgroundFilterThreshold {
+        let shouldDetach =
+            filteredByModule.count > backgroundFilterThreshold
+            || !trimmedCoverageQuery.isEmpty
+        if !shouldDetach {
             let output = FontFilterEngine.compute(
                 fonts: filteredByModule,
                 searchIndex: searchIndexByFontID,
@@ -867,12 +871,21 @@ final class FontBrowserViewModel: ObservableObject {
         if filterResultCache[signature] != nil {
             filterResultCacheOrder.removeAll { $0 == signature }
         }
-        filterResultCache[signature] = items
+        filterResultCache[signature] = items.map(\.id)
         filterResultCacheOrder.append(signature)
         while filterResultCacheOrder.count > filterResultCacheLimit {
             let stale = filterResultCacheOrder.removeFirst()
             filterResultCache.removeValue(forKey: stale)
         }
+    }
+
+    private func fonts(matchingOrderedIDs ids: [String]) -> [FontItem] {
+        ids.compactMap { fontsByID[$0] }
+    }
+
+    private func replaceAllFonts(_ fonts: [FontItem]) {
+        allFonts = fonts
+        fontsByID = Dictionary(uniqueKeysWithValues: fonts.map { ($0.id, $0) })
     }
 
     private func invalidateFilterResultCache() {
@@ -991,10 +1004,12 @@ final class FontBrowserViewModel: ObservableObject {
     private func recalculateProgrammingScores() {
         let engine = ProgrammingScoreEngine(weights: scoreWeights)
         let coverage = familyWeightCoverage ?? FamilyWeightCoverage.build(from: allFonts)
-        allFonts = FontCatalogService.attachProgrammingScores(
-            allFonts,
-            familyCoverage: coverage,
-            scoreEngine: engine
+        replaceAllFonts(
+            FontCatalogService.attachProgrammingScores(
+                allFonts,
+                familyCoverage: coverage,
+                scoreEngine: engine
+            )
         )
         rebuildMonospacedFonts()
     }
@@ -1014,7 +1029,7 @@ final class FontBrowserViewModel: ObservableObject {
         }.value
 
         guard !Task.isCancelled else { return }
-        allFonts = updated
+        replaceAllFonts(updated)
         rebuildMonospacedFonts()
     }
 

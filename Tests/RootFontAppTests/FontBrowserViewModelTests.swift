@@ -663,6 +663,31 @@ final class FontBrowserViewModelTests: XCTestCase {
         XCTAssertNotEqual(before, after)
     }
 
+    func testFilterResultCacheReturnsSameOrderedIDsOnRepeat() async {
+        let fonts = (0..<12).map { index in
+            FontItem.sample(
+                id: "f\(index)",
+                familyName: String(format: "Family %02d", index),
+                source: .user,
+                styleTags: [.regular]
+            )
+        }
+        let viewModel = FontBrowserViewModel(
+            catalogService: MockCatalogService(fonts: fonts),
+            preferencesStore: InMemoryPreferencesStore()
+        )
+        viewModel.load()
+        await waitForLoad(viewModel)
+
+        viewModel.applyFilters()
+        let firstPass = viewModel.filteredFonts.map(\.id)
+        viewModel.applyFilters()
+        let secondPass = viewModel.filteredFonts.map(\.id)
+
+        XCTAssertEqual(firstPass, secondPass)
+        XCTAssertEqual(firstPass.count, fonts.count)
+    }
+
     func testManualCollectionPersistsAndFiltersFonts() async {
         let fonts = [
             FontItem.sample(id: "A", familyName: "Alpha", source: .user, styleTags: [.regular]),
