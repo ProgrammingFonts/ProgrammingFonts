@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- UI locales for French (`fr`), German (`de`), and Spanish (`es`).
+
 ### Fixed
 - Swift 6.2+ `SendingRisksDataRace` in `FontBrowserViewModel.load()` and
   `applyFilters()`: font load and filter work stay on `Task.detached` with

@@ -377,6 +377,7 @@ struct FontListView: View {
         case .simplifiedChinese, .traditionalChinese: return 140
         case .japanese: return 150
         case .korean: return 155
+        case .french, .german, .spanish: return 160
         }
     }
 
@@ -386,6 +387,7 @@ struct FontListView: View {
         case .simplifiedChinese, .traditionalChinese: return 170
         case .japanese: return 190
         case .korean: return 195
+        case .french, .german, .spanish: return 200
         }
     }
 
@@ -395,6 +397,7 @@ struct FontListView: View {
         case .simplifiedChinese, .traditionalChinese: return 140
         case .japanese: return 150
         case .korean: return 150
+        case .french, .german, .spanish: return 170
         }
     }
 
@@ -404,6 +407,7 @@ struct FontListView: View {
         case .simplifiedChinese, .traditionalChinese: return 160
         case .japanese: return 190
         case .korean: return 190
+        case .french, .german, .spanish: return 220
         }
     }
 
@@ -413,6 +417,7 @@ struct FontListView: View {
         case .simplifiedChinese, .traditionalChinese: return 110
         case .japanese: return 120
         case .korean: return 125
+        case .french, .german, .spanish: return 140
         }
     }
 

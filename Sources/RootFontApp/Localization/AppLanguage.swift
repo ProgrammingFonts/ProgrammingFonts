@@ -6,6 +6,9 @@ enum AppLanguage: String, CaseIterable, Codable, Identifiable, Sendable {
     case traditionalChinese = "zh-Hant"
     case japanese = "ja"
     case korean = "ko"
+    case french = "fr"
+    case german = "de"
+    case spanish = "es"
 
     var id: Self { self }
 
@@ -23,6 +26,12 @@ enum AppLanguage: String, CaseIterable, Codable, Identifiable, Sendable {
             return "日本語"
         case .korean:
             return "한국어"
+        case .french:
+            return "Français"
+        case .german:
+            return "Deutsch"
+        case .spanish:
+            return "Español"
         }
     }
 
@@ -38,6 +47,12 @@ enum AppLanguage: String, CaseIterable, Codable, Identifiable, Sendable {
             return "ja.swift"
         case .korean:
             return "ko.swift"
+        case .french:
+            return "fr.swift"
+        case .german:
+            return "de.swift"
+        case .spanish:
+            return "es.swift"
         }
     }
 }

@@ -73,7 +73,7 @@ RootFont v0.3.0-alpha is the programming-font release on top of v0.2.0-beta. Thi
 
 ## Localization
 
-- Supported languages: `en`, `zh-Hans`, `zh-Hant`, `ja`, `ko`
+- Supported languages: `en`, `zh-Hans`, `zh-Hant`, `ja`, `ko`, `fr`, `de`, `es`
 - Quick Sample presets include dedicated Japanese and Korean text
 - When a selected font does not fully support current preview text, RootFont shows a fallback warning
 

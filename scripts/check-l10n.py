@@ -29,6 +29,9 @@ LOCALE_FILES = [
     L10N_DIR / "Locales" / "zh-Hant.swift",
     L10N_DIR / "Locales" / "ja.swift",
     L10N_DIR / "Locales" / "ko.swift",
+    L10N_DIR / "Locales" / "fr.swift",
+    L10N_DIR / "Locales" / "de.swift",
+    L10N_DIR / "Locales" / "es.swift",
 ]
 
 # Matches printf-style placeholders such as %@, %d, %lld, %1$d, %2$@, %.2f.
