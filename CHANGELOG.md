@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - UI locales for French (`fr`), German (`de`), and Spanish (`es`).
 
 ### Fixed
+- Font activation and installation now roll back registration and copied files
+  when manifest persistence fails; uninstall restores the font when it cannot
+  commit the updated managed-font state, and rollback failures are surfaced.
 - Swift 6.2+ `SendingRisksDataRace` in `FontBrowserViewModel.load()` and
   `applyFilters()`: font load and filter work stay on `Task.detached` with
   Sendable inputs; UI updates run from `@MainActor` tasks without sending

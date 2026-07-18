@@ -9,6 +9,7 @@ enum FontActivationScope: String, Codable, Sendable {
 enum FontActivationError: Error, Sendable {
     case fontNotFound
     case installConflict(destination: URL)
+    case rollbackFailed(primary: String, cleanup: [String])
 }
 
 struct ActivatedFontEntry: Codable, Hashable, Sendable {
@@ -90,14 +91,23 @@ struct FontActivationService: FontActivationServiceProtocol, @unchecked Sendable
     func activateForProcess(fontID: String) throws {
         let url = try resolveURL(for: fontID)
         try register(urls: [url], scope: .process)
-        var manifest = loadManifest()
-        manifest[fontID] = ActivatedFontEntry(
-            fontID: fontID,
-            originalURL: url,
-            installedURL: nil,
-            scope: .process
-        )
-        saveManifest(manifest)
+        do {
+            var manifest = loadManifest()
+            manifest[fontID] = ActivatedFontEntry(
+                fontID: fontID,
+                originalURL: url,
+                installedURL: nil,
+                scope: .process
+            )
+            try saveManifest(manifest)
+        } catch {
+            do {
+                try unregister(urls: [url], scope: .process)
+            } catch let cleanupError {
+                throw rollbackFailure(primary: error, cleanup: [cleanupError])
+            }
+            throw error
+        }
     }
 
     func installForUser(fontID: String) throws {
@@ -108,30 +118,99 @@ struct FontActivationService: FontActivationServiceProtocol, @unchecked Sendable
             throw FontActivationError.installConflict(destination: destination)
         }
         try fileManager.copyItem(at: original, to: destination)
-        try register(urls: [destination], scope: .user)
-        var manifest = loadManifest()
-        manifest[fontID] = ActivatedFontEntry(
-            fontID: fontID,
-            originalURL: original,
-            installedURL: destination,
-            scope: .user
-        )
-        saveManifest(manifest)
+        var registered = false
+        do {
+            try register(urls: [destination], scope: .user)
+            registered = true
+            var manifest = loadManifest()
+            manifest[fontID] = ActivatedFontEntry(
+                fontID: fontID,
+                originalURL: original,
+                installedURL: destination,
+                scope: .user
+            )
+            try saveManifest(manifest)
+        } catch {
+            var cleanupErrors: [Error] = []
+            if registered {
+                do {
+                    try unregister(urls: [destination], scope: .user)
+                } catch {
+                    cleanupErrors.append(error)
+                }
+            }
+            do {
+                if fileManager.fileExists(atPath: destination.path) {
+                    try fileManager.removeItem(at: destination)
+                }
+            } catch {
+                cleanupErrors.append(error)
+            }
+            if !cleanupErrors.isEmpty {
+                throw rollbackFailure(primary: error, cleanup: cleanupErrors)
+            }
+            throw error
+        }
     }
 
     func uninstall(fontID: String) throws {
-        var manifest = loadManifest()
-        guard let entry = manifest[fontID] else { return }
+        let originalManifest = loadManifest()
+        guard let entry = originalManifest[fontID] else { return }
+        var updatedManifest = originalManifest
+        updatedManifest.removeValue(forKey: fontID)
+
         if let installed = entry.installedURL {
-            try? unregister(urls: [installed], scope: .user)
-            if fileManager.fileExists(atPath: installed.path) {
-                try? fileManager.removeItem(at: installed)
+            try unregister(urls: [installed], scope: .user)
+            let backup = installed.deletingLastPathComponent()
+                .appendingPathComponent(".\(installed.lastPathComponent).rootfont-uninstall-\(UUID().uuidString)")
+            do {
+                if fileManager.fileExists(atPath: installed.path) {
+                    try fileManager.moveItem(at: installed, to: backup)
+                }
+                try saveManifest(updatedManifest)
+                if fileManager.fileExists(atPath: backup.path) {
+                    try fileManager.removeItem(at: backup)
+                }
+            } catch {
+                var cleanupErrors: [Error] = []
+                if fileManager.fileExists(atPath: backup.path),
+                   !fileManager.fileExists(atPath: installed.path) {
+                    do {
+                        try fileManager.moveItem(at: backup, to: installed)
+                    } catch {
+                        cleanupErrors.append(error)
+                    }
+                }
+                do {
+                    try register(urls: [installed], scope: .user)
+                } catch {
+                    cleanupErrors.append(error)
+                }
+                if manifestCache.read() != originalManifest {
+                    do {
+                        try saveManifest(originalManifest)
+                    } catch {
+                        cleanupErrors.append(error)
+                    }
+                }
+                if !cleanupErrors.isEmpty {
+                    throw rollbackFailure(primary: error, cleanup: cleanupErrors)
+                }
+                throw error
             }
         } else {
-            try? unregister(urls: [entry.originalURL], scope: .process)
+            try unregister(urls: [entry.originalURL], scope: .process)
+            do {
+                try saveManifest(updatedManifest)
+            } catch {
+                do {
+                    try register(urls: [entry.originalURL], scope: .process)
+                } catch let cleanupError {
+                    throw rollbackFailure(primary: error, cleanup: [cleanupError])
+                }
+                throw error
+            }
         }
-        manifest.removeValue(forKey: fontID)
-        saveManifest(manifest)
     }
 
     func reconcile() throws {
@@ -148,7 +227,7 @@ struct FontActivationService: FontActivationServiceProtocol, @unchecked Sendable
                 changed = true
             }
         }
-        if changed { saveManifest(manifest) }
+        if changed { try saveManifest(manifest) }
     }
 
     func isManaged(fontID: String) -> Bool {
@@ -189,6 +268,13 @@ struct FontActivationService: FontActivationServiceProtocol, @unchecked Sendable
         try unregisterAction(urls, scope)
     }
 
+    private func rollbackFailure(primary: Error, cleanup: [Error]) -> FontActivationError {
+        FontActivationError.rollbackFailed(
+            primary: String(describing: primary),
+            cleanup: cleanup.map { String(describing: $0) }
+        )
+    }
+
     private static func defaultRegister(urls: [URL], scope: CTFontManagerScope) throws {
         for url in urls {
             var error: Unmanaged<CFError>?
@@ -226,15 +312,15 @@ struct FontActivationService: FontActivationServiceProtocol, @unchecked Sendable
         return decoded
     }
 
-    private func saveManifest(_ manifest: [String: ActivatedFontEntry]) {
+    private func saveManifest(_ manifest: [String: ActivatedFontEntry]) throws {
         if manifestCache.read() == manifest {
             return
         }
 
         let directory = appSupportManifestURL.deletingLastPathComponent()
-        try? fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
-        guard let data = try? JSONEncoder().encode(manifest) else { return }
-        try? data.write(to: appSupportManifestURL, options: .atomic)
+        try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
+        let data = try JSONEncoder().encode(manifest)
+        try data.write(to: appSupportManifestURL, options: .atomic)
         manifestCache.write(manifest)
     }
 }
