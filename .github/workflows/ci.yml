@@ -7,22 +7,63 @@ concurrency:
 on:
   push:
     branches: [master, main, develop]
-    paths-ignore:
-      - '**.md'
-      - 'screenshots/**'
-      - '.github/ISSUE_TEMPLATE/**'
   pull_request:
     branches: [master, main, develop]
-    paths-ignore:
-      - '**.md'
-      - 'screenshots/**'
-      - '.github/ISSUE_TEMPLATE/**'
 
 permissions:
   contents: read
 
 jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      requires_macos: ${{ steps.changes.outputs.requires_macos }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Detect changes requiring macOS
+        id: changes
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          requires_macos=false
+
+          if [[ -z "$BASE_SHA" || "$BASE_SHA" =~ ^0+$ ]] || ! git cat-file -e "$BASE_SHA^{commit}"; then
+            requires_macos=true
+          else
+            while IFS= read -r -d '' file; do
+              case "$file" in
+                *.md|screenshots/*|.github/ISSUE_TEMPLATE/*) ;;
+                *) requires_macos=true; break ;;
+              esac
+            done < <(git diff --name-only -z "$BASE_SHA" "$HEAD_SHA")
+          fi
+
+          echo "requires_macos=$requires_macos" >> "$GITHUB_OUTPUT"
+
+  repository-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Check localization
+        run: python3 scripts/check-l10n.py
+
+      - name: Check version metadata
+        run: python3 scripts/check-version.py
+
+      - name: Check screenshot conventions
+        run: python3 scripts/optimize-screenshots.py --check
+
   build-and-test:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.requires_macos == 'true'
     runs-on: macos-15
     steps:
       - name: Checkout repository
@@ -103,12 +144,3 @@ jobs:
         with:
           name: swift-test-log
           path: test.log
-
-      - name: Check localization
-        run: python3 scripts/check-l10n.py
-
-      - name: Check version metadata
-        run: python3 scripts/check-version.py
-
-      - name: Check screenshot conventions
-        run: python3 scripts/optimize-screenshots.py --check
