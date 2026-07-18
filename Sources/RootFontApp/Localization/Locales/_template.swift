@@ -72,7 +72,7 @@ enum L10nTemplate {
         .previewSize: "Size",
         .previewWrapMode: "Single-line scroll preview",
         .fallbackPreviewInfo: "This font cannot render directly. Fallback to system font.",
-        .selectFontTitle: "RootFont",
+        .selectFontTitle: "rootfont",
         .selectFontHint: "Select a font from the list to start preview.",
         .selectFontTip: "Tip: Compact grid mode is closer to a font-wall view.",
         .catalogReadFailed: "Failed to read font catalog. Please retry.",

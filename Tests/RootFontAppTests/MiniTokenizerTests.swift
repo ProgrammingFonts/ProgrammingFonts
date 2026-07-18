@@ -5,7 +5,7 @@ final class MiniTokenizerTests: XCTestCase {
     func testTokenizesSwiftKeywordsAndStrings() {
         let tokenizer = MiniTokenizer()
         let tokens = tokenizer.tokenize(
-            #"let name = "RootFont" // note"#,
+            #"let name = "rootfont" // note"#,
             language: .swift
         )
 

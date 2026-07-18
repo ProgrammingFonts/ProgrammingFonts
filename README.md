@@ -1,6 +1,6 @@
-# RootFont
+# rootfont
 
-![RootFont Logo](logo-rootfont-300x300.png)
+![rootfont Logo](logo-rootfont-300x300.png)
 
 [![CI](https://github.com/rootfont/rootfont/actions/workflows/ci.yml/badge.svg)](https://github.com/rootfont/rootfont/actions/workflows/ci.yml)
 [![License Check](https://github.com/rootfont/rootfont/actions/workflows/license-check.yml/badge.svg)](https://github.com/rootfont/rootfont/actions/workflows/license-check.yml)
@@ -14,20 +14,20 @@ The native font manager for designers and programmers on macOS.
 **Platform:** macOS 14+  
 **Bundle ID:** `com.rootfont.app`
 
-RootFont is currently in active alpha development.
+rootfont is currently in active alpha development.
 
 ## What's New in v0.3.0-alpha (5)
 
-RootFont v0.3.0-alpha is the programming-font release on top of v0.2.0-beta. This build adds a dedicated Programming workspace, a full suitability-scoring pipeline, multi-mode font comparison, 12-language code preview, OpenType controls in the inspector, font activation/install flows, and one-click editor config export. Startup is faster thanks to staged catalog loading and shared font-URL caching.
+rootfont v0.3.0-alpha is the programming-font release on top of v0.2.0-beta. This build adds a dedicated Programming workspace, a full suitability-scoring pipeline, multi-mode font comparison, 12-language code preview, OpenType controls in the inspector, font activation/install flows, and one-click editor config export. Startup is faster thanks to staged catalog loading and shared font-URL caching.
 
 ### Programming workspace
 
 - Sidebar **Library / Programming** module switch; Programming mode scopes to monospaced fonts and sorts by programming fit by default.
-- New sidebar filters: **Recommended for code**, **Avoid for code**, and **Managed by RootFont**.
+- New sidebar filters: **Recommended for code**, **Avoid for code**, and **Managed by rootfont**.
 - **Programming suitability scoring** (S / A / B / C / NR) across ten weighted factors: monospace baseline, glyph disambiguation, ligatures, stylistic flexibility, box drawing, Powerline, Nerd Font, variable font, language coverage, and weight variety.
 - Score breakdown with per-factor progress bars, grade badges, and **Why** popovers; low-grade fonts show improvement hints.
 - Configurable score weights in Settings: **Default**, **Terminal Heavy**, **IDE Heavy**, and **Minimalist** presets plus ten independent sliders.
-- Persisted score cache at `~/Library/Application Support/RootFont/scores.json`, invalidated on font file changes.
+- Persisted score cache at `~/Library/Application Support/rootfont/scores.json`, invalidated on font file changes.
 
 ### Compare & code preview
 
@@ -39,7 +39,7 @@ RootFont v0.3.0-alpha is the programming-font release on top of v0.2.0-beta. Thi
 ### OpenType & workflow
 
 - Live OpenType binding: ligatures, slashed/dotted zero, and stylistic sets in preview; preferences persist per font.
-- **Font activation**: session activate, user-scope install to `~/Library/Fonts/RootFont/`, uninstall, and startup reconcile.
+- **Font activation**: session activate, user-scope install to `~/Library/Fonts/rootfont/`, uninstall, and startup reconcile.
 - One-click editor config copy for **VS Code**, **Cursor**, **Alacritty**, **Kitty**, **Warp**, and **Zed**.
 - Preview header actions: copy PostScript name, open in Font Book, open managed-fonts folder.
 
@@ -54,8 +54,8 @@ RootFont v0.3.0-alpha is the programming-font release on top of v0.2.0-beta. Thi
 ## Screenshots (v0.3.0-alpha)
 
 <p align="center">
-  <img src="screenshots/v0.3.0-alpha/01-main-dark.png" alt="RootFont main window in dark mode" width="46%" />
-  <img src="screenshots/v0.3.0-alpha/02-main-light.png" alt="RootFont main window in light mode" width="46%" />
+  <img src="screenshots/v0.3.0-alpha/01-main-dark.png" alt="rootfont main window in dark mode" width="46%" />
+  <img src="screenshots/v0.3.0-alpha/02-main-light.png" alt="rootfont main window in light mode" width="46%" />
 </p>
 
 > Screenshots follow the `screenshots/v<version>/NN-<slug>.png` convention.
@@ -75,7 +75,7 @@ RootFont v0.3.0-alpha is the programming-font release on top of v0.2.0-beta. Thi
 
 - Supported languages: `en`, `zh-Hans`, `zh-Hant`, `ja`, `ko`, `fr`, `de`, `es`
 - Quick Sample presets include dedicated Japanese and Korean text
-- When a selected font does not fully support current preview text, RootFont shows a fallback warning
+- When a selected font does not fully support current preview text, rootfont shows a fallback warning
 
 ## Quick Start
 
@@ -91,7 +91,7 @@ RootFont v0.3.0-alpha is the programming-font release on top of v0.2.0-beta. Thi
   [issue #56](https://github.com/rootfont/rootfont/issues/56)); open a
   new issue if you still hit it on the latest commit.
 
-RootFont is a **macOS-only** SwiftPM project. Building, running, and testing
+rootfont is a **macOS-only** SwiftPM project. Building, running, and testing
 on Linux or with Command Line Tools alone is **not supported**.
 
 ### Toolchain setup
@@ -129,7 +129,7 @@ swift run RootFontApp
 bash scripts/build-app.sh
 ```
 
-Produces `.build/app/RootFont.app` with version, build number, and git
+Produces `.build/app/rootfont.app` with version, build number, and git
 short SHA embedded in `Info.plist`.
 
 ### Run Tests
@@ -150,7 +150,7 @@ Hooks run localization and version-metadata checks on commit when relevant files
 
 Open an [issue](https://github.com/rootfont/rootfont/issues) with:
 
-- RootFont version and build (from **About → Copy Version**)
+- rootfont version and build (from **About → Copy Version**)
 - **About → Copy System Info** output
 - `swift --version` and `xcode-select -p`
 - Steps to reproduce and expected vs actual behavior
@@ -161,7 +161,7 @@ Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## License
 
-RootFont is licensed under Apache License 2.0. See [LICENSE](LICENSE).
+rootfont is licensed under Apache License 2.0. See [LICENSE](LICENSE).
 
 ## Third-Party Notices
 

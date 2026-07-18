@@ -1,4 +1,4 @@
-# RootFont Screenshots
+# rootfont Screenshots
 
 This directory holds the marketing / documentation screenshots referenced
 from the repository's `README.md`. Follow the conventions below so the

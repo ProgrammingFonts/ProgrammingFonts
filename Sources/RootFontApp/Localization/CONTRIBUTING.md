@@ -1,6 +1,6 @@
 # Localization Contribution Guide
 
-This document explains how to add a new UI language to RootFont.
+This document explains how to add a new UI language to rootfont.
 
 ## Structure
 
@@ -52,7 +52,7 @@ English (`en.swift`) is the fallback source of truth.
 ## Translation Rules
 
 - Keep placeholders and punctuation semantically equivalent.
-- Keep product name `RootFont` unchanged.
+- Keep product name `rootfont` unchanged.
 - Use concise UI text; avoid overlong labels.
 - Prefer consistency with existing terms (`Settings`, `Favorites`, `Preview`, etc.).
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate and optionally compress RootFont screenshot assets.
+"""Validate and optionally compress rootfont screenshot assets.
 
 Screenshot directory convention (see screenshots/README.md):
 

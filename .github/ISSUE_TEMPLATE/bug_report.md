@@ -24,7 +24,7 @@ A clear and concise description of what you expected to happen.
 If applicable, add screenshots to help explain your problem.
 
 ## Environment
-- **RootFont Version:** [e.g. 0.3.0-alpha (5)]
+- **rootfont Version:** [e.g. 0.3.0-alpha (5)]
 - **macOS Version:** [e.g. macOS 15.7.4]
 - **Device:** [e.g. MacBook Air M1]
 - **Swift Version:** paste output of `swift --version`

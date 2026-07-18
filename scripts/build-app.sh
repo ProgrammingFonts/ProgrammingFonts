@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-APP_NAME="RootFont"
+APP_NAME="rootfont"
 BIN_NAME="RootFontApp"
 BUILD_DIR="$(pwd)/.build/app"
 APP_BUNDLE="$BUILD_DIR/$APP_NAME.app"

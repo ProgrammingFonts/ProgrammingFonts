@@ -16,7 +16,7 @@ assignees: ''
 
 ## Question Details
 Please describe your license question in detail. Include:
-1. What you want to do with RootFont
+1. What you want to do with rootfont
 2. Any commercial context
 3. Specific licensing concerns
 

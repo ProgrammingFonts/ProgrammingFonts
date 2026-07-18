@@ -70,10 +70,10 @@ struct FontActivationService: FontActivationServiceProtocol, @unchecked Sendable
         let appSupport = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
             ?? URL(fileURLWithPath: NSTemporaryDirectory())
         self.appSupportManifestURL = manifestURL ?? appSupport
-            .appendingPathComponent("RootFont", isDirectory: true)
+            .appendingPathComponent("rootfont", isDirectory: true)
             .appendingPathComponent("activated-fonts.json")
         self.userInstallDirectoryURL = userInstallDirectoryURL ?? fileManager.homeDirectoryForCurrentUser
-            .appendingPathComponent("Library/Fonts/RootFont", isDirectory: true)
+            .appendingPathComponent("Library/Fonts/rootfont", isDirectory: true)
         self.usesInjectedFontURLs = availableFontURLsProvider != nil
         self.fontURLIndex = fontURLIndex
         self.availableFontURLsProvider = availableFontURLsProvider ?? {

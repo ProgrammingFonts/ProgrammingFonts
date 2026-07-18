@@ -12,7 +12,7 @@ currently being supported with security updates.
 
 ## Reporting a Vulnerability
 
-We take the security of RootFont seriously. If you believe you have found a security vulnerability, please report it to us as described below.
+We take the security of rootfont seriously. If you believe you have found a security vulnerability, please report it to us as described below.
 
 ### **Do Not** report security vulnerabilities through public GitHub issues.
 
@@ -43,7 +43,7 @@ After you submit a vulnerability report, you can expect the following:
 ## Security Best Practices
 
 ### For Users
-- Always use the latest version of RootFont
+- Always use the latest version of rootfont
 - Keep your macOS system updated
 - Review the permissions requested by the application
 - Report any suspicious behavior immediately
@@ -56,11 +56,11 @@ After you submit a vulnerability report, you can expect the following:
 
 ## Dependency Security
 
-RootFont uses automated tools to monitor for vulnerable dependencies:
+rootfont uses automated tools to monitor for vulnerable dependencies:
 - Dependabot scans for security vulnerabilities weekly
 - GitHub Actions include security checks
 - All dependencies are reviewed for license compliance
 
 ## License and Legal
 
-This security policy is governed by the same Apache License 2.0 as the RootFont software. See [LICENSE](LICENSE) for details.
+This security policy is governed by the same Apache License 2.0 as the rootfont software. See [LICENSE](LICENSE) for details.

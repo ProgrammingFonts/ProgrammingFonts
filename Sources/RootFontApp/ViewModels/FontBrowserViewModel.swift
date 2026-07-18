@@ -67,15 +67,15 @@ final class FontBrowserViewModel: ObservableObject {
         var text: String {
             switch self {
             case .mixed:
-                return "The quick brown fox 你好 こんにちは 안녕하세요 RootFont 123456"
+                return "The quick brown fox 你好 こんにちは 안녕하세요 rootfont 123456"
             case .english:
                 return "Sphinx of black quartz, judge my vow."
             case .chinese:
-                return "你好，欢迎使用 RootFont。字重：常规/粗体，数字：2026。"
+                return "你好，欢迎使用 rootfont。字重：常规/粗体，数字：2026。"
             case .japanese:
-                return "こんにちは。RootFontで文字組みを確認しましょう。ひらがな・カタカナ・漢字 2026"
+                return "こんにちは。rootfontで文字組みを確認しましょう。ひらがな・カタカナ・漢字 2026"
             case .korean:
-                return "안녕하세요. RootFont에서 타이포그래피를 점검하세요. 한글·영문·숫자 2026"
+                return "안녕하세요. rootfont에서 타이포그래피를 점검하세요. 한글·영문·숫자 2026"
             case .numeric:
                 return "0123456789 +-*/ () [] {}"
             }

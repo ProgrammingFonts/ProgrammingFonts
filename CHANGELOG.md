@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Product display name rebranded from `RootFont` to `rootfont` across UI
+  strings, docs, Application Support / Fonts paths, and the packaged app
+  name. Code module/target names such as `RootFontApp` are unchanged.
+
 ### Added
 - UI locales for French (`fr`), German (`de`), and Spanish (`es`).
 
@@ -123,7 +128,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Programming mode scopes to monospaced fonts and defaults sort to
   programming fit.
 - Sidebar filters: Recommended for code, Avoid for code, and Managed by
-  RootFont.
+  rootfont.
 - Programming suitability scoring (`ProgrammingScoreEngine`) with S / A /
   B / C / NR grades across ten weighted factors: monospace baseline,
   glyph disambiguation, ligature support, stylistic flexibility, box
@@ -132,7 +137,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `FontFeatureInspector` and `FontMetricsProbe` for OpenType feature
   detection, confusable-pair distances, and ASCII advance variance.
 - `ScoreManifestStore` persists profiles, metrics, and scores to
-  `~/Library/Application Support/RootFont/scores.json`, keyed by file
+  `~/Library/Application Support/rootfont/scores.json`, keyed by file
   modification time for automatic invalidation.
 - Score breakdown UI with per-factor progress bars, grade badges, Why
   popovers, and low-grade improvement hints.
@@ -147,7 +152,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `OpenTypeFeatureBinder` for live ligature, slashed-zero, and stylistic-
   set preview; per-font `FontFeaturePreferences` persistence.
 - `FontActivationService`: session activate, user-scope install to
-  `~/Library/Fonts/RootFont/`, uninstall, startup reconcile, and managed-
+  `~/Library/Fonts/rootfont/`, uninstall, startup reconcile, and managed-
   font sidebar filter.
 - `EditorConfigExporter` one-click snippets for VS Code, Cursor,
   Alacritty, Kitty, Warp, and Zed.
@@ -192,7 +197,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - About panel now shows the git short SHA under the build number and
   ships two new copy actions: "Copy Version" pastes a diagnostics
-  line (`RootFont v<version> (<build>) · commit <sha>`), "Copy System
+  line (`rootfont v<version> (<build>) · commit <sha>`), "Copy System
   Info" additionally appends `macOS x.y.z · <arch> · <language> ·
   <appearance>`.
 - `scripts/build-app.sh` embeds `RootFontCommitSha` into the packaged

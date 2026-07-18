@@ -93,7 +93,7 @@ struct ScoreManifestStore: ScoreManifestStoreProtocol, @unchecked Sendable {
             let appSupport = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
                 ?? URL(fileURLWithPath: NSTemporaryDirectory())
             self.manifestURL = appSupport
-                .appendingPathComponent("RootFont", isDirectory: true)
+                .appendingPathComponent("rootfont", isDirectory: true)
                 .appendingPathComponent("scores.json")
         }
     }

@@ -4,7 +4,7 @@ import AppKit
 #endif
 
 enum AppMetadata {
-    static let appName = "RootFont"
+    static let appName = "rootfont"
     static let websiteURL = "https://rootfont.com"
     static let githubURL = "https://github.com/rootfont/rootfont"
     static let fallbackVersion = "0.3.0-alpha"
@@ -74,7 +74,7 @@ enum AppMetadata {
     }
 
     /// One-line string suitable for bug reports, e.g.
-    /// `RootFont v0.3.0-alpha (5) · commit abc1234`.
+    /// `rootfont v0.3.0-alpha (5) · commit abc1234`.
     static var diagnosticsLine: String {
         var parts = ["\(appName) v\(shortVersion) (\(buildNumber))"]
         let sha = commitShortSHA
@@ -120,6 +120,6 @@ enum AppMetadata {
 
     static var copyrightText: String {
         let year = Calendar.current.component(.year, from: Date())
-        return "Copyright © \(year) RootFont"
+        return "Copyright © \(year) rootfont"
     }
 }

@@ -217,7 +217,7 @@ struct SidebarView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
-        .navigationTitle("RootFont")
+        .navigationTitle("rootfont")
         .onAppear {
             coverageInput = viewModel.glyphCoverageQuery
         }

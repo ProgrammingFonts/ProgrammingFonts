@@ -106,8 +106,8 @@ enum SnippetCatalog {
         case .json:
             return """
             {
-              "user": { "id": 42, "name": "RootFont" },
-              "message": "Hello, RootFont!"
+              "user": { "id": 42, "name": "rootfont" },
+              "message": "Hello, rootfont!"
             }
             """
         case .shell:
@@ -115,7 +115,7 @@ enum SnippetCatalog {
             #!/usr/bin/env bash
             set -euo pipefail
 
-            user_name="RootFont"
+            user_name="rootfont"
             echo "Hello, ${user_name}!"
             """
         case .css:

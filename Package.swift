@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "RootFont",
+    name: "rootfont",
     platforms: [
         .macOS(.v14)
     ],

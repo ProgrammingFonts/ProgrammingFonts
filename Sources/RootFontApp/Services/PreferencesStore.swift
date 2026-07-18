@@ -60,7 +60,7 @@ final class PreferencesStore: PreferencesStoreProtocol {
     }
 
     var previewText: String {
-        get { defaults.string(forKey: Keys.previewText) ?? "The quick brown fox jumps over the lazy dog 你好，RootFont" }
+        get { defaults.string(forKey: Keys.previewText) ?? "The quick brown fox jumps over the lazy dog 你好，rootfont" }
         set { defaults.set(newValue, forKey: Keys.previewText) }
     }
 

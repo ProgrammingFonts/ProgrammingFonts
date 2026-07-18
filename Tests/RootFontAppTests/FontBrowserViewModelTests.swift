@@ -531,7 +531,7 @@ final class FontBrowserViewModelTests: XCTestCase {
     }
 
     func testJapaneseAndKoreanPreviewPresetsProvideLocalizedText() {
-        XCTAssertTrue(FontBrowserViewModel.PreviewPreset.japanese.text.contains("RootFont"))
+        XCTAssertTrue(FontBrowserViewModel.PreviewPreset.japanese.text.contains("rootfont"))
         XCTAssertEqual(FontBrowserViewModel.PreviewPreset.japanese.title(language: .english), "Japanese")
         XCTAssertEqual(FontBrowserViewModel.PreviewPreset.korean.title(language: .korean), "한국어")
     }

@@ -1,10 +1,10 @@
-# Contributing to RootFont
+# Contributing to rootfont
 
-Thank you for your interest in contributing to RootFont!
+Thank you for your interest in contributing to rootfont!
 
 ## Development Setup
 
-RootFont is a pure Swift Package Manager macOS app. You do not need an
+rootfont is a pure Swift Package Manager macOS app. You do not need an
 Xcode project file to build or run it.
 
 1. **Clone the repository**
@@ -44,7 +44,7 @@ Xcode project file to build or run it.
    `*.xcodeproj` — the package manifest is the source of truth.
 
 5. **Toolchain (required for tests)**
-   RootFont requires the **full Xcode** app, not Command Line Tools alone.
+   rootfont requires the **full Xcode** app, not Command Line Tools alone.
    See [README.md](README.md#toolchain-setup) for `xcode-select` setup and
    XCTest verification (`xcrun swift -e 'import XCTest; print("XCTest OK")'`).
 
@@ -138,7 +138,7 @@ rather than inside the SwiftUI view layer.
 
 ## License Agreement
 
-By contributing to RootFont, you agree that your contributions will be
+By contributing to rootfont, you agree that your contributions will be
 licensed under the Apache License, Version 2.0. This is automatic under
 Section 5 of the Apache License.
 
