@@ -628,6 +628,8 @@ final class FontBrowserViewModelTests: XCTestCase {
 
         let scoreBefore = viewModel.allFonts.first?.programmingScore?.total
         viewModel.applyScoreWeightPreset(.terminalHeavy)
+        // Wait for the async rescore task to complete.
+        try? await Task.sleep(nanoseconds: 200_000_000)
         let scoreAfter = viewModel.allFonts.first?.programmingScore?.total
 
         XCTAssertNotNil(scoreBefore)
@@ -659,6 +661,8 @@ final class FontBrowserViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.allFonts.first?.programmingScore?.total, before)
 
         viewModel.applyPendingScoreWeightRefresh()
+        // Wait for the async rescore task to complete.
+        try? await Task.sleep(nanoseconds: 200_000_000)
         let after = viewModel.allFonts.first?.programmingScore?.total
         XCTAssertNotEqual(before, after)
     }

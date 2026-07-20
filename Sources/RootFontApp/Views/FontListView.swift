@@ -472,6 +472,7 @@ private struct FontGridCard: View {
 
     @State private var isHovering = false
     @State private var resolvedNSFont: NSFont?
+    @State private var fontResolveGeneration = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -533,7 +534,9 @@ private struct FontGridCard: View {
             }
         }
         .onTapGesture(perform: onSelect)
+        .accessibilityAddTraits(.isButton)
         .onAppear { refreshResolvedFont() }
+        .onDisappear { fontResolveGeneration += 1 }
         .onChange(of: item.postScriptName) { _, _ in refreshResolvedFont() }
         .onChange(of: previewSize) { _, _ in refreshResolvedFont() }
         .onChange(of: densityMode) { _, _ in refreshResolvedFont() }
@@ -541,7 +544,17 @@ private struct FontGridCard: View {
 
     private func refreshResolvedFont() {
         let size = densityMode == .compact ? CGFloat(previewSize) : CGFloat(previewSize + 4)
-        resolvedNSFont = GridFontCache.shared.font(postScriptName: item.postScriptName, size: size)
+        fontResolveGeneration += 1
+        let generation = fontResolveGeneration
+        let postScriptName = item.postScriptName
+        DispatchQueue.global(qos: .userInitiated).async {
+            let font = GridFontCache.shared.font(postScriptName: postScriptName, size: size)
+            DispatchQueue.main.async {
+                guard generation == self.fontResolveGeneration else { return }
+                guard self.item.postScriptName == postScriptName else { return }
+                self.resolvedNSFont = font
+            }
+        }
     }
 
     private func tag(text: String) -> some View {
@@ -555,44 +568,14 @@ private struct FontGridCard: View {
     }
 
     private func scoreChip(grade: ProgrammingGrade) -> some View {
-        Text(gradeText(grade))
+        Text(ProgrammingGradeUI.shortText(for: grade))
             .font(.caption2.weight(.bold))
             .lineLimit(1)
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
-            .background(gradeColor(grade).opacity(0.18), in: Capsule())
-            .foregroundStyle(gradeColor(grade))
-            .accessibilityLabel(L10n.tr(gradeL10nKey(grade), language: language))
-    }
-
-    private func gradeText(_ grade: ProgrammingGrade) -> String {
-        switch grade {
-        case .s: return "S"
-        case .a: return "A"
-        case .b: return "B"
-        case .c: return "C"
-        case .notRecommended: return "NR"
-        }
-    }
-
-    private func gradeColor(_ grade: ProgrammingGrade) -> Color {
-        switch grade {
-        case .s: return .green
-        case .a: return .mint
-        case .b: return .yellow
-        case .c: return .orange
-        case .notRecommended: return .red
-        }
-    }
-
-    private func gradeL10nKey(_ grade: ProgrammingGrade) -> L10nKey {
-        switch grade {
-        case .s: return .gradeS
-        case .a: return .gradeA
-        case .b: return .gradeB
-        case .c: return .gradeC
-        case .notRecommended: return .gradeNotRecommended
-        }
+            .background(ProgrammingGradeUI.color(for: grade).opacity(0.18), in: Capsule())
+            .foregroundStyle(ProgrammingGradeUI.color(for: grade))
+            .accessibilityLabel(L10n.tr(ProgrammingGradeUI.l10nKey(for: grade), language: language))
     }
 
     private var cardBackground: Color {
@@ -643,30 +626,14 @@ private struct FontGridCard: View {
 }
 
 private func scoreChip(grade: ProgrammingGrade, language: AppLanguage) -> some View {
-    Text(gradeText(grade))
+    Text(ProgrammingGradeUI.shortText(for: grade))
     .font(.caption2.weight(.bold))
     .lineLimit(1)
     .padding(.horizontal, 8)
     .padding(.vertical, 3)
-    .background({
-        switch grade {
-        case .s: return Color.green.opacity(0.18)
-        case .a: return Color.mint.opacity(0.18)
-        case .b: return Color.yellow.opacity(0.18)
-        case .c: return Color.orange.opacity(0.18)
-        case .notRecommended: return Color.red.opacity(0.18)
-        }
-    }(), in: Capsule())
-    .foregroundStyle({
-        switch grade {
-        case .s: return Color.green
-        case .a: return Color.mint
-        case .b: return Color.yellow
-        case .c: return Color.orange
-        case .notRecommended: return Color.red
-        }
-    }())
-    .accessibilityLabel(L10n.tr(gradeL10nKey(grade), language: language))
+    .background(ProgrammingGradeUI.color(for: grade).opacity(0.18), in: Capsule())
+    .foregroundStyle(ProgrammingGradeUI.color(for: grade))
+    .accessibilityLabel(L10n.tr(ProgrammingGradeUI.l10nKey(for: grade), language: language))
 }
 
 private struct FontOrganizationMenus: View {
@@ -710,22 +677,3 @@ private struct FontOrganizationMenus: View {
     }
 }
 
-private func gradeText(_ grade: ProgrammingGrade) -> String {
-    switch grade {
-    case .s: return "S"
-    case .a: return "A"
-    case .b: return "B"
-    case .c: return "C"
-    case .notRecommended: return "NR"
-    }
-}
-
-private func gradeL10nKey(_ grade: ProgrammingGrade) -> L10nKey {
-    switch grade {
-    case .s: return .gradeS
-    case .a: return .gradeA
-    case .b: return .gradeB
-    case .c: return .gradeC
-    case .notRecommended: return .gradeNotRecommended
-    }
-}

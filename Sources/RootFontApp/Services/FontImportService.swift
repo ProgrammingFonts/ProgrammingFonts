@@ -7,17 +7,33 @@ protocol FontImportServiceProtocol: Sendable {
 }
 
 struct FontImportService: FontImportServiceProtocol {
+    private let registerAction: @Sendable (URL) -> Bool
+
+    init(registerAction: (@Sendable (URL) -> Bool)? = nil) {
+        self.registerAction = registerAction ?? { url in
+            var error: Unmanaged<CFError>?
+            let ok = CTFontManagerRegisterFontsForURL(url as CFURL, .process, &error)
+            if !ok {
+                _ = error?.takeRetainedValue()
+            }
+            return ok
+        }
+    }
+
     @discardableResult
     func registerFonts(at urls: [URL]) -> Int {
         var success = 0
         for url in urls {
-            var error: Unmanaged<CFError>?
-            if CTFontManagerRegisterFontsForURL(url as CFURL, .process, &error) {
+            guard Self.isSupportedFontURL(url) else { continue }
+            if registerAction(url) {
                 success += 1
-            } else {
-                _ = error?.takeRetainedValue()
             }
         }
         return success
+    }
+
+    private static func isSupportedFontURL(_ url: URL) -> Bool {
+        let allowedExtensions = ["ttf", "otf", "ttc", "otc", "dfont", "woff", "woff2"]
+        return allowedExtensions.contains(url.pathExtension.lowercased())
     }
 }

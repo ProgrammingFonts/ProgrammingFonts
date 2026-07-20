@@ -87,12 +87,11 @@ final class FontBrowserViewModel: ObservableObject {
     private let preferencesStore: PreferencesStoreProtocol
     let activationService: FontActivationServiceProtocol
     private let maxRecents = 30
-    private let maxCoverageCacheEntries = 2048
+    private let maxSearchPresentationEntries = 320
     private let backgroundFilterThreshold = 400
     private let filterResultCacheLimit = 8
     private var searchIndexByFontID: [String: FontFilterEngine.SearchIndexEntry] = [:]
-    private var coverageSupportCache: [String: Bool] = [:]
-    private var coverageCacheOrder: [String] = []
+    private var coverageCache = CoverageCache(limit: 2048)
     private var familyWeightCoverage: FamilyWeightCoverage?
     private var preparedSearchQuery = SearchMatcher.prepare(query: "")
     private var trimmedCoverageQuery = ""
@@ -204,7 +203,6 @@ final class FontBrowserViewModel: ObservableObject {
         searchQuery = value
         preparedSearchQuery = SearchMatcher.prepare(query: value)
         preferencesStore.searchQuery = value
-        rebuildSearchPresentations()
         applyFilters()
     }
 
@@ -241,7 +239,6 @@ final class FontBrowserViewModel: ObservableObject {
         sidebarFilter = collection.sidebarFilter
         preferencesStore.searchQuery = searchQuery
         preferencesStore.sidebarFilter = sidebarFilter.rawValue
-        rebuildSearchPresentations()
         applyFilters()
     }
 
@@ -390,8 +387,7 @@ final class FontBrowserViewModel: ObservableObject {
         scoreWeightPreset = preset
         scoreWeights = preset.weights
         persistScoreWeights()
-        recalculateProgrammingScores()
-        applyFilters()
+        scheduleProgrammingScoreRecalculation()
     }
 
     func updateScoreWeight(
@@ -408,8 +404,17 @@ final class FontBrowserViewModel: ObservableObject {
     func applyPendingScoreWeightRefresh() {
         scoreWeightRefreshTask?.cancel()
         scoreWeightRefreshTask = nil
-        recalculateProgrammingScores()
-        applyFilters()
+        scheduleProgrammingScoreRecalculation()
+    }
+
+    private func scheduleProgrammingScoreRecalculation() {
+        scoreRescoreTask?.cancel()
+        scoreRescoreTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            await self.recalculateProgrammingScoresDetached()
+            guard !Task.isCancelled else { return }
+            self.applyFilters()
+        }
     }
 
     private func scheduleScoreWeightRefresh() {
@@ -507,7 +512,6 @@ final class FontBrowserViewModel: ObservableObject {
     private func applyPartialLoadResult(fonts: [FontItem]) {
         replaceAllFonts(fonts)
         rebuildSearchIndex(force: false)
-        rebuildSearchPresentations()
         applyFilters()
         if selectedFont == nil {
             selectedFont = filteredFonts.first
@@ -528,7 +532,26 @@ final class FontBrowserViewModel: ObservableObject {
             replaceAllFonts(fonts)
             let needsRescore = scoreWeights != .default || fonts.contains(where: { $0.programmingScore == nil })
             if needsRescore {
-                recalculateProgrammingScores()
+                scoreRescoreTask?.cancel()
+                scoreRescoreTask = Task { @MainActor [weak self] in
+                    guard let self else { return }
+                    await self.recalculateProgrammingScoresDetached()
+                    guard !Task.isCancelled else { return }
+                    if sameIDs {
+                        self.rebuildMonospacedFonts()
+                        self.catalogEpoch &+= 1
+                        self.invalidateFilterResultCache()
+                    } else {
+                        self.rebuildSearchIndex(force: true)
+                    }
+                    self.applyFilters()
+                    if self.selectedFont == nil {
+                        self.selectedFont = self.filteredFonts.first
+                    }
+                }
+                isLoading = false
+                loadProgress = nil
+                return
             }
             if sameIDs {
                 // Names/localizations did not change during enrichment — only
@@ -539,7 +562,6 @@ final class FontBrowserViewModel: ObservableObject {
             } else {
                 rebuildSearchIndex(force: true)
             }
-            rebuildSearchPresentations()
             applyFilters()
             if selectedFont == nil {
                 selectedFont = filteredFonts.first
@@ -605,7 +627,6 @@ final class FontBrowserViewModel: ObservableObject {
         preferencesStore.searchQuery = ""
         preferencesStore.sidebarFilter = SidebarFilter.all.rawValue
         preferencesStore.sortOption = SortOption.familyName.rawValue
-        rebuildSearchPresentations()
         applyFilters()
     }
 
@@ -751,7 +772,7 @@ final class FontBrowserViewModel: ObservableObject {
             manualCollectionFontIDs: manualIDs,
             tagFilterFontIDs: tagIDs,
             familyWeightCoverage: familyWeightCoverage,
-            coverageSupportCache: coverageSupportCache
+            coverageSupportCache: coverageCache.values
         )
 
         let filteredByModule = scopedFonts(for: allFonts)
@@ -806,6 +827,7 @@ final class FontBrowserViewModel: ObservableObject {
         }
         filteredFonts = items
         filteredFontIDs = Set(items.map(\.id))
+        rebuildSearchPresentations(for: items)
         selectFirstIfNeeded()
     }
 
@@ -900,14 +922,12 @@ final class FontBrowserViewModel: ObservableObject {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty { return true }
         let cacheKey = "\(postScriptName)|\(trimmed)"
-        if let cached = coverageSupportCache[cacheKey] {
+        if let cached = coverageCache.value(for: cacheKey) {
             return cached
         }
         guard let font = NSFontResolveCache.shared.font(postScriptName: postScriptName, size: 16) else { return false }
         let supported = supportsAllCharacters(font: font, text: trimmed)
-        coverageSupportCache[cacheKey] = supported
-        coverageCacheOrder.append(cacheKey)
-        trimCoverageCacheIfNeeded()
+        coverageCache.store(supported, for: cacheKey)
         return supported
     }
 
@@ -929,7 +949,6 @@ final class FontBrowserViewModel: ObservableObject {
         familyWeightCoverage = FamilyWeightCoverage.build(from: allFonts)
         indexedFontIDs = nextIDs
         rebuildMonospacedFonts()
-        rebuildSearchPresentations()
         catalogEpoch &+= 1
         invalidateFilterResultCache()
     }
@@ -946,12 +965,7 @@ final class FontBrowserViewModel: ObservableObject {
     }
 
     private func mergeCoverageCacheUpdates(_ updates: [String: Bool]) {
-        guard !updates.isEmpty else { return }
-        for (key, value) in updates {
-            coverageSupportCache[key] = value
-            coverageCacheOrder.append(key)
-        }
-        trimCoverageCacheIfNeeded()
+        coverageCache.merge(updates)
     }
 
     private func rebuildMonospacedFonts() {
@@ -959,19 +973,7 @@ final class FontBrowserViewModel: ObservableObject {
     }
 
     private func clearCoverageCache() {
-        coverageSupportCache.removeAll(keepingCapacity: true)
-        coverageCacheOrder.removeAll(keepingCapacity: true)
-    }
-
-    private func trimCoverageCacheIfNeeded() {
-        guard coverageCacheOrder.count > maxCoverageCacheEntries else { return }
-        let overflow = coverageCacheOrder.count - maxCoverageCacheEntries
-        guard overflow > 0 else { return }
-        let staleKeys = coverageCacheOrder.prefix(overflow)
-        for key in staleKeys {
-            coverageSupportCache.removeValue(forKey: key)
-        }
-        coverageCacheOrder.removeFirst(overflow)
+        coverageCache.clear()
     }
 
     private func persistSmartCollections() {
@@ -1001,21 +1003,7 @@ final class FontBrowserViewModel: ObservableObject {
         return (try? JSONDecoder().decode([String: [String]].self, from: data)) ?? [:]
     }
 
-    private func recalculateProgrammingScores() {
-        let engine = ProgrammingScoreEngine(weights: scoreWeights)
-        let coverage = familyWeightCoverage ?? FamilyWeightCoverage.build(from: allFonts)
-        replaceAllFonts(
-            FontCatalogService.attachProgrammingScores(
-                allFonts,
-                familyCoverage: coverage,
-                scoreEngine: engine
-            )
-        )
-        rebuildMonospacedFonts()
-    }
-
     private func recalculateProgrammingScoresDetached() async {
-        scoreRescoreTask?.cancel()
         let weights = scoreWeights
         let fontsSnapshot = allFonts
         let coverage = familyWeightCoverage ?? FamilyWeightCoverage.build(from: fontsSnapshot)
@@ -1049,14 +1037,15 @@ final class FontBrowserViewModel: ObservableObject {
             )
     }
 
-    private func rebuildSearchPresentations() {
+    private func rebuildSearchPresentations(for items: [FontItem]? = nil) {
         guard !preparedSearchQuery.isEmpty else {
             searchPresentationByFontID.removeAll(keepingCapacity: true)
             return
         }
         let lang = language
         let prepared = preparedSearchQuery
-        searchPresentationByFontID = Dictionary(uniqueKeysWithValues: allFonts.map { item in
+        let sourceItems = Array((items ?? filteredFonts).prefix(maxSearchPresentationEntries))
+        searchPresentationByFontID = Dictionary(uniqueKeysWithValues: sourceItems.map { item in
             (item.id, FontSearchPresentationBuilder.build(for: item, language: lang, preparedQuery: prepared))
         })
     }

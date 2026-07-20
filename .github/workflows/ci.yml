@@ -126,17 +126,47 @@ jobs:
           DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
         shell: bash
         run: |
-          swift test --parallel 2>&1 | tee test.log
+          swift test --parallel --enable-code-coverage 2>&1 | tee test.log
           status=${PIPESTATUS[0]}
           if [ "$status" -ne 0 ]; then
             echo "=== swift test failed (exit $status) ==="
             tail -80 test.log
             exit "$status"
           fi
+          xcrun llvm-cov export \
+            .build/debug/RootFontPackageTests.xctest/Contents/MacOS/RootFontPackageTests \
+            -instr-profile .build/debug/codecov/default.profdata > coverage.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          data = json.loads(Path("coverage.json").read_text())
+          summaries = data.get("data", [])
+          lines = []
+          covered = 0
+          total = 0
+          for item in summaries:
+              for file in item.get("files", []):
+                  summary = file.get("summary", {}).get("lines", {})
+                  covered += summary.get("covered", 0)
+                  total += summary.get("count", 0)
+          pct = 100.0 if total == 0 else covered * 100.0 / total
+          print(f"Coverage: {pct:.2f}% ({covered}/{total})")
+          Path("coverage-summary.txt").write_text(f"{pct:.2f}% ({covered}/{total})\n")
+          PY
+          echo "## Code coverage" >> "$GITHUB_STEP_SUMMARY"
+          cat coverage-summary.txt >> "$GITHUB_STEP_SUMMARY"
           if grep -E "testFilterLargeCatalogCompletesWithinBudget|Executed .* tests" test.log > /dev/null; then
             echo "## Performance gate" >> "$GITHUB_STEP_SUMMARY"
             grep "testFilterLargeCatalogCompletesWithinBudget" test.log >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
           fi
+
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: swift-coverage
+          path: |
+            coverage.json
+            coverage-summary.txt
 
       - name: Upload test log on failure
         if: failure()

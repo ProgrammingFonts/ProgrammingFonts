@@ -116,7 +116,7 @@ rather than inside the SwiftUI view layer.
 
 - Keys live in
   `Sources/RootFontApp/Localization/L10nKey.swift`.
-- Each locale (`en`, `zh-Hans`, `zh-Hant`, `ja`, `ko`) is a dictionary
+- Each locale (`en`, `zh-Hans`, `zh-Hant`, `ja`, `ko`, `fr`, `de`, `es`) is a dictionary
   under `Sources/RootFontApp/Localization/Locales/`.
 - Add every new key to **all** locales. `scripts/check-l10n.py`
   verifies missing/extra keys and printf placeholder consistency.

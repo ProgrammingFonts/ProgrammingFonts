@@ -8,6 +8,7 @@ enum FontActivationScope: String, Codable, Sendable {
 
 enum FontActivationError: Error, Sendable {
     case fontNotFound
+    case invalidFontFile(URL)
     case installConflict(destination: URL)
     case rollbackFailed(primary: String, cleanup: [String])
 }
@@ -112,8 +113,10 @@ struct FontActivationService: FontActivationServiceProtocol, @unchecked Sendable
 
     func installForUser(fontID: String) throws {
         let original = try resolveURL(for: fontID)
+        try validateFontFileURL(original)
         try fileManager.createDirectory(at: userInstallDirectoryURL, withIntermediateDirectories: true)
         let destination = userInstallDirectoryURL.appendingPathComponent(original.lastPathComponent)
+        try validateManagedDestination(destination)
         if fileManager.fileExists(atPath: destination.path) {
             throw FontActivationError.installConflict(destination: destination)
         }
@@ -273,6 +276,21 @@ struct FontActivationService: FontActivationServiceProtocol, @unchecked Sendable
             primary: String(describing: primary),
             cleanup: cleanup.map { String(describing: $0) }
         )
+    }
+
+    private func validateFontFileURL(_ url: URL) throws {
+        let allowedExtensions = ["ttf", "otf", "ttc", "otc", "dfont", "woff", "woff2"]
+        guard allowedExtensions.contains(url.pathExtension.lowercased()) else {
+            throw FontActivationError.invalidFontFile(url)
+        }
+    }
+
+    private func validateManagedDestination(_ destination: URL) throws {
+        let managedRoot = userInstallDirectoryURL.standardizedFileURL.path
+        let candidate = destination.standardizedFileURL.path
+        guard candidate == managedRoot || candidate.hasPrefix(managedRoot + "/") else {
+            throw FontActivationError.invalidFontFile(destination)
+        }
     }
 
     private static func defaultRegister(urls: [URL], scope: CTFontManagerScope) throws {

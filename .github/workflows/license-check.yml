@@ -39,6 +39,15 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.1'
+          bundler-cache: false
+
+      - name: Cache Ruby gems
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/gem
+          key: ubuntu-ruby-3.1-licensee
+          restore-keys: |
+            ubuntu-ruby-3.1-
 
       - name: Install licensee
         run: gem install licensee
@@ -92,4 +101,3 @@ jobs:
         with:
           api-key: ${{ secrets.FOSSA_API_KEY }}
           fossa-version: latest
-        continue-on-error: true

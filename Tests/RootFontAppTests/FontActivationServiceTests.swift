@@ -69,6 +69,28 @@ final class FontActivationServiceTests: XCTestCase {
         XCTAssertFalse(service.isManaged(fontID: "Fira"))
     }
 
+    func testInstallRejectsUnsupportedFileExtension() throws {
+        let sandbox = try makeSandbox()
+        defer { try? FileManager.default.removeItem(at: sandbox) }
+        let sourceFile = sandbox.appendingPathComponent("Source/Readme.txt")
+        try FileManager.default.createDirectory(at: sourceFile.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try Data("not-a-font".utf8).write(to: sourceFile)
+
+        let service = FontActivationService(
+            manifestURL: sandbox.appendingPathComponent("manifest.json"),
+            userInstallDirectoryURL: sandbox.appendingPathComponent("UserFonts", isDirectory: true),
+            availableFontURLsProvider: { [sourceFile] },
+            registerAction: { _, _ in },
+            unregisterAction: { _, _ in }
+        )
+
+        XCTAssertThrowsError(try service.installForUser(fontID: "Readme")) { error in
+            guard case FontActivationError.invalidFontFile = error else {
+                return XCTFail("Expected invalidFontFile, got \(error)")
+            }
+        }
+    }
+
     func testInstallManifestFailureRollsBackRegistrationAndCopiedFont() throws {
         let sandbox = try makeSandbox()
         defer { try? FileManager.default.removeItem(at: sandbox) }
@@ -200,6 +222,31 @@ final class FontActivationServiceTests: XCTestCase {
         let attrsAfterSecondSave = try FileManager.default.attributesOfItem(atPath: manifestURL.path)
         let mtimeAfterSecondSave = (attrsAfterSecondSave[.modificationDate] as? Date)?.timeIntervalSince1970 ?? 0
         XCTAssertEqual(mtimeAfterFirstSave, mtimeAfterSecondSave, accuracy: 0.001)
+    }
+
+    func testManagedInstallStaysInsideManagedDirectory() throws {
+        let sandbox = try makeSandbox()
+        defer { try? FileManager.default.removeItem(at: sandbox) }
+        let sourceFont = sandbox
+            .appendingPathComponent("Source")
+            .appendingPathComponent("nested/../Fira.ttf")
+            .standardizedFileURL
+        try FileManager.default.createDirectory(at: sourceFont.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try Data("font".utf8).write(to: sourceFont)
+        let userFonts = sandbox.appendingPathComponent("UserFonts", isDirectory: true)
+
+        let service = FontActivationService(
+            manifestURL: sandbox.appendingPathComponent("manifest.json"),
+            userInstallDirectoryURL: userFonts,
+            availableFontURLsProvider: { [sourceFont] },
+            registerAction: { _, _ in },
+            unregisterAction: { _, _ in }
+        )
+
+        try service.installForUser(fontID: "Fira")
+
+        let installed = userFonts.appendingPathComponent("Fira.ttf").standardizedFileURL.path
+        XCTAssertTrue(installed.hasPrefix(userFonts.standardizedFileURL.path + "/"))
     }
 
     private func makeSandbox() throws -> URL {
