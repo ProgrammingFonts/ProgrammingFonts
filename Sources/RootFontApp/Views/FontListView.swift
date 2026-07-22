@@ -33,6 +33,41 @@ struct FontListView: View {
         VStack(spacing: 0) {
             headerView
 
+            if let banner = viewModel.importBannerMessage {
+                HStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.orange)
+                    Text(banner)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer(minLength: 0)
+                    Button {
+                        viewModel.clearImportBanner()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Dismiss")
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(Color.orange.opacity(0.12))
+            }
+
+            if viewModel.isRecalculatingScores {
+                HStack(spacing: 8) {
+                    ProgressView()
+                        .controlSize(.mini)
+                    Text(viewModel.tr(.recalculatingScores))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 4)
+            }
+
             VStack(spacing: 0) {
                 if viewModel.isLoading && viewModel.filteredFonts.isEmpty {
                     Spacer()
@@ -105,6 +140,12 @@ struct FontListView: View {
                                 lastGridContainerWidth = newWidth
                                 updateGridColumnCountIfNeeded(for: newWidth)
                             }
+                            .onAppear {
+                                prefetchVisibleGridFonts(from: viewModel.filteredFonts)
+                            }
+                            .onChange(of: viewModel.filteredFonts.map(\.id)) { _, _ in
+                                prefetchVisibleGridFonts(from: viewModel.filteredFonts)
+                            }
                         }
                     } else {
                         List(viewModel.filteredFonts, selection: Binding(
@@ -173,6 +214,9 @@ struct FontListView: View {
                     isSearchFieldFocused = true
                 }
             }
+        }
+        .onChange(of: viewModel.searchFocusToken) { _, _ in
+            isSearchFieldFocused = true
         }
         .onChange(of: displayMode) { _, newValue in
             UserDefaults.standard.set(newValue.rawValue, forKey: "rootfont.displayMode")
@@ -440,6 +484,16 @@ struct FontListView: View {
         }
     }
 
+    private func prefetchVisibleGridFonts(from fonts: [FontItem]) {
+        let size = densityMode == .compact ? CGFloat(listPreviewSize) : CGFloat(listPreviewSize + 4)
+        let names = fonts.prefix(cachedGridColumnCount * 6).map(\.postScriptName)
+        DispatchQueue.global(qos: .utility).async {
+            for name in names {
+                _ = GridFontCache.shared.font(postScriptName: name, size: size)
+            }
+        }
+    }
+
     private func computeGridColumnCount(for containerWidth: CGFloat) -> Int {
         let horizontalPadding: CGFloat = 32
         let available = max(containerWidth - horizontalPadding, 200)
@@ -547,6 +601,7 @@ private struct FontGridCard: View {
         fontResolveGeneration += 1
         let generation = fontResolveGeneration
         let postScriptName = item.postScriptName
+        resolvedNSFont = nil
         DispatchQueue.global(qos: .userInitiated).async {
             let font = GridFontCache.shared.font(postScriptName: postScriptName, size: size)
             DispatchQueue.main.async {

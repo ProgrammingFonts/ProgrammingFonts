@@ -79,6 +79,7 @@ final class InMemoryPreferencesStore: PreferencesStoreProtocol {
     var fontTagsData: Data?
     var scoreWeightsData: Data?
     var fontFeaturePrefsData: Data?
+    var selectedFontID: String?
 
     var appLanguage: AppLanguage {
         get { didChooseAppLanguage ? storedLanguage : .english }

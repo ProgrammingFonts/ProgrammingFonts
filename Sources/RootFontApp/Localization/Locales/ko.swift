@@ -263,5 +263,8 @@ enum L10nKO {
         .whyExampleTitle: "예시",
         .whyInspectFactors: "요인 보기",
         .whyCompareNow: "지금 비교",
+        .importNoSupportedFonts: "가져올 수 있는 지원 글꼴 파일이 없습니다",
+        .recalculatingScores: "프로그래밍 적합도 점수 업데이트 중…",
+        .focusSearch: "검색 포커스",
     ]
 }

@@ -263,5 +263,8 @@ enum L10nEN {
         .whyExampleTitle: "Example",
         .whyInspectFactors: "Inspect factors",
         .whyCompareNow: "Compare now",
+        .importNoSupportedFonts: "No supported font files to import",
+        .recalculatingScores: "Updating programming scores…",
+        .focusSearch: "Focus Search",
     ]
 }

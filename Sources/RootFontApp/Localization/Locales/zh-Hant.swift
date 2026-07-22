@@ -263,5 +263,8 @@ enum L10nZHHant {
         .whyExampleTitle: "範例",
         .whyInspectFactors: "查看因子",
         .whyCompareNow: "立即比較",
+        .importNoSupportedFonts: "沒有可匯入的受支援字型檔",
+        .recalculatingScores: "正在更新程式設計適配評分…",
+        .focusSearch: "聚焦搜尋",
     ]
 }

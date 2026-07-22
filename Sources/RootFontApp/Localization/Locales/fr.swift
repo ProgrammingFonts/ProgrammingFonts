@@ -263,5 +263,8 @@ enum L10nFR {
         .whyExampleTitle: "Exemple",
         .whyInspectFactors: "Inspecter les facteurs",
         .whyCompareNow: "Comparer maintenant",
+        .importNoSupportedFonts: "Aucun fichier de police pris en charge à importer",
+        .recalculatingScores: "Mise à jour des scores de programmation…",
+        .focusSearch: "Focus recherche",
     ]
 }

@@ -32,6 +32,7 @@ final class PreferencesStoreTests: XCTestCase {
         store.searchQuery = "mono"
         store.sidebarFilter = "favorites"
         store.sortOption = "displayName"
+        store.selectedFontID = "SFMono-Regular"
 
         let reloaded = PreferencesStore(defaults: defaults)
         XCTAssertEqual(reloaded.favoriteIDs, ["A", "B"])
@@ -44,6 +45,7 @@ final class PreferencesStoreTests: XCTestCase {
         XCTAssertEqual(reloaded.searchQuery, "mono")
         XCTAssertEqual(reloaded.sidebarFilter, "favorites")
         XCTAssertEqual(reloaded.sortOption, "displayName")
+        XCTAssertEqual(reloaded.selectedFontID, "SFMono-Regular")
     }
 
     private func makeDefaults() -> UserDefaults {

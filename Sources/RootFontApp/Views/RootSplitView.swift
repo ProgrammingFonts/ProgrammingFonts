@@ -87,7 +87,6 @@ struct RootSplitView: View {
     }
 
     private func handleDrop(providers: [NSItemProvider]) -> Bool {
-        let ext = ["ttf", "otf", "ttc", "otc"]
         for provider in providers where provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {
             provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier, options: nil) { item, _ in
                 let url: URL?
@@ -99,11 +98,8 @@ struct RootSplitView: View {
                     url = nil
                 }
                 guard let url else { return }
-                let allowed = ext.contains(url.pathExtension.lowercased())
-                if allowed {
-                    Task { @MainActor in
-                        _ = viewModel.importFonts(from: [url])
-                    }
+                Task { @MainActor in
+                    _ = viewModel.importFonts(from: [url])
                 }
             }
         }

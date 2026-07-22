@@ -11,7 +11,9 @@ struct CoverageCache: Sendable {
     }
 
     mutating func value(for key: String) -> Bool? {
-        values[key]
+        guard let cached = values[key] else { return nil }
+        touch(key)
+        return cached
     }
 
     mutating func store(_ value: Bool, for key: String) {

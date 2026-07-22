@@ -133,15 +133,25 @@ jobs:
             tail -80 test.log
             exit "$status"
           fi
+          # Resolve the XCTest binary path dynamically (product name casing varies).
+          TEST_BIN="$(find .build/debug -path '*.xctest/Contents/MacOS/*' -type f -perm -111 ! -name '*.dylib' 2>/dev/null | head -n 1)"
+          PROFDATA="$(find .build/debug -name 'default.profdata' 2>/dev/null | head -n 1)"
+          if [[ -z "$TEST_BIN" || -z "$PROFDATA" ]]; then
+            echo "=== coverage export skipped: missing binary or profdata ==="
+            echo "TEST_BIN=${TEST_BIN:-missing}"
+            echo "PROFDATA=${PROFDATA:-missing}"
+            exit 1
+          fi
+          echo "coverage_binary=$TEST_BIN"
+          echo "coverage_profdata=$PROFDATA"
           xcrun llvm-cov export \
-            .build/debug/RootFontPackageTests.xctest/Contents/MacOS/RootFontPackageTests \
-            -instr-profile .build/debug/codecov/default.profdata > coverage.json
+            "$TEST_BIN" \
+            -instr-profile "$PROFDATA" > coverage.json
           python3 - <<'PY'
           import json
           from pathlib import Path
           data = json.loads(Path("coverage.json").read_text())
           summaries = data.get("data", [])
-          lines = []
           covered = 0
           total = 0
           for item in summaries:

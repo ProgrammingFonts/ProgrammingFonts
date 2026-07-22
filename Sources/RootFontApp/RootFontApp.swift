@@ -56,6 +56,10 @@ struct RootFontApp: App {
             CommandGroup(replacing: .appSettings) { }
             CommandGroup(replacing: .systemServices) { }
             CommandMenu(viewModel.tr(.personal)) {
+                Button(viewModel.tr(.focusSearch)) {
+                    viewModel.focusSearchField()
+                }
+                .keyboardShortcut("f", modifiers: [.command])
                 Button(viewModel.tr(.favoriteAdd)) {
                     if let selected = viewModel.selectedFont {
                         viewModel.toggleFavorite(selected)

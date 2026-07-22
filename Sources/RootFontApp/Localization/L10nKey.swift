@@ -261,4 +261,7 @@ enum L10nKey {
     case whyExampleTitle
     case whyInspectFactors
     case whyCompareNow
+    case importNoSupportedFonts
+    case recalculatingScores
+    case focusSearch
 }

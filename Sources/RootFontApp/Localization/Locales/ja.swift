@@ -263,5 +263,8 @@ enum L10nJA {
         .whyExampleTitle: "例",
         .whyInspectFactors: "要因を確認",
         .whyCompareNow: "今すぐ比較",
+        .importNoSupportedFonts: "インポートできる対応フォントがありません",
+        .recalculatingScores: "プログラミング適合スコアを更新中…",
+        .focusSearch: "検索にフォーカス",
     ]
 }

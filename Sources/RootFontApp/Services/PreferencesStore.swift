@@ -19,6 +19,7 @@ protocol PreferencesStoreProtocol: AnyObject {
     var fontTagsData: Data? { get set }
     var scoreWeightsData: Data? { get set }
     var fontFeaturePrefsData: Data? { get set }
+    var selectedFontID: String? { get set }
 }
 
 final class PreferencesStore: PreferencesStoreProtocol {
@@ -43,6 +44,7 @@ final class PreferencesStore: PreferencesStoreProtocol {
         static let fontTagsData = "rootfont.fontTagsData"
         static let scoreWeightsData = "rootfont.scoreWeightsData"
         static let fontFeaturePrefsData = "rootfont.fontFeaturePrefsData"
+        static let selectedFontID = "rootfont.selectedFontID"
     }
 
     init(defaults: UserDefaults = .standard) {
@@ -155,5 +157,10 @@ final class PreferencesStore: PreferencesStoreProtocol {
     var fontFeaturePrefsData: Data? {
         get { defaults.data(forKey: Keys.fontFeaturePrefsData) }
         set { defaults.set(newValue, forKey: Keys.fontFeaturePrefsData) }
+    }
+
+    var selectedFontID: String? {
+        get { defaults.string(forKey: Keys.selectedFontID) }
+        set { defaults.set(newValue, forKey: Keys.selectedFontID) }
     }
 }

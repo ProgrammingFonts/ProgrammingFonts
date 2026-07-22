@@ -263,5 +263,8 @@ enum L10nZHHans {
         .whyExampleTitle: "示例",
         .whyInspectFactors: "查看因子",
         .whyCompareNow: "立即对比",
+        .importNoSupportedFonts: "没有可导入的受支持字体文件",
+        .recalculatingScores: "正在更新编程适配评分…",
+        .focusSearch: "聚焦搜索",
     ]
 }

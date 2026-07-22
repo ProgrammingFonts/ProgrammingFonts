@@ -628,8 +628,7 @@ final class FontBrowserViewModelTests: XCTestCase {
 
         let scoreBefore = viewModel.allFonts.first?.programmingScore?.total
         viewModel.applyScoreWeightPreset(.terminalHeavy)
-        // Wait for the async rescore task to complete.
-        try? await Task.sleep(nanoseconds: 200_000_000)
+        await viewModel.waitForScoreRecalculation()
         let scoreAfter = viewModel.allFonts.first?.programmingScore?.total
 
         XCTAssertNotNil(scoreBefore)
@@ -661,8 +660,7 @@ final class FontBrowserViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.allFonts.first?.programmingScore?.total, before)
 
         viewModel.applyPendingScoreWeightRefresh()
-        // Wait for the async rescore task to complete.
-        try? await Task.sleep(nanoseconds: 200_000_000)
+        await viewModel.waitForScoreRecalculation()
         let after = viewModel.allFonts.first?.programmingScore?.total
         XCTAssertNotEqual(before, after)
     }
@@ -739,6 +737,36 @@ final class FontBrowserViewModelTests: XCTestCase {
 
         viewModel.selectTag("coding")
         XCTAssertEqual(viewModel.filteredFonts.map(\.id), ["A"])
+    }
+
+    func testRestoresSelectedFontFromStoreAfterLoad() async {
+        let fonts = [
+            FontItem.sample(id: "A", familyName: "Alpha", source: .user, styleTags: [.regular]),
+            FontItem.sample(id: "B", familyName: "Beta", source: .user, styleTags: [.regular]),
+        ]
+        let store = InMemoryPreferencesStore()
+        store.selectedFontID = "B"
+        let viewModel = FontBrowserViewModel(
+            catalogService: MockCatalogService(fonts: fonts),
+            preferencesStore: store
+        )
+
+        viewModel.load()
+        await waitForLoad(viewModel)
+
+        XCTAssertEqual(viewModel.selectedFont?.id, "B")
+    }
+
+    func testImportUnsupportedFilesSetsBanner() {
+        let viewModel = FontBrowserViewModel(
+            catalogService: MockCatalogService(fonts: []),
+            fontImportService: FontImportService { _ in true },
+            preferencesStore: InMemoryPreferencesStore()
+        )
+
+        let ok = viewModel.importFonts(from: [URL(fileURLWithPath: "/tmp/readme.txt")])
+        XCTAssertFalse(ok)
+        XCTAssertEqual(viewModel.importBannerMessage, viewModel.tr(.importNoSupportedFonts))
     }
 }
 

@@ -263,5 +263,8 @@ enum L10nDE {
         .whyExampleTitle: "Beispiel",
         .whyInspectFactors: "Faktoren prüfen",
         .whyCompareNow: "Jetzt vergleichen",
+        .importNoSupportedFonts: "Keine unterstützten Schriftdateien zum Importieren",
+        .recalculatingScores: "Programmier-Scores werden aktualisiert…",
+        .focusSearch: "Suche fokussieren",
     ]
 }
