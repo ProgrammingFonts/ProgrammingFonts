@@ -134,8 +134,8 @@ jobs:
             exit "$status"
           fi
           # Resolve the XCTest binary path dynamically (product name casing varies).
-          TEST_BIN="$(find .build/debug -path '*.xctest/Contents/MacOS/*' -type f -perm -111 ! -name '*.dylib' 2>/dev/null | head -n 1)"
-          PROFDATA="$(find .build/debug -name 'default.profdata' 2>/dev/null | head -n 1)"
+          TEST_BIN="$(find -L .build/debug -path '*.xctest/Contents/MacOS/*' -type f -perm -111 ! -name '*.dylib' 2>/dev/null | head -n 1)"
+          PROFDATA="$(find -L .build/debug -name 'default.profdata' 2>/dev/null | head -n 1)"
           if [[ -z "$TEST_BIN" || -z "$PROFDATA" ]]; then
             echo "=== coverage export skipped: missing binary or profdata ==="
             echo "TEST_BIN=${TEST_BIN:-missing}"
