@@ -768,6 +768,30 @@ final class FontBrowserViewModelTests: XCTestCase {
         XCTAssertFalse(ok)
         XCTAssertEqual(viewModel.importBannerMessage, viewModel.tr(.importNoSupportedFonts))
     }
+
+    func testBatchSelectionToggleAndFavorite() async {
+        let fonts = [
+            FontItem.sample(id: "A", familyName: "Alpha", source: .user, styleTags: [.monospace]),
+            FontItem.sample(id: "B", familyName: "Beta", source: .user, styleTags: [.monospace]),
+        ]
+        let viewModel = FontBrowserViewModel(
+            catalogService: MockCatalogService(fonts: fonts),
+            preferencesStore: InMemoryPreferencesStore()
+        )
+
+        viewModel.load()
+        await waitForLoad(viewModel)
+
+        viewModel.handleFontTap(fonts[0], commandKey: false)
+        viewModel.handleFontTap(fonts[1], commandKey: true)
+        XCTAssertEqual(viewModel.batchSelectionCount, 2)
+        XCTAssertTrue(viewModel.isBatchSelected(fonts[0]))
+        XCTAssertTrue(viewModel.isBatchSelected(fonts[1]))
+
+        viewModel.batchToggleFavorite()
+        XCTAssertTrue(viewModel.isFavorite(fonts[0]))
+        XCTAssertTrue(viewModel.isFavorite(fonts[1]))
+    }
 }
 
 private extension ProgrammingProfile {

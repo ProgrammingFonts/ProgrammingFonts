@@ -55,6 +55,8 @@ fastlane/test_output
 # Code coverage
 *.gcda
 *.gcno
+coverage.json
+coverage-summary.txt
 
 # Profiling data
 *.profdata

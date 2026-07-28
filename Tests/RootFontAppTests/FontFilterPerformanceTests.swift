@@ -32,6 +32,7 @@ final class FontFilterPerformanceTests: XCTestCase {
             managedFontIDs: [],
             manualCollectionFontIDs: nil,
             tagFilterFontIDs: nil,
+            fontHealthFontIDs: nil,
             familyWeightCoverage: nil,
             coverageSupportCache: [:]
         )
@@ -77,6 +78,7 @@ final class FontFilterPerformanceTests: XCTestCase {
             managedFontIDs: [],
             manualCollectionFontIDs: nil,
             tagFilterFontIDs: nil,
+            fontHealthFontIDs: nil,
             familyWeightCoverage: nil,
             coverageSupportCache: [:]
         )

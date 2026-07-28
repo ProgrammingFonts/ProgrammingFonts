@@ -68,6 +68,10 @@ struct FontListView: View {
                 .padding(.vertical, 4)
             }
 
+            if viewModel.batchSelectionCount > 1 {
+                batchToolbar
+            }
+
             VStack(spacing: 0) {
                 if viewModel.isLoading && viewModel.filteredFonts.isEmpty {
                     Spacer()
@@ -94,14 +98,15 @@ struct FontListView: View {
                         systemImage: "exclamationmark.triangle",
                         description: Text(errorMessage)
                     )
-                } else if viewModel.filteredFonts.isEmpty {
+                } else if viewModel.filteredFonts.isEmpty && viewModel.sidebarFilter != .fontHealth {
                     ContentUnavailableView(
                         viewModel.tr(.noMatchingFonts),
                         systemImage: "magnifyingglass",
                         description: Text(viewModel.tr(.tryClearFilters))
                     )
-                } else {
-                    if displayMode == .grid {
+                } else if viewModel.sidebarFilter == .fontHealth {
+                    fontHealthContent
+                } else if displayMode == .grid {
                         GeometryReader { proxy in
                             ScrollView {
                                 LazyVGrid(
@@ -116,14 +121,17 @@ struct FontListView: View {
                                             secondaryTitle: presentation.secondary,
                                             primaryHighlightRanges: presentation.primaryHighlightRanges,
                                             secondaryHighlightRanges: presentation.secondaryHighlightRanges,
-                                            isSelected: viewModel.selectedFont?.id == item.id,
+                                            isSelected: viewModel.isBatchSelected(item),
                                             isFavorite: viewModel.isFavorite(item),
                                             previewText: viewModel.previewText,
                                             previewSize: listPreviewSize,
                                             densityMode: densityMode,
                                             language: viewModel.language
                                         ) {
-                                            viewModel.selectFont(item)
+                                            viewModel.handleFontTap(
+                                                item,
+                                                commandKey: NSEvent.modifierFlags.contains(.command)
+                                            )
                                         } onToggleFavorite: {
                                             viewModel.toggleFavorite(item)
                                         }
@@ -148,14 +156,7 @@ struct FontListView: View {
                             }
                         }
                     } else {
-                        List(viewModel.filteredFonts, selection: Binding(
-                            get: { viewModel.selectedFont?.id },
-                            set: { selectedID in
-                                guard let selectedID,
-                                      let item = viewModel.filteredFonts.first(where: { $0.id == selectedID }) else { return }
-                                viewModel.selectFont(item)
-                            }
-                        )) { item in
+                        List(viewModel.filteredFonts) { item in
                             let presentation = viewModel.searchPresentation(for: item)
                             HStack(spacing: 10) {
                                 VStack(alignment: .leading, spacing: 2) {
@@ -189,6 +190,17 @@ struct FontListView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.vertical, 4)
                             .contentShape(Rectangle())
+                            .background(
+                                viewModel.isBatchSelected(item)
+                                    ? Color.accentColor.opacity(0.12)
+                                    : Color.clear
+                            )
+                            .onTapGesture {
+                                viewModel.handleFontTap(
+                                    item,
+                                    commandKey: NSEvent.modifierFlags.contains(.command)
+                                )
+                            }
                             .contextMenu {
                                 FontOrganizationMenus(viewModel: viewModel, item: item)
                             }
@@ -197,7 +209,6 @@ struct FontListView: View {
                         .listStyle(.inset)
                     }
                 }
-            }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .onAppear {
@@ -262,6 +273,164 @@ struct FontListView: View {
             searchDebounceTask?.cancel()
             listPreviewSizeDebounceTask?.cancel()
         }
+    }
+
+    private var fontHealthContent: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 12) {
+                FontHealthReportView(viewModel: viewModel)
+                    .padding(.horizontal, 12)
+                    .padding(.top, 8)
+
+                if !viewModel.filteredFonts.isEmpty {
+                    Text(viewModel.tr(.fontHealthAffectedListTitle))
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 12)
+
+                    if displayMode == .grid {
+                        LazyVGrid(columns: cachedGridColumns, spacing: gridSpacing) {
+                            ForEach(viewModel.filteredFonts) { item in
+                                fontHealthGridCard(item: item)
+                            }
+                        }
+                        .padding(.horizontal, 12)
+                    } else {
+                        VStack(spacing: 0) {
+                            ForEach(viewModel.filteredFonts) { item in
+                                fontHealthListRow(item: item)
+                                Divider()
+                            }
+                        }
+                        .padding(.horizontal, 12)
+                    }
+                } else if !viewModel.fontHealthReport.affectedFontIDs.isEmpty {
+                    ContentUnavailableView(
+                        viewModel.tr(.noMatchingFonts),
+                        systemImage: "magnifyingglass",
+                        description: Text(viewModel.tr(.tryClearFilters))
+                    )
+                    .padding(.top, 24)
+                }
+            }
+            .padding(.bottom, 12)
+        }
+    }
+
+    @ViewBuilder
+    private func fontHealthGridCard(item: FontItem) -> some View {
+        let presentation = viewModel.searchPresentation(for: item)
+        FontGridCard(
+            item: item,
+            primaryTitle: presentation.primary,
+            secondaryTitle: presentation.secondary,
+            primaryHighlightRanges: presentation.primaryHighlightRanges,
+            secondaryHighlightRanges: presentation.secondaryHighlightRanges,
+            isSelected: viewModel.isBatchSelected(item),
+            isFavorite: viewModel.isFavorite(item),
+            healthIssueLabels: viewModel.fontHealthIssues(for: item).map { viewModel.fontHealthIssueLabel($0) },
+            previewText: viewModel.previewText,
+            previewSize: listPreviewSize,
+            densityMode: densityMode,
+            language: viewModel.language
+        ) {
+            viewModel.handleFontTap(
+                item,
+                commandKey: NSEvent.modifierFlags.contains(.command)
+            )
+        } onToggleFavorite: {
+            viewModel.toggleFavorite(item)
+        }
+        .contextMenu {
+            FontOrganizationMenus(viewModel: viewModel, item: item)
+        }
+    }
+
+    @ViewBuilder
+    private func fontHealthListRow(item: FontItem) -> some View {
+        let presentation = viewModel.searchPresentation(for: item)
+        HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text.highlighted(
+                    presentation.primary,
+                    characterRanges: presentation.primaryHighlightRanges
+                ).font(.system(size: listPreviewSize, weight: .semibold))
+                Text.highlighted(
+                    presentation.secondary,
+                    characterRanges: presentation.secondaryHighlightRanges
+                ).font(.system(size: max(11, listPreviewSize - 2))).foregroundStyle(.secondary)
+                HStack(spacing: 4) {
+                    ForEach(viewModel.fontHealthIssues(for: item).sorted(by: { $0.rawValue < $1.rawValue }), id: \.self) { kind in
+                        Text(viewModel.fontHealthIssueLabel(kind))
+                            .font(.caption2.weight(.semibold))
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.orange.opacity(0.14), in: Capsule())
+                    }
+                }
+            }
+            Spacer()
+            Text(viewModel.styleLabel(for: item))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Button {
+                viewModel.toggleFavorite(item)
+            } label: {
+                Image(systemName: viewModel.isFavorite(item) ? "star.fill" : "star")
+                    .foregroundStyle(viewModel.isFavorite(item) ? .yellow : .secondary)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.vertical, 8)
+        .background(
+            viewModel.isBatchSelected(item)
+                ? Color.accentColor.opacity(0.12)
+                : Color.clear
+        )
+        .contentShape(Rectangle())
+        .onTapGesture {
+            viewModel.handleFontTap(
+                item,
+                commandKey: NSEvent.modifierFlags.contains(.command)
+            )
+        }
+        .contextMenu {
+            FontOrganizationMenus(viewModel: viewModel, item: item)
+        }
+    }
+
+    private var batchToolbar: some View {
+        HStack(spacing: 10) {
+            Text(String(format: viewModel.tr(.batchSelectionCount), viewModel.batchSelectionCount))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Button(viewModel.tr(.batchFavorite)) {
+                viewModel.batchToggleFavorite()
+            }
+            .controlSize(.small)
+            Button(viewModel.tr(.batchActivateSession)) {
+                viewModel.batchActivateForSession()
+            }
+            .controlSize(.small)
+            if !viewModel.userTagNames.isEmpty {
+                Menu(viewModel.tr(.batchApplyTag)) {
+                    ForEach(viewModel.userTagNames, id: \.self) { tag in
+                        Button(tag) {
+                            viewModel.batchApplyTag(tag)
+                        }
+                    }
+                }
+                .controlSize(.small)
+            }
+            Spacer(minLength: 0)
+            Button(viewModel.tr(.batchClearSelection)) {
+                viewModel.clearBatchSelection()
+            }
+            .controlSize(.small)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(Color.accentColor.opacity(0.08))
     }
 
     private var headerView: some View {
@@ -517,6 +686,7 @@ private struct FontGridCard: View {
     let secondaryHighlightRanges: [Range<Int>]
     let isSelected: Bool
     let isFavorite: Bool
+    var healthIssueLabels: [String] = []
     let previewText: String
     let previewSize: Double
     let densityMode: FontListView.DensityMode
@@ -563,6 +733,9 @@ private struct FontGridCard: View {
 
             HStack(spacing: 6) {
                 tag(text: item.source == .system ? L10n.tr(.system, language: language) : L10n.tr(.user, language: language))
+                ForEach(healthIssueLabels, id: \.self) { label in
+                    tag(text: label)
+                }
                 if item.programming?.isMonospaced == true,
                    let score = item.programmingScore {
                     scoreChip(grade: score.grade)

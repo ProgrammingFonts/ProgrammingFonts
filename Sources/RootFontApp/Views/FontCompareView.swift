@@ -1,15 +1,23 @@
+import AppKit
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct FontCompareView: View {
     let baseline: FontItem
     let candidate: FontItem
+    let baselineFamilyName: String
+    let candidateFamilyName: String
+    let plainCodeSnippet: String
     let baselineScore: ProgrammingScore
     let candidateScore: ProgrammingScore
     let codeSnippet: AttributedString
     let baselineFont: Font
     let candidateFont: Font
     let factorTitle: (ProgrammingScoreFactor) -> String
+    let bucketTitle: (CoverageBucket) -> String
     let tr: (L10nKey) -> String
+
+    @State private var exportMessage: String?
 
     @State private var displayMode: CompareDisplayMode = .sideBySide
     @State private var overlayOpacity: Double = 0.58
@@ -51,6 +59,22 @@ struct FontCompareView: View {
                 Text("\(baselineScore.total) -> \(candidateScore.total)")
                     .font(.caption2.monospacedDigit())
                     .foregroundStyle(.secondary)
+                Menu(tr(.exportCompareReport)) {
+                    Button(tr(.copyCompareReport)) {
+                        copyCompareReportText()
+                    }
+                    Button(tr(.exportComparePNG)) {
+                        exportComparePNG()
+                    }
+                }
+                .menuStyle(.borderlessButton)
+                .fixedSize()
+            }
+
+            if let exportMessage {
+                Text(exportMessage)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
             }
 
             compareModeControls
@@ -89,8 +113,8 @@ struct FontCompareView: View {
         switch displayMode {
         case .sideBySide:
             HStack(alignment: .top, spacing: 10) {
-                compareColumn(title: baseline.familyName, attributed: codeSnippet, font: baselineFont)
-                compareColumn(title: candidate.familyName, attributed: codeSnippet, font: candidateFont)
+                compareColumn(title: baselineFamilyName, attributed: codeSnippet, font: baselineFont)
+                compareColumn(title: candidateFamilyName, attributed: codeSnippet, font: candidateFont)
             }
         case .overlay:
             overlayCompareBlock
@@ -364,6 +388,53 @@ struct FontCompareView: View {
         cachedCandidateBounds = glyphBounds(for: glyph, postScriptName: candidate.postScriptName)
     }
 
+    private func compareReportInput() -> CompareReportInput {
+        CompareReportInput(
+            baselineFamilyName: baselineFamilyName,
+            candidateFamilyName: candidateFamilyName,
+            baselinePostScriptName: baseline.postScriptName,
+            candidatePostScriptName: candidate.postScriptName,
+            baselineScore: baselineScore,
+            candidateScore: candidateScore,
+            baselineProfile: baseline.programming,
+            candidateProfile: candidate.programming,
+            codeSnippet: plainCodeSnippet,
+            previewSize: 14,
+            factorTitle: factorTitle,
+            bucketTitle: bucketTitle
+        )
+    }
+
+    private func copyCompareReportText() {
+        let text = CompareReportExporter.textReport(input: compareReportInput())
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+        showExportMessage(tr(.exportCompareCopied))
+    }
+
+    private func exportComparePNG() {
+        guard let data = CompareReportExporter.pngData(input: compareReportInput()) else { return }
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.png]
+        panel.nameFieldStringValue = "\(baseline.postScriptName)-vs-\(candidate.postScriptName).png"
+        panel.begin { response in
+            guard response == .OK, let url = panel.url else { return }
+            do {
+                try FileExportService.write(data, to: url)
+                showExportMessage(tr(.exportSpecimenSaved))
+            } catch {
+                showExportMessage(tr(.exportFailed))
+            }
+        }
+    }
+
+    private func showExportMessage(_ message: String) {
+        exportMessage = message
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 1_400_000_000)
+            exportMessage = nil
+        }
+    }
 }
 
 private struct CoverageDiff {

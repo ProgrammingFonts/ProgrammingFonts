@@ -20,6 +20,8 @@ protocol PreferencesStoreProtocol: AnyObject {
     var scoreWeightsData: Data? { get set }
     var fontFeaturePrefsData: Data? { get set }
     var selectedFontID: String? { get set }
+    var customSnippetsData: Data? { get set }
+    var watchFontFoldersEnabled: Bool { get set }
 }
 
 final class PreferencesStore: PreferencesStoreProtocol {
@@ -45,6 +47,8 @@ final class PreferencesStore: PreferencesStoreProtocol {
         static let scoreWeightsData = "rootfont.scoreWeightsData"
         static let fontFeaturePrefsData = "rootfont.fontFeaturePrefsData"
         static let selectedFontID = "rootfont.selectedFontID"
+        static let customSnippetsData = "rootfont.customSnippetsData"
+        static let watchFontFoldersEnabled = "rootfont.watchFontFoldersEnabled"
     }
 
     init(defaults: UserDefaults = .standard) {
@@ -162,5 +166,20 @@ final class PreferencesStore: PreferencesStoreProtocol {
     var selectedFontID: String? {
         get { defaults.string(forKey: Keys.selectedFontID) }
         set { defaults.set(newValue, forKey: Keys.selectedFontID) }
+    }
+
+    var customSnippetsData: Data? {
+        get { defaults.data(forKey: Keys.customSnippetsData) }
+        set { defaults.set(newValue, forKey: Keys.customSnippetsData) }
+    }
+
+    var watchFontFoldersEnabled: Bool {
+        get {
+            if defaults.object(forKey: Keys.watchFontFoldersEnabled) == nil {
+                return true
+            }
+            return defaults.bool(forKey: Keys.watchFontFoldersEnabled)
+        }
+        set { defaults.set(newValue, forKey: Keys.watchFontFoldersEnabled) }
     }
 }

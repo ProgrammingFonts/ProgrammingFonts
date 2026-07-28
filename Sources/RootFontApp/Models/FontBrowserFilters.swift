@@ -16,6 +16,7 @@ enum SidebarFilter: String, CaseIterable, Sendable {
     case recommendedForCode
     case avoidForCode
     case managed
+    case fontHealth
 }
 
 enum SortOption: String, CaseIterable, Identifiable, Sendable {

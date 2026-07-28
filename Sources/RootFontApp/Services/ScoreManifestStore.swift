@@ -2,7 +2,7 @@ import Foundation
 
 protocol ScoreManifestStoreProtocol: Sendable {
     func load() -> [String: CachedScoreEntry]
-    func save(_ entries: [String: CachedScoreEntry])
+    @discardableResult func save(_ entries: [String: CachedScoreEntry]) -> Bool
     func cacheKey(for postScriptName: String, fileURL: URL) -> String
 }
 
@@ -107,16 +107,22 @@ struct ScoreManifestStore: ScoreManifestStoreProtocol, @unchecked Sendable {
         return entries
     }
 
-    func save(_ entries: [String: CachedScoreEntry]) {
+    @discardableResult
+    func save(_ entries: [String: CachedScoreEntry]) -> Bool {
         if entryCache.read() == entries {
-            return
+            return true
         }
 
         let directory = manifestURL.deletingLastPathComponent()
-        try? fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
-        guard let data = try? JSONEncoder().encode(entries) else { return }
-        try? data.write(to: manifestURL, options: .atomic)
-        entryCache.write(entries)
+        do {
+            try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
+            let data = try JSONEncoder().encode(entries)
+            try data.write(to: manifestURL, options: .atomic)
+            entryCache.write(entries)
+            return true
+        } catch {
+            return false
+        }
     }
 
     private func readEntriesFromDisk() -> [String: CachedScoreEntry] {

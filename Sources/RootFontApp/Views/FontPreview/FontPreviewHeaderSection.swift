@@ -12,7 +12,10 @@ struct FontPreviewHeaderSection: View {
     @Binding var activationConflictPath: String?
     @Binding var showInstallConfirm: Bool
     let editorTitle: (EditorTarget) -> String
+    let editorCategoryTitle: (EditorTargetCategory) -> String
     let onCopyEditorConfig: (EditorTarget, String) -> Void
+    let onExportSpecimenPNG: () -> Void
+    let onExportSpecimenPDF: () -> Void
     let onOpenInFontBook: (FontItem) -> Void
     let onPerformActivation: (@escaping () throws -> Void) -> Void
 
@@ -47,15 +50,30 @@ struct FontPreviewHeaderSection: View {
                 .fixedSize()
                 .accessibilityLabel(viewModel.tr(.copyFontName))
                 Menu(viewModel.tr(.copyEditorConfig)) {
-                    ForEach(EditorTarget.allCases) { target in
-                        Button(editorTitle(target)) {
-                            onCopyEditorConfig(target, selected.postScriptName)
+                    ForEach(EditorTarget.grouped, id: \.0) { category, targets in
+                        Section(editorCategoryTitle(category)) {
+                            ForEach(targets) { target in
+                                Button(editorTitle(target)) {
+                                    onCopyEditorConfig(target, selected.postScriptName)
+                                }
+                            }
                         }
                     }
                 }
                 .menuStyle(.borderlessButton)
                 .fixedSize()
                 .accessibilityLabel(viewModel.tr(.copyEditorConfig))
+                Menu(viewModel.tr(.exportSpecimen)) {
+                    Button(viewModel.tr(.exportSpecimen)) {
+                        onExportSpecimenPNG()
+                    }
+                    Button(viewModel.tr(.exportSpecimenPDF)) {
+                        onExportSpecimenPDF()
+                    }
+                }
+                .menuStyle(.borderlessButton)
+                .fixedSize()
+                .accessibilityLabel(viewModel.tr(.exportSpecimen))
                 Text(selected.postScriptName)
                     .font(.caption)
                     .foregroundStyle(.secondary)

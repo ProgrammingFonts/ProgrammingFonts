@@ -24,6 +24,7 @@ final class FontFilterEngineTests: XCTestCase {
             managedFontIDs: [],
             manualCollectionFontIDs: nil,
             tagFilterFontIDs: nil,
+            fontHealthFontIDs: nil,
             familyWeightCoverage: nil,
             coverageSupportCache: [:]
         )
@@ -55,6 +56,7 @@ final class FontFilterEngineTests: XCTestCase {
             managedFontIDs: [],
             manualCollectionFontIDs: nil,
             tagFilterFontIDs: nil,
+            fontHealthFontIDs: nil,
             familyWeightCoverage: nil,
             coverageSupportCache: [:]
         )
@@ -86,6 +88,7 @@ final class FontFilterEngineTests: XCTestCase {
             managedFontIDs: [],
             manualCollectionFontIDs: nil,
             tagFilterFontIDs: nil,
+            fontHealthFontIDs: nil,
             familyWeightCoverage: nil,
             coverageSupportCache: [:]
         )
@@ -117,6 +120,7 @@ final class FontFilterEngineTests: XCTestCase {
             managedFontIDs: [],
             manualCollectionFontIDs: ["A"],
             tagFilterFontIDs: nil,
+            fontHealthFontIDs: nil,
             familyWeightCoverage: nil,
             coverageSupportCache: [:]
         )
@@ -148,6 +152,7 @@ final class FontFilterEngineTests: XCTestCase {
             managedFontIDs: [],
             manualCollectionFontIDs: nil,
             tagFilterFontIDs: ["B"],
+            fontHealthFontIDs: nil,
             familyWeightCoverage: nil,
             coverageSupportCache: [:]
         )

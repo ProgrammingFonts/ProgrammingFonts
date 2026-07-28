@@ -66,4 +66,13 @@ struct FontPreviewFactorLabels {
     func whyTitle(_ factor: ProgrammingScoreFactor) -> String {
         title(factor)
     }
+
+    func bucketTitle(_ bucket: CoverageBucket) -> String {
+        switch bucket {
+        case .latinExtended: return tr(.coverageBucketLatinExtended)
+        case .cyrillic: return tr(.coverageBucketCyrillic)
+        case .greek: return tr(.coverageBucketGreek)
+        case .cjk: return tr(.coverageBucketCJK)
+        }
+    }
 }

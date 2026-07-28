@@ -10,18 +10,21 @@ struct RootFontApp: App {
     init() {
         let preferences = PreferencesStore()
         let activation = FontActivationService()
-        self.activationService = activation
-        _viewModel = StateObject(
-            wrappedValue: FontBrowserViewModel(
-                catalogService: FontCatalogService(),
-                preferencesStore: preferences,
-                activationService: activation
-            )
+        let browserViewModel = FontBrowserViewModel(
+            catalogService: FontCatalogService(),
+            preferencesStore: preferences,
+            activationService: activation
         )
+        self.activationService = activation
+        _viewModel = StateObject(wrappedValue: browserViewModel)
         NSApplication.shared.setActivationPolicy(.regular)
         NSApplication.shared.activate(ignoringOtherApps: true)
         AppAppearanceApplier.applyImmediately(preferences.appearanceMode)
-        try? activation.reconcile()
+        do {
+            try activation.reconcile()
+        } catch {
+            browserViewModel.reportActivationReconcileFailure()
+        }
     }
 
     var body: some Scene {
@@ -45,6 +48,7 @@ struct RootFontApp: App {
                 )
                 .onAppear {
                     viewModel.load()
+                    viewModel.startCatalogWatcherIfNeeded()
                 }
                 .onChange(of: viewModel.appearanceMode) { _, newValue in
                     AppAppearanceApplier.apply(newValue)
@@ -79,6 +83,17 @@ struct RootFontApp: App {
                     viewModel.jumpToAllFonts()
                 }
                 .keyboardShortcut("1", modifiers: [.command, .option])
+                Divider()
+                Button(viewModel.tr(.selectPreviousFont)) {
+                    viewModel.selectAdjacentFont(offset: -1)
+                }
+                .keyboardShortcut(.upArrow, modifiers: [])
+                .disabled(viewModel.filteredFonts.isEmpty)
+                Button(viewModel.tr(.selectNextFont)) {
+                    viewModel.selectAdjacentFont(offset: 1)
+                }
+                .keyboardShortcut(.downArrow, modifiers: [])
+                .disabled(viewModel.filteredFonts.isEmpty)
             }
             CommandGroup(replacing: .appInfo) {
                 Button(String(format: viewModel.tr(.aboutTitle), AppMetadata.appName)) {

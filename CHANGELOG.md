@@ -16,6 +16,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - UI locales for French (`fr`), German (`de`), and Spanish (`es`).
 
 ### Fixed
+- Font-folder watching now serializes FSEvents lifecycle state, retains its
+  callback context safely, avoids duplicate nested watches, and queues a reload
+  when a catalog change arrives during an active load.
+- Font-health duplicate detection distinguishes weight tiers, reducing false
+  positives for legitimate members of the same family.
+- Specimen and comparison exports report write failures instead of showing a
+  false success message; score-cache write failures no longer poison memory.
+- Managed-font reconciliation failures at launch are surfaced as a dismissible
+  warning instead of being silently ignored.
+- CI coverage summaries now include production sources only, and generated
+  coverage artifacts are ignored locally.
 - Font activation and installation now roll back registration and copied files
   when manifest persistence fails; uninstall restores the font when it cannot
   commit the updated managed-font state, and rollback failures are surfaced.

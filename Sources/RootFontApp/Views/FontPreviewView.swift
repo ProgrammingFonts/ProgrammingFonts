@@ -1,6 +1,7 @@
 import AppKit
 import CoreText
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct FontPreviewView: View {
     @ObservedObject var viewModel: FontBrowserViewModel
@@ -26,6 +27,10 @@ struct FontPreviewView: View {
     @State private var showInstallConfirm = false
     @State private var draftPreviewText = ""
     @State private var previewTextDebounceTask: Task<Void, Never>?
+    @State private var variableAxes: [VariableFontAxis] = []
+    @State private var variableAxisValues: [String: Double] = [:]
+    @State private var customSnippetName = ""
+    @State private var specimenExportMessage: String?
 
     private var factorLabels: FontPreviewFactorLabels {
         FontPreviewFactorLabels(tr: viewModel.tr)
@@ -52,10 +57,18 @@ struct FontPreviewView: View {
                             activationConflictPath: $activationConflictPath,
                             showInstallConfirm: $showInstallConfirm,
                             editorTitle: editorTitle,
+                            editorCategoryTitle: editorCategoryTitle,
                             onCopyEditorConfig: copyEditorConfig,
+                            onExportSpecimenPNG: exportSpecimenPNG,
+                            onExportSpecimenPDF: exportSpecimenPDF,
                             onOpenInFontBook: openInFontBook,
                             onPerformActivation: performActivation
                         )
+                        if let specimenExportMessage {
+                            Text(specimenExportMessage)
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
                         previewSurfaceSection
                         if previewSurface == .sample {
                             quickSampleSection
@@ -64,6 +77,13 @@ struct FontPreviewView: View {
                             codeLanguageSection
                         }
                         previewSizeSection
+                        if !variableAxes.isEmpty {
+                            VariableFontPreviewSection(
+                                title: viewModel.tr(.variableFontAxes),
+                                axes: variableAxes,
+                                axisValues: $variableAxisValues
+                            )
+                        }
                         if previewSurface == .sample {
                             previewModeSection
                         }
@@ -134,6 +154,11 @@ struct FontPreviewView: View {
         .onChange(of: viewModel.selectedFont?.id, initial: true) { _, _ in
             guard let selected = viewModel.selectedFont else { return }
             loadFeaturePreferences(for: selected)
+            reloadVariableAxes(for: selected)
+        }
+        .onChange(of: viewModel.previewSize) { _, _ in
+            guard let selected = viewModel.selectedFont else { return }
+            reloadVariableAxes(for: selected)
         }
         .onAppear {
             if draftPreviewText.isEmpty {
@@ -261,6 +286,55 @@ struct FontPreviewView: View {
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(.quaternary, lineWidth: 1)
                 )
+
+            customSnippetSection
+        }
+    }
+
+    private var customSnippetSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(viewModel.tr(.customSnippets))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            if !viewModel.customSnippets.isEmpty {
+                Menu(viewModel.tr(.customSnippets)) {
+                    ForEach(viewModel.customSnippets) { snippet in
+                        Button(snippet.name) {
+                            codeSnippet = snippet.text
+                        }
+                    }
+                }
+                .pickerStyle(.menu)
+            }
+
+            HStack(spacing: 8) {
+                TextField(viewModel.tr(.customSnippetNamePlaceholder), text: $customSnippetName)
+                    .textFieldStyle(.roundedBorder)
+                Button(viewModel.tr(.addCustomSnippet)) {
+                    viewModel.addCustomSnippet(name: customSnippetName, text: codeSnippet)
+                    customSnippetName = ""
+                }
+                .disabled(
+                    customSnippetName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                        || codeSnippet.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                )
+            }
+
+            if !viewModel.customSnippets.isEmpty {
+                ForEach(viewModel.customSnippets) { snippet in
+                    HStack {
+                        Text(snippet.name)
+                            .font(.caption)
+                        Spacer()
+                        Button(viewModel.tr(.deleteCustomSnippet), role: .destructive) {
+                            viewModel.removeCustomSnippet(id: snippet.id)
+                        }
+                        .buttonStyle(.link)
+                        .font(.caption)
+                    }
+                }
+            }
         }
     }
 
@@ -530,6 +604,21 @@ struct FontPreviewView: View {
     }
 
     private func previewFont(for item: FontItem, size: Double, monospacedNumerals: Bool) -> Font {
+        if !variableAxes.isEmpty {
+            let axisValues = Dictionary(
+                uniqueKeysWithValues: variableAxes.map { axis in
+                    (axis.tag, variableAxisValues[axis.tag] ?? axis.defaultValue)
+                }
+            )
+            if let nsFont = VariableFontInspector.font(
+                postScriptName: item.postScriptName,
+                size: size,
+                axisValues: axisValues
+            ) {
+                return Font(nsFont)
+            }
+        }
+
         let options = OpenTypeFeatureOptions(
             ligaturesEnabled: ligaturesEnabled,
             zeroVariantEnabled: zeroVariantEnabled,
@@ -583,13 +672,88 @@ struct FontPreviewView: View {
     }
 
     private func editorTitle(_ target: EditorTarget) -> String {
-        switch target {
-        case .vscode: return viewModel.tr(.editorVSCode)
-        case .cursor: return viewModel.tr(.editorCursor)
-        case .alacritty: return viewModel.tr(.editorAlacritty)
-        case .kitty: return viewModel.tr(.editorKitty)
-        case .warp: return viewModel.tr(.editorWarp)
-        case .zed: return viewModel.tr(.editorZed)
+        viewModel.tr(target.l10nKey)
+    }
+
+    private func editorCategoryTitle(_ category: EditorTargetCategory) -> String {
+        viewModel.tr(category.l10nKey)
+    }
+
+    private func reloadVariableAxes(for item: FontItem) {
+        let axes = VariableFontInspector.axes(
+            postScriptName: item.postScriptName,
+            size: CGFloat(viewModel.previewSize)
+        )
+        variableAxes = axes
+        variableAxisValues = Dictionary(
+            uniqueKeysWithValues: axes.map { ($0.tag, $0.defaultValue) }
+        )
+    }
+
+    private func exportSpecimenPNG() {
+        saveSpecimen(format: .png)
+    }
+
+    private func exportSpecimenPDF() {
+        saveSpecimen(format: .pdf)
+    }
+
+    private enum SpecimenExportFormat {
+        case png
+        case pdf
+    }
+
+    private func saveSpecimen(format: SpecimenExportFormat) {
+        guard let selected = viewModel.selectedFont else { return }
+        let nsFont = NSFont(name: selected.postScriptName, size: viewModel.previewSize)
+            ?? NSFont.systemFont(ofSize: viewModel.previewSize)
+        let previewText = draftPreviewText.isEmpty ? viewModel.previewText : draftPreviewText
+        let data: Data?
+        let fileExtension: String
+        let contentType: UTType
+        switch format {
+        case .png:
+            data = SpecimenExporter.pngData(
+                familyName: selected.familyName(for: viewModel.language),
+                displayName: selected.displayName(for: viewModel.language),
+                postScriptName: selected.postScriptName,
+                previewText: previewText,
+                size: CGFloat(viewModel.previewSize),
+                font: nsFont
+            )
+            fileExtension = "png"
+            contentType = .png
+        case .pdf:
+            data = SpecimenExporter.pdfData(
+                familyName: selected.familyName(for: viewModel.language),
+                displayName: selected.displayName(for: viewModel.language),
+                postScriptName: selected.postScriptName,
+                previewText: previewText,
+                size: CGFloat(viewModel.previewSize),
+                font: nsFont
+            )
+            fileExtension = "pdf"
+            contentType = .pdf
+        }
+        guard let data else { return }
+
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [contentType]
+        panel.nameFieldStringValue = "\(selected.postScriptName)-specimen.\(fileExtension)"
+        panel.begin { response in
+            guard response == .OK, let url = panel.url else { return }
+            do {
+                try FileExportService.write(data, to: url)
+                specimenExportMessage = viewModel.tr(.exportSpecimenSaved)
+            } catch {
+                specimenExportMessage = viewModel.tr(.exportFailed)
+            }
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 1_400_000_000)
+                withAnimation(.easeOut(duration: 0.15)) {
+                    specimenExportMessage = nil
+                }
+            }
         }
     }
 

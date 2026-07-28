@@ -26,6 +26,7 @@ enum FontFilterEngine {
         let managedFontIDs: Set<String>
         let manualCollectionFontIDs: Set<String>?
         let tagFilterFontIDs: Set<String>?
+        let fontHealthFontIDs: Set<String>?
         let familyWeightCoverage: FamilyWeightCoverage?
         let coverageSupportCache: [String: Bool]
     }
@@ -118,6 +119,9 @@ enum FontFilterEngine {
                 return isAvoidForCode(item, coverage: familyCoverage, scoreEngine: scoreEngine)
             case .managed:
                 return inputs.managedFontIDs.contains(item.id)
+            case .fontHealth:
+                guard let ids = inputs.fontHealthFontIDs else { return false }
+                return ids.contains(item.id)
             }
         }
 

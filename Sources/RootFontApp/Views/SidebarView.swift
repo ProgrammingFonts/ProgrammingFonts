@@ -42,6 +42,14 @@ struct SidebarView: View {
                     .padding(.vertical, 2)
                     .contentShape(Rectangle())
                     .tag(SidebarFilter.user)
+                Label(
+                    "\(viewModel.tr(.sidebarFontHealth)) (\(viewModel.fontHealthIssueCount))",
+                    systemImage: "heart.text.square"
+                )
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 2)
+                .contentShape(Rectangle())
+                .tag(SidebarFilter.fontHealth)
             }
 
             if viewModel.workspaceModule == .programming {
@@ -210,6 +218,26 @@ struct SidebarView: View {
                 }
 
                 Text(viewModel.tr(.showSystemAliasFontsDescription))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(nil)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                HStack(alignment: .center, spacing: 8) {
+                    Text(viewModel.tr(.watchFontFolders))
+                        .lineLimit(nil)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Toggle("", isOn: Binding(
+                        get: { viewModel.watchFontFoldersEnabled },
+                        set: { viewModel.updateWatchFontFoldersEnabled($0) }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                }
+
+                Text(viewModel.tr(.watchFontFoldersDescription))
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                     .lineLimit(nil)

@@ -50,6 +50,25 @@ final class ScoreManifestStoreTests: XCTestCase {
         XCTAssertEqual(store.load().keys.sorted(), ["Mono|1", "Mono|2"])
     }
 
+    func testFailedSaveDoesNotPoisonMemoryCache() throws {
+        let temp = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let invalidManifestURL = temp.appendingPathComponent("scores.json", isDirectory: true)
+        try FileManager.default.createDirectory(at: invalidManifestURL, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: temp) }
+        let store = ScoreManifestStore(manifestURL: invalidManifestURL)
+        let entries = [
+            "Mono|1": CachedScoreEntry(
+                programming: nil,
+                metrics: nil,
+                score: ProgrammingScore(total: 50, grade: .c, breakdown: [])
+            )
+        ]
+
+        XCTAssertFalse(store.save(entries))
+        XCTAssertTrue(store.load().isEmpty)
+    }
+
     func testSaveSkipsWriteWhenEntriesUnchanged() throws {
         let temp = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)

@@ -49,12 +49,16 @@ struct FontPreviewProgrammingPanel: View {
                     FontCompareView(
                         baseline: baseline,
                         candidate: compare,
+                        baselineFamilyName: baseline.familyName(for: viewModel.language),
+                        candidateFamilyName: compare.familyName(for: viewModel.language),
+                        plainCodeSnippet: codeSnippet,
                         baselineScore: baselineScore,
                         candidateScore: compareScore,
                         codeSnippet: highlightedCode(codeSnippet),
                         baselineFont: previewFont(baseline, max(12, viewModel.previewSize * 0.82), true),
                         candidateFont: previewFont(compare, max(12, viewModel.previewSize * 0.82), true),
                         factorTitle: factorLabels.title,
+                        bucketTitle: factorLabels.bucketTitle,
                         tr: viewModel.tr
                     )
                 }

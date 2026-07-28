@@ -80,6 +80,8 @@ final class InMemoryPreferencesStore: PreferencesStoreProtocol {
     var scoreWeightsData: Data?
     var fontFeaturePrefsData: Data?
     var selectedFontID: String?
+    var customSnippetsData: Data?
+    var watchFontFoldersEnabled: Bool = true
 
     var appLanguage: AppLanguage {
         get { didChooseAppLanguage ? storedLanguage : .english }

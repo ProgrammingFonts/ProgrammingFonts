@@ -53,13 +53,29 @@ struct RootSplitView: View {
                 }
         }
         .overlay(alignment: .bottomTrailing) {
-            if isDropTargeted {
-                Label(viewModel.tr(.dropFontsToImport), systemImage: "tray.and.arrow.down")
+            VStack(alignment: .trailing, spacing: 8) {
+                if let warning = viewModel.startupWarningMessage {
+                    HStack(spacing: 8) {
+                        Label(warning, systemImage: "exclamationmark.triangle.fill")
+                        Button {
+                            viewModel.clearStartupWarning()
+                        } label: {
+                            Image(systemName: "xmark")
+                        }
+                        .buttonStyle(.plain)
+                    }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
-                    .background(.ultraThinMaterial, in: Capsule())
-                    .padding(16)
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10))
+                }
+                if isDropTargeted {
+                    Label(viewModel.tr(.dropFontsToImport), systemImage: "tray.and.arrow.down")
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(.ultraThinMaterial, in: Capsule())
+                }
             }
+            .padding(16)
         }
         .onChange(of: isPreviewInspectorPresented, initial: true) { _, newValue in
             autoCloseArmed = false

@@ -7,6 +7,8 @@ Checks performed per locale:
   3. Placeholder consistency: printf-style placeholders (%@, %d, %1$d, etc.)
      must be identical across locales. Purely positional ordering differences
      (e.g. using %2$d before %1$d) are allowed because the multiset matches.
+  4. Suspicious untranslated prose copied verbatim from English is reported
+     as a warning without failing the build.
 
 Exit code: 1 when any check fails, 0 otherwise.
 """
@@ -39,6 +41,11 @@ PLACEHOLDER_PATTERN = re.compile(r"%(?:\d+\$)?[-+# 0]*\d*(?:\.\d+)?(?:ll|l|h|z|j
 ENTRY_PATTERN = re.compile(
     r"\.(?P<key>[A-Za-z0-9_]+)\s*:\s*\"(?P<value>(?:[^\"\\]|\\.)*)\"",
 )
+UNCHANGED_ALLOWED_KEYS = {
+    "editorVSCode",
+    "editorClaudeCode",
+    "weightNerdFont",
+}
 
 
 def parse_keys(path: pathlib.Path) -> set[str]:
@@ -62,6 +69,11 @@ def placeholder_signature(value: str) -> Counter:
     return Counter(placeholders(value))
 
 
+def looks_like_prose(value: str) -> bool:
+    words = re.findall(r"[A-Za-z]{2,}", value)
+    return len(words) >= 2
+
+
 def main() -> int:
     all_keys = parse_keys(KEYS_FILE)
     en_entries = parse_locale_entries(EN_FILE)
@@ -76,6 +88,7 @@ def main() -> int:
         extra = sorted(locale_keys - all_keys)
 
         placeholder_mismatches: list[str] = []
+        untranslated: list[str] = []
         for key, value in entries.items():
             expected = expected_signatures.get(key)
             if expected is None:
@@ -87,6 +100,13 @@ def main() -> int:
                 placeholder_mismatches.append(
                     f"{key}: expected {expected_str}, got {got_str}"
                 )
+            if (
+                locale_file != EN_FILE
+                and key not in UNCHANGED_ALLOWED_KEYS
+                and value == en_entries.get(key)
+                and looks_like_prose(value)
+            ):
+                untranslated.append(key)
 
         if missing or extra or placeholder_mismatches:
             has_error = True
@@ -101,6 +121,8 @@ def main() -> int:
                     print(f"    - {line}")
         else:
             print(f"[OK] {locale_file.relative_to(ROOT)}")
+        if untranslated:
+            print(f"  Warning: possible untranslated English ({len(untranslated)}): " + ", ".join(untranslated))
 
     if has_error:
         print("\nLocalization check failed.")

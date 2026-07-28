@@ -156,6 +156,9 @@ jobs:
           total = 0
           for item in summaries:
               for file in item.get("files", []):
+                  filename = file.get("filename", "").replace("\\", "/")
+                  if "/Sources/RootFontApp/" not in filename:
+                      continue
                   summary = file.get("summary", {}).get("lines", {})
                   covered += summary.get("covered", 0)
                   total += summary.get("count", 0)

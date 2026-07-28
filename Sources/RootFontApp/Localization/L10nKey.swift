@@ -227,11 +227,62 @@ enum L10nKey {
     case editorKitty
     case editorWarp
     case editorZed
+    case editorXcode
+    case editorTerminal
+    case editorITerm2
+    case editorWezTerm
+    case editorClaudeCode
+    case editorOpenCode
+    case editorCodex
+    case editorCategoryIDE
+    case editorCategoryTerminal
+    case editorCategoryAITool
+    case sidebarFontHealth
+    case fontHealthBroken
+    case fontHealthDuplicates
+    case fontHealthSummary
+    case fontHealthReportTitle
+    case fontHealthBrokenSection
+    case fontHealthDuplicatesSection
+    case fontHealthNoIssues
+    case fontHealthExportReport
+    case fontHealthReportCopied
+    case fontHealthBrokenHint
+    case fontHealthDuplicateHint
+    case fontHealthDuplicateGroupTitle
+    case fontHealthAffectedFonts
+    case fontHealthDuplicateGroups
+    case fontHealthDefaultStyle
+    case fontHealthSummaryDetailed
+    case fontHealthAffectedListTitle
+    case variableFontAxes
+    case exportSpecimen
+    case exportSpecimenSaved
+    case exportFailed
+    case customSnippets
+    case addCustomSnippet
+    case customSnippetNamePlaceholder
+    case deleteCustomSnippet
+    case selectPreviousFont
+    case selectNextFont
+    case exportCompareReport
+    case exportComparePNG
+    case exportCompareCopied
+    case copyCompareReport
+    case exportSpecimenPDF
+    case batchSelectionCount
+    case batchFavorite
+    case batchActivateSession
+    case batchApplyTag
+    case batchClearSelection
+    case watchFontFolders
+    case watchFontFoldersDescription
     case activateForSession
     case installForAllApps
     case uninstallManagedFont
     case activationDone
     case activationFailed
+    case managedFontRecoveryFailed
     case managedByRootFont
     case installConfirmTitle
     case installConfirmMessage
