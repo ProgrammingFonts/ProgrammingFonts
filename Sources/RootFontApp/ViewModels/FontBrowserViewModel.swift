@@ -20,77 +20,14 @@ private final class CatalogLoadBridge: @unchecked Sendable {
 
 @MainActor
 final class FontBrowserViewModel: ObservableObject {
-    private struct FilterSignature: Hashable {
-        let searchQuery: String
-        let coverageQuery: String
-        let selectedSource: FontSource?
-        let selectedStyle: FontStyleTag?
-        let sidebarFilter: SidebarFilter
-        let sortOption: SortOption
-        let language: AppLanguage
-        let showSystemAliasFonts: Bool
-        let catalogEpoch: Int
-        let favoritesSignature: Int
-        let recentsSignature: Int
-        let workspaceModule: WorkspaceModule
-        let managedSignature: Int
-        let scoreWeightsSignature: Int
-        let manualCollectionSignature: Int
-        let tagFilterSignature: Int
-        let fontHealthSignature: Int
-    }
-
-    enum PreviewPreset: String, CaseIterable, Identifiable {
-        case mixed
-        case english
-        case chinese
-        case japanese
-        case korean
-        case numeric
-
-        var id: Self { self }
-
-        var l10nKey: L10nKey {
-            switch self {
-            case .mixed: return .previewPresetMixed
-            case .english: return .previewPresetEnglish
-            case .chinese: return .previewPresetChinese
-            case .japanese: return .previewPresetJapanese
-            case .korean: return .previewPresetKorean
-            case .numeric: return .previewPresetNumeric
-            }
-        }
-
-        func title(language: AppLanguage) -> String {
-            L10n.tr(l10nKey, language: language)
-        }
-
-        var text: String {
-            switch self {
-            case .mixed:
-                return "The quick brown fox 你好 こんにちは 안녕하세요 rootfont 123456"
-            case .english:
-                return "Sphinx of black quartz, judge my vow."
-            case .chinese:
-                return "你好，欢迎使用 rootfont。字重：常规/粗体，数字：2026。"
-            case .japanese:
-                return "こんにちは。rootfontで文字組みを確認しましょう。ひらがな・カタカナ・漢字 2026"
-            case .korean:
-                return "안녕하세요. rootfont에서 타이포그래피를 점검하세요. 한글·영문·숫자 2026"
-            case .numeric:
-                return "0123456789 +-*/ () [] {}"
-            }
-        }
-    }
+    typealias PreviewPreset = FontPreviewPreset
 
     private let catalogService: FontCatalogServiceProtocol
     private let fontImportService: FontImportServiceProtocol
     private let preferencesStore: PreferencesStoreProtocol
     let activationService: FontActivationServiceProtocol
     private let maxRecents = 30
-    private let maxSearchPresentationEntries = 320
     private let backgroundFilterThreshold = 400
-    private let filterResultCacheLimit = 8
     private var searchIndexByFontID: [String: FontFilterEngine.SearchIndexEntry] = [:]
     private var coverageCache = CoverageCache(limit: 2048)
     private var familyWeightCoverage: FamilyWeightCoverage?
@@ -101,11 +38,8 @@ final class FontBrowserViewModel: ObservableObject {
     private var indexedFontIDs: Set<String> = []
     private var catalogEpoch: Int = 0
     private var activeFilterTask: Task<Void, Never>?
-    private var filterResultCache: [FilterSignature: [String]] = [:]
-    private var filterResultCacheOrder: [FilterSignature] = []
-    private var searchPresentationByFontID: [String: FontSearchPresentation] = [:]
-    private var searchPresentationOrder: [String] = []
-    private var searchPresentationCacheToken = ""
+    private let filterResultCache = FontFilterResultCache(limit: 8)
+    private let searchPresentationCache = FontSearchPresentationCache(limit: 320)
     private var monospacedFonts: [FontItem] = []
     private var fontsByID: [String: FontItem] = [:]
     private var filteredFontIDs: Set<String> = []
@@ -174,20 +108,36 @@ final class FontBrowserViewModel: ObservableObject {
         self.preparedSearchQuery = SearchMatcher.prepare(query: preferencesStore.searchQuery)
         self.sidebarFilter = SidebarFilter(rawValue: preferencesStore.sidebarFilter) ?? .all
         self.sortOption = SortOption(rawValue: preferencesStore.sortOption) ?? .familyName
-        self.smartCollections = Self.decodeSmartCollections(preferencesStore.smartCollectionsData)
-        self.manualCollections = Self.decodeManualCollections(preferencesStore.manualCollectionsData)
-        self.fontTagAssignments = Self.decodeFontTagAssignments(preferencesStore.fontTagsData)
+        self.smartCollections = FontBrowserPreferencesCodec.decode(
+            [SmartCollection].self,
+            from: preferencesStore.smartCollectionsData,
+            default: []
+        )
+        self.manualCollections = FontBrowserPreferencesCodec.decode(
+            [ManualCollection].self,
+            from: preferencesStore.manualCollectionsData,
+            default: []
+        )
+        self.fontTagAssignments = FontBrowserPreferencesCodec.decode(
+            [String: [String]].self,
+            from: preferencesStore.fontTagsData,
+            default: [:]
+        )
         self.rebuildTagIndex()
         self.trimmedCoverageQuery = ""
-        if let data = preferencesStore.scoreWeightsData,
-           let decoded = try? JSONDecoder().decode(ScoreWeights.self, from: data) {
+        if let decoded: ScoreWeights = FontBrowserPreferencesCodec.decode(
+            ScoreWeights?.self,
+            from: preferencesStore.scoreWeightsData,
+            default: nil
+        ) {
             self.scoreWeights = decoded
             self.scoreWeightPreset = Self.bestMatchingPreset(for: decoded)
         }
-        if let data = preferencesStore.fontFeaturePrefsData,
-           let decoded = try? JSONDecoder().decode([String: FontFeaturePreferences].self, from: data) {
-            self.fontFeaturePrefsMap = decoded
-        }
+        self.fontFeaturePrefsMap = FontBrowserPreferencesCodec.decode(
+            [String: FontFeaturePreferences].self,
+            from: preferencesStore.fontFeaturePrefsData,
+            default: [:]
+        )
         self.managedFontIDs = activationService.managedFontIDs()
         self.pendingSelectedFontID = preferencesStore.selectedFontID
         self.customSnippets = CustomSnippetStore.decode(preferencesStore.customSnippetsData)
@@ -589,7 +539,7 @@ final class FontBrowserViewModel: ObservableObject {
 
     func updateFeaturePreferences(_ prefs: FontFeaturePreferences, forFontID fontID: String) {
         fontFeaturePrefsMap[fontID] = prefs
-        preferencesStore.fontFeaturePrefsData = try? JSONEncoder().encode(fontFeaturePrefsMap)
+        preferencesStore.fontFeaturePrefsData = FontBrowserPreferencesCodec.encode(fontFeaturePrefsMap)
     }
 
     @discardableResult
@@ -732,17 +682,11 @@ final class FontBrowserViewModel: ObservableObject {
                 }
             }
 
-            let outcome: (fonts: [FontItem]?, failed: Bool) = await Task.detached(priority: .userInitiated) {
-                do {
-                    let fonts = try catalogService.loadFonts(
-                        onPartial: onPartial,
-                        reportProgress: reportProgress
-                    )
-                    return (fonts, false)
-                } catch {
-                    return (nil, true)
-                }
-            }.value
+            let outcome = await FontCatalogLoadExecutor.execute(
+                service: catalogService,
+                onPartial: onPartial,
+                reportProgress: reportProgress
+            )
 
             self.applyLoadResult(fonts: outcome.fonts, failed: outcome.failed)
         }
@@ -958,7 +902,7 @@ final class FontBrowserViewModel: ObservableObject {
 
         let manualIDs = activeManualCollectionFontIDs()
         let tagIDs = activeTagFilterFontIDs()
-        let signature = FilterSignature(
+        let signature = FontFilterSignature(
             searchQuery: searchQuery,
             coverageQuery: trimmedCoverageQuery,
             selectedSource: selectedSource,
@@ -978,7 +922,7 @@ final class FontBrowserViewModel: ObservableObject {
             fontHealthSignature: sidebarFilter == .fontHealth ? fontHealthReport.affectedFontIDs.hashValue : 0
         )
 
-        if let cachedIDs = filterResultCache[signature] {
+        if let cachedIDs = filterResultCache.value(for: signature) {
             commitFilterResult(fonts(matchingOrderedIDs: cachedIDs), signature: signature, fromCache: true)
             return
         }
@@ -1047,7 +991,7 @@ final class FontBrowserViewModel: ObservableObject {
 
     private func commitFilterResult(
         _ items: [FontItem],
-        signature: FilterSignature,
+        signature: FontFilterSignature,
         fromCache: Bool
     ) {
         if !fromCache {
@@ -1073,12 +1017,12 @@ final class FontBrowserViewModel: ObservableObject {
         return tagToFontIDs[tag]
     }
 
-    private func matchesFilterSignature(_ signature: FilterSignature) -> Bool {
+    private func matchesFilterSignature(_ signature: FontFilterSignature) -> Bool {
         currentFilterSignature() == signature
     }
 
-    private func currentFilterSignature() -> FilterSignature {
-        FilterSignature(
+    private func currentFilterSignature() -> FontFilterSignature {
+        FontFilterSignature(
             searchQuery: searchQuery,
             coverageQuery: trimmedCoverageQuery,
             selectedSource: selectedSource,
@@ -1119,16 +1063,8 @@ final class FontBrowserViewModel: ObservableObject {
         }
     }
 
-    private func storeFilterResultInCache(_ items: [FontItem], for signature: FilterSignature) {
-        if filterResultCache[signature] != nil {
-            filterResultCacheOrder.removeAll { $0 == signature }
-        }
-        filterResultCache[signature] = items.map(\.id)
-        filterResultCacheOrder.append(signature)
-        while filterResultCacheOrder.count > filterResultCacheLimit {
-            let stale = filterResultCacheOrder.removeFirst()
-            filterResultCache.removeValue(forKey: stale)
-        }
+    private func storeFilterResultInCache(_ items: [FontItem], for signature: FontFilterSignature) {
+        filterResultCache.store(fontIDs: items.map(\.id), for: signature)
     }
 
     private func fonts(matchingOrderedIDs ids: [String]) -> [FontItem] {
@@ -1142,8 +1078,7 @@ final class FontBrowserViewModel: ObservableObject {
     }
 
     private func invalidateFilterResultCache() {
-        filterResultCache.removeAll(keepingCapacity: true)
-        filterResultCacheOrder.removeAll(keepingCapacity: true)
+        filterResultCache.clear()
     }
 
     /// Exposed for tests — returns true when the font resolved by
@@ -1208,34 +1143,19 @@ final class FontBrowserViewModel: ObservableObject {
     }
 
     private func persistSmartCollections() {
-        preferencesStore.smartCollectionsData = try? JSONEncoder().encode(smartCollections)
+        preferencesStore.smartCollectionsData = FontBrowserPreferencesCodec.encode(smartCollections)
     }
 
     private func persistManualCollections() {
-        preferencesStore.manualCollectionsData = try? JSONEncoder().encode(manualCollections)
+        preferencesStore.manualCollectionsData = FontBrowserPreferencesCodec.encode(manualCollections)
     }
 
     private func persistFontTags() {
-        preferencesStore.fontTagsData = try? JSONEncoder().encode(fontTagAssignments)
+        preferencesStore.fontTagsData = FontBrowserPreferencesCodec.encode(fontTagAssignments)
     }
 
     private func persistCustomSnippets() {
         preferencesStore.customSnippetsData = CustomSnippetStore.encode(customSnippets)
-    }
-
-    private static func decodeSmartCollections(_ data: Data?) -> [SmartCollection] {
-        guard let data else { return [] }
-        return (try? JSONDecoder().decode([SmartCollection].self, from: data)) ?? []
-    }
-
-    private static func decodeManualCollections(_ data: Data?) -> [ManualCollection] {
-        guard let data else { return [] }
-        return (try? JSONDecoder().decode([ManualCollection].self, from: data)) ?? []
-    }
-
-    private static func decodeFontTagAssignments(_ data: Data?) -> [String: [String]] {
-        guard let data else { return [:] }
-        return (try? JSONDecoder().decode([String: [String]].self, from: data)) ?? [:]
     }
 
     @discardableResult
@@ -1267,7 +1187,7 @@ final class FontBrowserViewModel: ObservableObject {
                 preparedQuery: preparedSearchQuery
             )
         }
-        if let cached = searchPresentationByFontID[item.id] {
+        if let cached = searchPresentationCache.value(for: item.id) {
             return cached
         }
         let built = FontSearchPresentationBuilder.build(
@@ -1275,62 +1195,37 @@ final class FontBrowserViewModel: ObservableObject {
             language: language,
             preparedQuery: preparedSearchQuery
         )
-        storeSearchPresentation(built, for: item.id)
+        searchPresentationCache.store(built, for: item.id)
         return built
     }
 
     private func rebuildSearchPresentations(for items: [FontItem]? = nil) {
         guard !preparedSearchQuery.isEmpty else {
-            clearSearchPresentationCache()
+            searchPresentationCache.clear()
             return
         }
         let token = searchPresentationToken()
         let sourceItems = items ?? filteredFonts
-        if token != searchPresentationCacheToken {
-            clearSearchPresentationCache()
-            searchPresentationCacheToken = token
-        }
+        searchPresentationCache.resetIfNeeded(token: token)
 
-        let existingIDs = Set(searchPresentationByFontID.keys)
         let sourceIDs = Set(sourceItems.map(\.id))
-        for staleID in existingIDs where !sourceIDs.contains(staleID) {
-            searchPresentationByFontID.removeValue(forKey: staleID)
-            searchPresentationOrder.removeAll { $0 == staleID }
-        }
+        searchPresentationCache.retain(fontIDs: sourceIDs)
 
         let lang = language
         let prepared = preparedSearchQuery
-        for item in sourceItems.prefix(maxSearchPresentationEntries) {
-            if searchPresentationByFontID[item.id] != nil { continue }
+        for item in sourceItems.prefix(320) {
+            if searchPresentationCache.value(for: item.id) != nil { continue }
             let built = FontSearchPresentationBuilder.build(
                 for: item,
                 language: lang,
                 preparedQuery: prepared
             )
-            storeSearchPresentation(built, for: item.id)
+            searchPresentationCache.store(built, for: item.id)
         }
     }
 
     private func searchPresentationToken() -> String {
         "\(language.rawValue)|\(preparedSearchQuery.normalized)|\(preparedSearchQuery.choseong)"
-    }
-
-    private func storeSearchPresentation(_ presentation: FontSearchPresentation, for id: String) {
-        if searchPresentationByFontID[id] != nil {
-            searchPresentationOrder.removeAll { $0 == id }
-        }
-        searchPresentationByFontID[id] = presentation
-        searchPresentationOrder.append(id)
-        while searchPresentationOrder.count > maxSearchPresentationEntries {
-            let stale = searchPresentationOrder.removeFirst()
-            searchPresentationByFontID.removeValue(forKey: stale)
-        }
-    }
-
-    private func clearSearchPresentationCache() {
-        searchPresentationByFontID.removeAll(keepingCapacity: true)
-        searchPresentationOrder.removeAll(keepingCapacity: true)
-        searchPresentationCacheToken = ""
     }
 
     func preferredSearchDisplay(for item: FontItem) -> (primary: String, secondary: String) {
@@ -1344,7 +1239,7 @@ final class FontBrowserViewModel: ObservableObject {
     }
 
     private func persistScoreWeights() {
-        preferencesStore.scoreWeightsData = try? JSONEncoder().encode(scoreWeights)
+        preferencesStore.scoreWeightsData = FontBrowserPreferencesCodec.encode(scoreWeights)
     }
 
     private static func bestMatchingPreset(for weights: ScoreWeights) -> ScoreWeightPreset {
