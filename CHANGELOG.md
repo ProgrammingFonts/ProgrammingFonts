@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `FontBrowserViewModel` delegates preview presets, filter-result caching,
   preference coding, and detached catalog loading to focused support types
   while preserving its existing UI-facing API.
+- Programming-score task cancellation/debouncing and collection/tag state
+  transformations now live in dedicated coordinators instead of the browser
+  view model.
 - Product display name rebranded from `RootFont` to `rootfont` across UI
   strings, docs, Application Support / Fonts paths, and the packaged app
   name. Code module/target names such as `RootFontApp` are unchanged.

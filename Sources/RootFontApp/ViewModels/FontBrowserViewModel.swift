@@ -43,9 +43,7 @@ final class FontBrowserViewModel: ObservableObject {
     private var monospacedFonts: [FontItem] = []
     private var fontsByID: [String: FontItem] = [:]
     private var filteredFontIDs: Set<String> = []
-    private var scoreWeightRefreshTask: Task<Void, Never>?
-    private var scoreRescoreTask: Task<Void, Never>?
-    private var scoreRecalculationGeneration: UInt64 = 0
+    private let scoreCoordinator = ProgrammingScoreCoordinator()
     private var pendingSelectedFontID: String?
 
     @Published private(set) var allFonts: [FontItem] = []
@@ -281,16 +279,14 @@ final class FontBrowserViewModel: ObservableObject {
     }
 
     func saveCurrentFiltersAsSmartCollection(named name: String) {
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-        let item = SmartCollection(
-            name: trimmed,
+        guard let item = FontCollectionController.smartCollection(
+            named: name,
             searchQuery: searchQuery,
             glyphCoverageQuery: glyphCoverageQuery,
             selectedSource: selectedSource,
             selectedStyle: selectedStyle,
             sidebarFilter: sidebarFilter
-        )
+        ) else { return }
         smartCollections.insert(item, at: 0)
         persistSmartCollections()
     }
@@ -320,13 +316,10 @@ final class FontBrowserViewModel: ObservableObject {
     }
 
     func createManualCollection(named name: String) {
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-        var fontIDs: [String] = []
-        if let selectedFont {
-            fontIDs = [selectedFont.id]
-        }
-        let collection = ManualCollection(name: trimmed, fontIDs: fontIDs)
+        guard let collection = FontCollectionController.manualCollection(
+            named: name,
+            selectedFontID: selectedFont?.id
+        ) else { return }
         manualCollections.insert(collection, at: 0)
         persistManualCollections()
     }
@@ -369,14 +362,11 @@ final class FontBrowserViewModel: ObservableObject {
     }
 
     func toggleFont(_ item: FontItem, inCollection collectionID: String) {
-        guard let index = manualCollections.firstIndex(where: { $0.id == collectionID }) else { return }
-        var updated = manualCollections[index]
-        if updated.fontIDs.contains(item.id) {
-            updated.fontIDs.removeAll { $0 == item.id }
-        } else {
-            updated.fontIDs.append(item.id)
-        }
-        manualCollections[index] = updated
+        guard FontCollectionController.toggleFont(
+            fontID: item.id,
+            collectionID: collectionID,
+            in: &manualCollections
+        ) else { return }
         persistManualCollections()
         if activeManualCollectionID == collectionID {
             applyFilters()
@@ -388,17 +378,11 @@ final class FontBrowserViewModel: ObservableObject {
     }
 
     func toggleTag(_ tag: String, on item: FontItem) {
-        var tags = fontTagAssignments[item.id] ?? []
-        if let index = tags.firstIndex(of: tag) {
-            tags.remove(at: index)
-        } else {
-            tags.append(tag)
-        }
-        if tags.isEmpty {
-            fontTagAssignments.removeValue(forKey: item.id)
-        } else {
-            fontTagAssignments[item.id] = tags.sorted()
-        }
+        FontCollectionController.toggleTag(
+            tag,
+            fontID: item.id,
+            assignments: &fontTagAssignments
+        )
         rebuildTagIndex()
         persistFontTags()
         if activeTagName == tag {
@@ -407,18 +391,16 @@ final class FontBrowserViewModel: ObservableObject {
     }
 
     func createTag(named name: String) {
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-        if let selectedFont {
-            var tags = fontTagAssignments[selectedFont.id] ?? []
-            guard !tags.contains(trimmed) else { return }
-            tags.append(trimmed)
-            fontTagAssignments[selectedFont.id] = tags.sorted()
-            rebuildTagIndex()
-            persistFontTags()
-            if activeTagName == trimmed {
-                applyFilters()
-            }
+        guard let selectedFont,
+              let tag = FontCollectionController.addTag(
+                  named: name,
+                  fontID: selectedFont.id,
+                  assignments: &fontTagAssignments
+              ) else { return }
+        rebuildTagIndex()
+        persistFontTags()
+        if activeTagName == tag {
+            applyFilters()
         }
     }
 
@@ -470,66 +452,51 @@ final class FontBrowserViewModel: ObservableObject {
 
     /// Applies a pending debounced score refresh immediately (tests and preset flows).
     func applyPendingScoreWeightRefresh() {
-        scoreWeightRefreshTask?.cancel()
-        scoreWeightRefreshTask = nil
-        scheduleProgrammingScoreRecalculation()
+        scoreCoordinator.flushDebounce { [weak self] in
+            self?.scheduleProgrammingScoreRecalculation()
+        }
     }
 
     /// Waits until in-flight score recalculation (and debounce) finish. Used by tests.
     func waitForScoreRecalculation() async {
-        if let refresh = scoreWeightRefreshTask {
-            await refresh.value
-        }
-        if let rescore = scoreRescoreTask {
-            await rescore.value
-        }
+        await scoreCoordinator.waitUntilIdle()
     }
 
     private func scheduleProgrammingScoreRecalculation() {
-        let generation = beginScoreRecalculation()
-        scoreRescoreTask?.cancel()
-        scoreRescoreTask = Task { @MainActor [weak self] in
-            guard let self else { return }
-            let applied = await self.recalculateProgrammingScoresDetached(expectedGeneration: generation)
-            guard applied, !Task.isCancelled else {
-                self.finishScoreRecalculation(generation: generation)
-                return
+        isRecalculatingScores = true
+        let weights = scoreWeights
+        let fontsSnapshot = allFonts
+        let coverage = familyWeightCoverage ?? FamilyWeightCoverage.build(from: fontsSnapshot)
+        scoreCoordinator.schedule(
+            calculation: {
+                FontCatalogService.attachProgrammingScores(
+                    fontsSnapshot,
+                    familyCoverage: coverage,
+                    scoreEngine: ProgrammingScoreEngine(weights: weights)
+                )
+            },
+            apply: { [weak self] updated in
+                guard let self else { return }
+                self.replaceAllFonts(updated)
+                self.rebuildMonospacedFonts()
+                self.catalogEpoch &+= 1
+                self.invalidateFilterResultCache()
+                self.applyFilters()
+            },
+            completion: { [weak self] in
+                self?.isRecalculatingScores = false
             }
-            self.catalogEpoch &+= 1
-            self.invalidateFilterResultCache()
-            self.applyFilters()
-            self.finishScoreRecalculation(generation: generation)
-        }
+        )
     }
 
     private func scheduleScoreWeightRefresh() {
-        scoreWeightRefreshTask?.cancel()
-        scoreWeightRefreshTask = Task { @MainActor [weak self] in
-            try? await Task.sleep(nanoseconds: 220_000_000)
-            guard !Task.isCancelled, let self else { return }
-            self.scoreWeightRefreshTask = nil
-            self.scheduleProgrammingScoreRecalculation()
+        scoreCoordinator.scheduleDebounced(delayNanoseconds: 220_000_000) { [weak self] in
+            self?.scheduleProgrammingScoreRecalculation()
         }
     }
 
-    private func beginScoreRecalculation() -> UInt64 {
-        scoreRecalculationGeneration &+= 1
-        isRecalculatingScores = true
-        return scoreRecalculationGeneration
-    }
-
-    private func finishScoreRecalculation(generation: UInt64) {
-        guard generation == scoreRecalculationGeneration else { return }
-        isRecalculatingScores = false
-        scoreRescoreTask = nil
-    }
-
     private func cancelScoreRecalculation() {
-        scoreRecalculationGeneration &+= 1
-        scoreWeightRefreshTask?.cancel()
-        scoreWeightRefreshTask = nil
-        scoreRescoreTask?.cancel()
-        scoreRescoreTask = nil
+        scoreCoordinator.cancel()
         isRecalculatingScores = false
     }
 
@@ -1120,14 +1087,9 @@ final class FontBrowserViewModel: ObservableObject {
     }
 
     private func rebuildTagIndex() {
-        var inverted: [String: Set<String>] = [:]
-        for (fontID, tags) in fontTagAssignments {
-            for tag in tags {
-                inverted[tag, default: []].insert(fontID)
-            }
-        }
-        tagToFontIDs = inverted
-        sortedUserTagNames = inverted.keys.sorted()
+        let index = FontCollectionController.tagIndex(assignments: fontTagAssignments)
+        tagToFontIDs = index.fontIDsByTag
+        sortedUserTagNames = index.sortedNames
     }
 
     private func mergeCoverageCacheUpdates(_ updates: [String: Bool]) {
@@ -1156,27 +1118,6 @@ final class FontBrowserViewModel: ObservableObject {
 
     private func persistCustomSnippets() {
         preferencesStore.customSnippetsData = CustomSnippetStore.encode(customSnippets)
-    }
-
-    @discardableResult
-    private func recalculateProgrammingScoresDetached(expectedGeneration: UInt64) async -> Bool {
-        let weights = scoreWeights
-        let fontsSnapshot = allFonts
-        let coverage = familyWeightCoverage ?? FamilyWeightCoverage.build(from: fontsSnapshot)
-
-        let updated = await Task.detached(priority: .userInitiated) {
-            FontCatalogService.attachProgrammingScores(
-                fontsSnapshot,
-                familyCoverage: coverage,
-                scoreEngine: ProgrammingScoreEngine(weights: weights)
-            )
-        }.value
-
-        guard !Task.isCancelled else { return false }
-        guard expectedGeneration == scoreRecalculationGeneration else { return false }
-        replaceAllFonts(updated)
-        rebuildMonospacedFonts()
-        return true
     }
 
     func searchPresentation(for item: FontItem) -> FontSearchPresentation {
