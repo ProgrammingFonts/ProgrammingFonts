@@ -166,7 +166,7 @@ jobs:
           print(f"Coverage: {pct:.2f}% ({covered}/{total})")
           Path("coverage-summary.txt").write_text(f"{pct:.2f}% ({covered}/{total})\n")
           PY
-          python3 scripts/check-coverage.py coverage.json --minimum 24.0
+          python3 scripts/check-coverage.py coverage.json --minimum 25.0
           echo "## Code coverage" >> "$GITHUB_STEP_SUMMARY"
           cat coverage-summary.txt >> "$GITHUB_STEP_SUMMARY"
           if grep -E "testFilterLargeCatalogCompletesWithinBudget|Executed .* tests" test.log > /dev/null; then

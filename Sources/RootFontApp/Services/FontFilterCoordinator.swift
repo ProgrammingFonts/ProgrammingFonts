@@ -2,6 +2,8 @@ import Foundation
 
 @MainActor
 final class FontFilterCoordinator {
+    typealias Compute = @Sendable (Request) -> FontFilterEngine.ComputeOutput
+
     struct Request: Sendable {
         let signature: FontFilterSignature
         let fonts: [FontItem]
@@ -19,12 +21,26 @@ final class FontFilterCoordinator {
 
     private let backgroundThreshold: Int
     private let resultCache: FontFilterResultCache
+    private let compute: Compute
     private var activeTask: Task<Void, Never>?
     private var generation: UInt64 = 0
 
-    init(backgroundThreshold: Int = 400, cacheLimit: Int = 8) {
+    init(
+        backgroundThreshold: Int = 400,
+        cacheLimit: Int = 8,
+        compute: @escaping Compute = { request in
+            FontFilterEngine.compute(
+                fonts: request.fonts,
+                searchIndex: request.searchIndex,
+                favoriteIDs: request.favoriteIDs,
+                recentIDs: request.recentIDs,
+                inputs: request.inputs
+            )
+        }
+    ) {
         self.backgroundThreshold = backgroundThreshold
         resultCache = FontFilterResultCache(limit: cacheLimit)
+        self.compute = compute
     }
 
     func apply(
@@ -49,13 +65,7 @@ final class FontFilterCoordinator {
             || !request.inputs.coverageQuery.isEmpty
         if !shouldDetach {
             complete(
-                FontFilterEngine.compute(
-                    fonts: request.fonts,
-                    searchIndex: request.searchIndex,
-                    favoriteIDs: request.favoriteIDs,
-                    recentIDs: request.recentIDs,
-                    inputs: request.inputs
-                ),
+                compute(request),
                 request: request,
                 completion: completion
             )
@@ -63,14 +73,9 @@ final class FontFilterCoordinator {
         }
 
         activeTask = Task { @MainActor [weak self] in
+            guard let compute = self?.compute else { return }
             let output = await Task.detached(priority: .userInitiated) {
-                FontFilterEngine.compute(
-                    fonts: request.fonts,
-                    searchIndex: request.searchIndex,
-                    favoriteIDs: request.favoriteIDs,
-                    recentIDs: request.recentIDs,
-                    inputs: request.inputs
-                )
+                compute(request)
             }.value
             guard let self,
                   !Task.isCancelled,

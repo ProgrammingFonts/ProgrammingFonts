@@ -2,22 +2,6 @@ import AppKit
 import CoreText
 import Foundation
 
-/// Routes catalog load callbacks back to the main actor without capturing
-/// `FontBrowserViewModel` in `@Sendable` closures passed to `Task.detached`.
-private final class CatalogLoadBridge: @unchecked Sendable {
-    weak var owner: FontBrowserViewModel?
-
-    @MainActor
-    func handlePartial(_ fonts: [FontItem]) {
-        owner?.deliverPartialLoad(fonts)
-    }
-
-    @MainActor
-    func handleProgress(_ progress: Double) {
-        owner?.deliverLoadProgress(progress)
-    }
-}
-
 @MainActor
 final class FontBrowserViewModel: ObservableObject {
     typealias PreviewPreset = FontPreviewPreset
@@ -42,6 +26,7 @@ final class FontBrowserViewModel: ObservableObject {
     private var fontsByID: [String: FontItem] = [:]
     private var filteredFontIDs: Set<String> = []
     private let scoreCoordinator = ProgrammingScoreCoordinator()
+    private let catalogCoordinator = FontCatalogCoordinator()
     private var pendingSelectedFontID: String?
 
     @Published private(set) var allFonts: [FontItem] = []
@@ -89,54 +74,35 @@ final class FontBrowserViewModel: ObservableObject {
         preferencesStore: PreferencesStoreProtocol,
         activationService: FontActivationServiceProtocol = FontActivationService()
     ) {
+        let restored = FontBrowserPreferencesController(store: preferencesStore).restore()
         self.catalogService = catalogService
         self.fontImportService = fontImportService
         self.preferencesStore = preferencesStore
         self.activationService = activationService
-        self.favoriteIDs = preferencesStore.favoriteIDs
-        self.recentFontIDs = preferencesStore.recentFontIDs
-        self.previewText = preferencesStore.previewText
-        self.previewSize = preferencesStore.previewSize
-        self.language = preferencesStore.appLanguage
-        self.appearanceMode = preferencesStore.appearanceMode
-        self.showSystemAliasFonts = preferencesStore.showSystemAliasFonts
-        self.searchQuery = preferencesStore.searchQuery
-        self.preparedSearchQuery = SearchMatcher.prepare(query: preferencesStore.searchQuery)
-        self.sidebarFilter = SidebarFilter(rawValue: preferencesStore.sidebarFilter) ?? .all
-        self.sortOption = SortOption(rawValue: preferencesStore.sortOption) ?? .familyName
-        self.smartCollections = FontBrowserPreferencesCodec.decode(
-            [SmartCollection].self,
-            from: preferencesStore.smartCollectionsData,
-            default: []
-        )
-        self.manualCollections = FontBrowserPreferencesCodec.decode(
-            [ManualCollection].self,
-            from: preferencesStore.manualCollectionsData,
-            default: []
-        )
-        self.fontTagAssignments = FontBrowserPreferencesCodec.decode(
-            [String: [String]].self,
-            from: preferencesStore.fontTagsData,
-            default: [:]
-        )
+        self.favoriteIDs = restored.favoriteIDs
+        self.recentFontIDs = restored.recentFontIDs
+        self.previewText = restored.previewText
+        self.previewSize = restored.previewSize
+        self.language = restored.language
+        self.appearanceMode = restored.appearanceMode
+        self.showSystemAliasFonts = restored.showSystemAliasFonts
+        self.searchQuery = restored.searchQuery
+        self.preparedSearchQuery = SearchMatcher.prepare(query: restored.searchQuery)
+        self.sidebarFilter = restored.sidebarFilter
+        self.sortOption = restored.sortOption
+        self.smartCollections = restored.smartCollections
+        self.manualCollections = restored.manualCollections
+        self.fontTagAssignments = restored.fontTagAssignments
         self.rebuildTagIndex()
         self.trimmedCoverageQuery = ""
-        if let decoded: ScoreWeights = FontBrowserPreferencesCodec.decode(
-            ScoreWeights?.self,
-            from: preferencesStore.scoreWeightsData,
-            default: nil
-        ) {
+        if let decoded = restored.scoreWeights {
             self.scoreWeights = decoded
             self.scoreWeightPreset = Self.bestMatchingPreset(for: decoded)
         }
-        self.fontFeaturePrefsMap = FontBrowserPreferencesCodec.decode(
-            [String: FontFeaturePreferences].self,
-            from: preferencesStore.fontFeaturePrefsData,
-            default: [:]
-        )
+        self.fontFeaturePrefsMap = restored.featurePreferences
         self.managedFontIDs = activationService.managedFontIDs()
-        self.pendingSelectedFontID = preferencesStore.selectedFontID
-        self.customSnippets = CustomSnippetStore.decode(preferencesStore.customSnippetsData)
+        self.pendingSelectedFontID = restored.selectedFontID
+        self.customSnippets = restored.customSnippets
     }
 
     func startCatalogWatcherIfNeeded() {
@@ -179,16 +145,11 @@ final class FontBrowserViewModel: ObservableObject {
     }
 
     func handleFontTap(_ item: FontItem, commandKey: Bool) {
-        if commandKey {
-            if batchSelectedFontIDs.contains(item.id) {
-                batchSelectedFontIDs.remove(item.id)
-            } else {
-                batchSelectedFontIDs.insert(item.id)
-            }
-            selectFont(item)
-            return
-        }
-        batchSelectedFontIDs = [item.id]
+        batchSelectedFontIDs = FontSelectionController.selectionAfterTap(
+            fontID: item.id,
+            commandKey: commandKey,
+            current: batchSelectedFontIDs
+        )
         selectFont(item)
     }
 
@@ -197,20 +158,18 @@ final class FontBrowserViewModel: ObservableObject {
     }
 
     func batchSelectedFonts() -> [FontItem] {
-        batchSelectedFontIDs.compactMap { fontsByID[$0] }
+        FontSelectionController.fonts(
+            selectedIDs: batchSelectedFontIDs,
+            fontsByID: fontsByID
+        )
     }
 
     func batchToggleFavorite() {
-        let items = batchSelectedFonts()
-        guard !items.isEmpty else { return }
-        let shouldFavorite = !items.allSatisfy { favoriteIDs.contains($0.id) }
-        for item in items {
-            if shouldFavorite {
-                favoriteIDs.insert(item.id)
-            } else {
-                favoriteIDs.remove(item.id)
-            }
-        }
+        guard !batchSelectedFontIDs.isEmpty else { return }
+        favoriteIDs = FontSelectionController.toggledFavorites(
+            selectedIDs: batchSelectedFontIDs,
+            favorites: favoriteIDs
+        )
         preferencesStore.favoriteIDs = favoriteIDs
         if sidebarFilter == .favorites {
             applyFilters()
@@ -537,17 +496,13 @@ final class FontBrowserViewModel: ObservableObject {
     }
 
     func selectAdjacentFont(offset: Int) {
-        guard !filteredFonts.isEmpty else { return }
-        if let selectedFont,
-           let index = filteredFonts.firstIndex(where: { $0.id == selectedFont.id }) {
-            let nextIndex = min(max(0, index + offset), filteredFonts.count - 1)
-            let next = filteredFonts[nextIndex]
-            batchSelectedFontIDs = [next.id]
-            selectFont(next)
-        } else if let first = filteredFonts.first {
-            batchSelectedFontIDs = [first.id]
-            selectFont(first)
-        }
+        guard let next = FontSelectionController.adjacentFont(
+            to: selectedFont?.id,
+            offset: offset,
+            in: filteredFonts
+        ) else { return }
+        batchSelectedFontIDs = [next.id]
+        selectFont(next)
     }
 
     func addCustomSnippet(name: String, text: String) {
@@ -628,41 +583,18 @@ final class FontBrowserViewModel: ObservableObject {
         isLoading = true
         loadProgress = 0
         loadErrorMessage = nil
-        let catalogService = self.catalogService
-
-        Task { @MainActor [weak self] in
-            guard let self else { return }
-
-            let bridge = CatalogLoadBridge()
-            bridge.owner = self
-
-            let onPartial: @Sendable ([FontItem]) -> Void = { partial in
-                Task { @MainActor in
-                    bridge.handlePartial(partial)
-                }
+        catalogCoordinator.load(
+            service: catalogService,
+            onPartial: { [weak self] fonts in
+                self?.applyPartialLoadResult(fonts: fonts)
+            },
+            onProgress: { [weak self] progress in
+                self?.loadProgress = progress
+            },
+            completion: { [weak self] outcome in
+                self?.applyLoadResult(fonts: outcome.fonts, failed: outcome.failed)
             }
-            let reportProgress: @Sendable (Double) -> Void = { progress in
-                Task { @MainActor in
-                    bridge.handleProgress(progress)
-                }
-            }
-
-            let outcome = await FontCatalogLoadExecutor.execute(
-                service: catalogService,
-                onPartial: onPartial,
-                reportProgress: reportProgress
-            )
-
-            self.applyLoadResult(fonts: outcome.fonts, failed: outcome.failed)
-        }
-    }
-
-    fileprivate func deliverPartialLoad(_ fonts: [FontItem]) {
-        applyPartialLoadResult(fonts: fonts)
-    }
-
-    fileprivate func deliverLoadProgress(_ progress: Double) {
-        loadProgress = progress
+        )
     }
 
     private func applyPartialLoadResult(fonts: [FontItem]) {
@@ -1167,11 +1099,11 @@ final class FontBrowserViewModel: ObservableObject {
     }
 
     private func updateRecents(with id: String) {
-        recentFontIDs.removeAll(where: { $0 == id })
-        recentFontIDs.insert(id, at: 0)
-        if recentFontIDs.count > maxRecents {
-            recentFontIDs = Array(recentFontIDs.prefix(maxRecents))
-        }
+        recentFontIDs = FontSelectionController.recents(
+            adding: id,
+            to: recentFontIDs,
+            limit: maxRecents
+        )
         preferencesStore.recentFontIDs = recentFontIDs
         if sidebarFilter == .recents {
             applyFilters()

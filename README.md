@@ -16,6 +16,8 @@ The native font manager for designers and programmers on macOS.
 
 rootfont is currently in active alpha development.
 
+Open engineering and deferred release work is tracked in [TODO.md](TODO.md).
+
 ## What's New in v0.3.0-alpha (5)
 
 rootfont v0.3.0-alpha is the programming-font release on top of v0.2.0-beta. This build adds a dedicated Programming workspace, a full suitability-scoring pipeline, multi-mode font comparison, 12-language code preview, OpenType controls in the inspector, font activation/install flows, and one-click editor config export. Startup is faster thanks to staged catalog loading and shared font-URL caching.

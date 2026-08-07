@@ -84,9 +84,6 @@ struct FontPreviewView: View {
                                 axisValues: $variableAxisValues
                             )
                         }
-                        if previewSurface == .sample {
-                            previewModeSection
-                        }
                         typographyOptionsSection
                         featureToggleSection(for: selected)
                         if selected.programming?.isMonospaced == true,
@@ -235,11 +232,12 @@ struct FontPreviewView: View {
     }
 
     private var previewSurfaceSection: some View {
-        Picker(viewModel.tr(.previewMode), selection: $previewSurface) {
-            Text(viewModel.tr(.previewModeSample)).tag(FontPreviewSurface.sample)
-            Text(viewModel.tr(.previewModeCode)).tag(FontPreviewSurface.code)
-        }
-        .pickerStyle(.segmented)
+        FontPreviewSurfacePicker(
+            selection: $previewSurface,
+            title: viewModel.tr(.previewMode),
+            sampleTitle: viewModel.tr(.previewModeSample),
+            codeTitle: viewModel.tr(.previewModeCode)
+        )
     }
 
     private var codeLanguageSection: some View {
@@ -333,43 +331,26 @@ struct FontPreviewView: View {
     }
 
     private var previewSizeSection: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("\(viewModel.tr(.previewSize)): \(Int(viewModel.previewSize)) px")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Slider(
-                value: Binding(
-                    get: { viewModel.previewSize },
-                    set: { viewModel.previewSize = $0.rounded() }
-                ),
-                in: 12...96
-            )
-                .onChange(of: viewModel.previewSize) { _, _ in
-                    viewModel.updatePreviewSize(viewModel.previewSize)
-                }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private var previewModeSection: some View {
-        HStack(spacing: 10) {
-            Toggle(isOn: $useSingleLinePreview) {
-                Text(viewModel.tr(.previewWrapMode))
-            }
-            .toggleStyle(.switch)
-            Spacer(minLength: 0)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, 2)
+        FontPreviewSizeControl(
+            size: Binding(
+                get: { viewModel.previewSize },
+                set: { viewModel.previewSize = $0.rounded() }
+            ),
+            title: viewModel.tr(.previewSize),
+            onChange: { viewModel.updatePreviewSize(viewModel.previewSize) }
+        )
     }
 
     private var typographyOptionsSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Toggle(viewModel.tr(.previewMonospacedNumeralsStyle), isOn: $useMonospacedDigits)
-                .toggleStyle(.switch)
-            Toggle(viewModel.tr(.previewExpandedLetterSpacing), isOn: $expandedLetterSpacing)
-                .toggleStyle(.switch)
-        }
+        FontPreviewDisplayOptions(
+            singleLine: $useSingleLinePreview,
+            monospacedDigits: $useMonospacedDigits,
+            expandedLetterSpacing: $expandedLetterSpacing,
+            showsWrapOption: previewSurface == .sample,
+            wrapTitle: viewModel.tr(.previewWrapMode),
+            digitsTitle: viewModel.tr(.previewMonospacedNumeralsStyle),
+            spacingTitle: viewModel.tr(.previewExpandedLetterSpacing)
+        )
     }
 
     @ViewBuilder

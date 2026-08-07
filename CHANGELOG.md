@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Font filtering now runs through a dedicated coordinator, large list/preview
   status sections are reusable views, and CI enforces the measured coverage
   baseline.
+- Catalog loading, preference restoration, and selection transformations now
+  have focused controllers and regression tests; preview controls are further
+  decomposed and the CI coverage floor is raised to 25%.
 - Product display name rebranded from `RootFont` to `rootfont` across UI
   strings, docs, Application Support / Fonts paths, and the packaged app
   name. Code module/target names such as `RootFontApp` are unchanged.
