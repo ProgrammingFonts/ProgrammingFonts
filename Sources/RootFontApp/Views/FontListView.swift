@@ -34,38 +34,11 @@ struct FontListView: View {
             headerView
 
             if let banner = viewModel.importBannerMessage {
-                HStack(spacing: 8) {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.orange)
-                    Text(banner)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Spacer(minLength: 0)
-                    Button {
-                        viewModel.clearImportBanner()
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(.secondary)
-                    }
-                    .buttonStyle(.plain)
-                    .help("Dismiss")
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(Color.orange.opacity(0.12))
+                FontImportBanner(message: banner, onDismiss: viewModel.clearImportBanner)
             }
 
             if viewModel.isRecalculatingScores {
-                HStack(spacing: 8) {
-                    ProgressView()
-                        .controlSize(.mini)
-                    Text(viewModel.tr(.recalculatingScores))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Spacer(minLength: 0)
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 4)
+                FontScoreProgressBanner(message: viewModel.tr(.recalculatingScores))
             }
 
             if viewModel.batchSelectionCount > 1 {
@@ -75,22 +48,11 @@ struct FontListView: View {
             VStack(spacing: 0) {
                 if viewModel.isLoading && viewModel.filteredFonts.isEmpty {
                     Spacer()
-                    VStack(spacing: 10) {
-                        if let progress = viewModel.loadProgress {
-                            ProgressView(value: progress) {
-                                Text(
-                                    progress < 0.5
-                                        ? viewModel.tr(.loadingFonts)
-                                        : viewModel.tr(.loadingFontsEnriching)
-                                )
-                            }
-                            .progressViewStyle(.linear)
-                        } else {
-                            ProgressView(viewModel.tr(.loadingFonts))
-                        }
-                    }
-                    .controlSize(.small)
-                    .frame(maxWidth: 280)
+                    FontCatalogLoadingView(
+                        progress: viewModel.loadProgress,
+                        loadingText: viewModel.tr(.loadingFonts),
+                        enrichingText: viewModel.tr(.loadingFontsEnriching)
+                    )
                     Spacer()
                 } else if let errorMessage = viewModel.loadErrorMessage {
                     ContentUnavailableView(
@@ -904,4 +866,3 @@ private struct FontOrganizationMenus: View {
         }
     }
 }
-

@@ -116,39 +116,26 @@ struct FontPreviewView: View {
                             codePreviewSection(for: selected)
                         }
                         if !viewModel.hasRenderablePreviewFont() {
-                            Label(viewModel.tr(.fallbackPreviewInfo), systemImage: "info.circle")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .frame(maxWidth: .infinity, alignment: .leading)
+                            FontPreviewFallbackNotice(
+                                message: viewModel.tr(.fallbackPreviewInfo),
+                                isWarning: false
+                            )
                         } else if viewModel.hasPartialGlyphFallback(for: draftPreviewText) {
-                            Label(viewModel.tr(.fallbackPartialGlyphInfo), systemImage: "exclamationmark.circle")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .frame(maxWidth: .infinity, alignment: .leading)
+                            FontPreviewFallbackNotice(
+                                message: viewModel.tr(.fallbackPartialGlyphInfo),
+                                isWarning: true
+                            )
                         }
                     }
                     .padding(16)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
             } else {
-                VStack(spacing: 16) {
-                    Image(systemName: "textformat.alt")
-                        .font(.system(size: 42))
-                        .foregroundStyle(.secondary)
-                    Text(viewModel.tr(.selectFontTitle))
-                        .font(.title2.weight(.semibold))
-                        .multilineTextAlignment(.center)
-                    Text(viewModel.tr(.selectFontHint))
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                    Text(viewModel.tr(.selectFontTip))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                .padding(16)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                FontPreviewEmptyState(
+                    title: viewModel.tr(.selectFontTitle),
+                    hint: viewModel.tr(.selectFontHint),
+                    tip: viewModel.tr(.selectFontTip)
+                )
             }
         }
         .onChange(of: viewModel.selectedFont?.id, initial: true) { _, _ in

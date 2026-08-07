@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Programming-score task cancellation/debouncing and collection/tag state
   transformations now live in dedicated coordinators instead of the browser
   view model.
+- Font filtering now runs through a dedicated coordinator, large list/preview
+  status sections are reusable views, and CI enforces the measured coverage
+  baseline.
 - Product display name rebranded from `RootFont` to `rootfont` across UI
   strings, docs, Application Support / Fonts paths, and the packaged app
   name. Code module/target names such as `RootFontApp` are unchanged.

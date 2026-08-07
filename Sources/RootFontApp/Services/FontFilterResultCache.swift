@@ -1,6 +1,6 @@
 import Foundation
 
-struct FontFilterSignature: Hashable {
+struct FontFilterSignature: Hashable, Sendable {
     let searchQuery: String
     let coverageQuery: String
     let selectedSource: FontSource?
