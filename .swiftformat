@@ -1,0 +1,5 @@
+--swiftversion 6.0
+--languagemode 6
+--disable all
+--enable consecutiveBlankLines,trailingSpace
+--exclude .build

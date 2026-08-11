@@ -362,37 +362,19 @@ struct FontListView: View {
     }
 
     private var batchToolbar: some View {
-        HStack(spacing: 10) {
-            Text(String(format: viewModel.tr(.batchSelectionCount), viewModel.batchSelectionCount))
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Button(viewModel.tr(.batchFavorite)) {
-                viewModel.batchToggleFavorite()
-            }
-            .controlSize(.small)
-            Button(viewModel.tr(.batchActivateSession)) {
-                viewModel.batchActivateForSession()
-            }
-            .controlSize(.small)
-            if !viewModel.userTagNames.isEmpty {
-                Menu(viewModel.tr(.batchApplyTag)) {
-                    ForEach(viewModel.userTagNames, id: \.self) { tag in
-                        Button(tag) {
-                            viewModel.batchApplyTag(tag)
-                        }
-                    }
-                }
-                .controlSize(.small)
-            }
-            Spacer(minLength: 0)
-            Button(viewModel.tr(.batchClearSelection)) {
-                viewModel.clearBatchSelection()
-            }
-            .controlSize(.small)
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
-        .background(Color.accentColor.opacity(0.08))
+        FontListBatchToolbar(
+            selectionCount: viewModel.batchSelectionCount,
+            tags: viewModel.userTagNames,
+            countText: viewModel.tr(.batchSelectionCount),
+            favoriteTitle: viewModel.tr(.batchFavorite),
+            activateTitle: viewModel.tr(.batchActivateSession),
+            tagTitle: viewModel.tr(.batchApplyTag),
+            clearTitle: viewModel.tr(.batchClearSelection),
+            onFavorite: viewModel.batchToggleFavorite,
+            onActivate: viewModel.batchActivateForSession,
+            onApplyTag: viewModel.batchApplyTag,
+            onClear: viewModel.clearBatchSelection
+        )
     }
 
     private var headerView: some View {
@@ -812,57 +794,5 @@ private struct FontGridCard: View {
         if item.styleTags.contains(.italic) { return L10n.tr(.italic, language: language) }
         if item.styleTags.contains(.regular) { return L10n.tr(.regular, language: language) }
         return L10n.tr(.other, language: language)
-    }
-}
-
-private func scoreChip(grade: ProgrammingGrade, language: AppLanguage) -> some View {
-    Text(ProgrammingGradeUI.shortText(for: grade))
-    .font(.caption2.weight(.bold))
-    .lineLimit(1)
-    .padding(.horizontal, 8)
-    .padding(.vertical, 3)
-    .background(ProgrammingGradeUI.color(for: grade).opacity(0.18), in: Capsule())
-    .foregroundStyle(ProgrammingGradeUI.color(for: grade))
-    .accessibilityLabel(L10n.tr(ProgrammingGradeUI.l10nKey(for: grade), language: language))
-}
-
-private struct FontOrganizationMenus: View {
-    @ObservedObject var viewModel: FontBrowserViewModel
-    let item: FontItem
-
-    var body: some View {
-        Menu(viewModel.tr(.addToCollection)) {
-            if viewModel.manualCollections.isEmpty {
-                Text(viewModel.tr(.noManualCollectionsYet))
-            } else {
-                ForEach(viewModel.manualCollections) { collection in
-                    Button {
-                        viewModel.toggleFont(item, inCollection: collection.id)
-                    } label: {
-                        Label(
-                            collection.name,
-                            systemImage: viewModel.isFont(item, inCollection: collection.id)
-                                ? "checkmark"
-                                : "folder"
-                        )
-                    }
-                }
-            }
-        }
-
-        if !viewModel.userTagNames.isEmpty {
-            Menu(viewModel.tr(.fontTags)) {
-                ForEach(viewModel.userTagNames, id: \.self) { tag in
-                    Button {
-                        viewModel.toggleTag(tag, on: item)
-                    } label: {
-                        Label(
-                            tag,
-                            systemImage: viewModel.hasTag(tag, on: item) ? "checkmark" : "tag"
-                        )
-                    }
-                }
-            }
-        }
     }
 }

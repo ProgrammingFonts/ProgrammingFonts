@@ -44,4 +44,30 @@ final class FontBrowserPreferencesControllerTests: XCTestCase {
         XCTAssertEqual(state.sortOption, .displayName)
         XCTAssertEqual(state.selectedFontID, "selected")
     }
+
+    func testSaveMethodsOwnPreferenceWrites() {
+        let store = InMemoryPreferencesStore()
+        let controller = FontBrowserPreferencesController(store: store)
+
+        controller.saveFavorites(["favorite"])
+        controller.saveRecents(["recent"])
+        controller.saveLanguage(.japanese)
+        controller.saveAppearance(.dark)
+        controller.saveSearchQuery("mono")
+        controller.saveSidebarFilter(.favorites)
+        controller.saveSortOption(.displayName)
+        controller.saveSelectedFontID("selected")
+        controller.watchFontFoldersEnabled = false
+
+        XCTAssertEqual(store.favoriteIDs, ["favorite"])
+        XCTAssertEqual(store.recentFontIDs, ["recent"])
+        XCTAssertEqual(store.appLanguage, .japanese)
+        XCTAssertTrue(store.didChooseAppLanguage)
+        XCTAssertEqual(store.appearanceMode, .dark)
+        XCTAssertEqual(store.searchQuery, "mono")
+        XCTAssertEqual(store.sidebarFilter, SidebarFilter.favorites.rawValue)
+        XCTAssertEqual(store.sortOption, SortOption.displayName.rawValue)
+        XCTAssertEqual(store.selectedFontID, "selected")
+        XCTAssertFalse(store.watchFontFoldersEnabled)
+    }
 }

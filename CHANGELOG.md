@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Catalog loading, preference restoration, and selection transformations now
   have focused controllers and regression tests; preview controls are further
   decomposed and the CI coverage floor is raised to 25%.
+- Completed the architecture backlog by centralizing watcher/reload handling
+  and preference writes, splitting ViewModel/view/test responsibilities,
+  adding fixed-version Swift style checks and Debug cache diagnostics, and
+  raising the core-logic CI coverage floor to 70%.
 - Product display name rebranded from `RootFont` to `rootfont` across UI
   strings, docs, Application Support / Fonts paths, and the packaged app
   name. Code module/target names such as `RootFontApp` are unchanged.

@@ -53,6 +53,44 @@ final class FontBrowserPreferencesController {
         )
     }
 
+    var watchFontFoldersEnabled: Bool {
+        get { store.watchFontFoldersEnabled }
+        set { store.watchFontFoldersEnabled = newValue }
+    }
+
+    func saveFavorites(_ value: Set<String>) { store.favoriteIDs = value }
+    func saveRecents(_ value: [String]) { store.recentFontIDs = value }
+    func savePreviewText(_ value: String) { store.previewText = value }
+    func savePreviewSize(_ value: Double) { store.previewSize = value }
+    func saveLanguage(_ value: AppLanguage) {
+        store.appLanguage = value
+        store.didChooseAppLanguage = true
+    }
+    func saveAppearance(_ value: AppAppearanceMode) { store.appearanceMode = value }
+    func saveShowSystemAliasFonts(_ value: Bool) { store.showSystemAliasFonts = value }
+    func saveSearchQuery(_ value: String) { store.searchQuery = value }
+    func saveSidebarFilter(_ value: SidebarFilter) { store.sidebarFilter = value.rawValue }
+    func saveSortOption(_ value: SortOption) { store.sortOption = value.rawValue }
+    func saveSmartCollections(_ value: [SmartCollection]) {
+        store.smartCollectionsData = FontBrowserPreferencesCodec.encode(value)
+    }
+    func saveManualCollections(_ value: [ManualCollection]) {
+        store.manualCollectionsData = FontBrowserPreferencesCodec.encode(value)
+    }
+    func saveFontTags(_ value: [String: [String]]) {
+        store.fontTagsData = FontBrowserPreferencesCodec.encode(value)
+    }
+    func saveScoreWeights(_ value: ScoreWeights) {
+        store.scoreWeightsData = FontBrowserPreferencesCodec.encode(value)
+    }
+    func saveFeaturePreferences(_ value: [String: FontFeaturePreferences]) {
+        store.fontFeaturePrefsData = FontBrowserPreferencesCodec.encode(value)
+    }
+    func saveSelectedFontID(_ value: String?) { store.selectedFontID = value }
+    func saveCustomSnippets(_ value: [CustomSnippet]) {
+        store.customSnippetsData = CustomSnippetStore.encode(value)
+    }
+
     private func decode<T: Decodable>(_ type: T.Type, from data: Data?, default fallback: T) -> T {
         FontBrowserPreferencesCodec.decode(type, from: data, default: fallback)
     }

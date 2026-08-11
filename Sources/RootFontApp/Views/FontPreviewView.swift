@@ -241,86 +241,16 @@ struct FontPreviewView: View {
     }
 
     private var codeLanguageSection: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Picker(viewModel.tr(.snippetStrategy), selection: $snippetStrategy) {
-                Text(viewModel.tr(.snippetStrategySemantic)).tag(SnippetStrategy.semantic)
-                Text(viewModel.tr(.snippetStrategyNative)).tag(SnippetStrategy.native)
-            }
-            .pickerStyle(.segmented)
-
-            Picker(viewModel.tr(.codeLanguage), selection: $codeLanguage) {
-                Text(viewModel.tr(.languageSwift)).tag(MiniTokenizer.Language.swift)
-                Text(viewModel.tr(.languageTypeScript)).tag(MiniTokenizer.Language.typescript)
-                Text(viewModel.tr(.languageJavaScript)).tag(MiniTokenizer.Language.javascript)
-                Text(viewModel.tr(.languagePython)).tag(MiniTokenizer.Language.python)
-                Text(viewModel.tr(.languageRust)).tag(MiniTokenizer.Language.rust)
-                Text(viewModel.tr(.languageGo)).tag(MiniTokenizer.Language.go)
-                Text(viewModel.tr(.languageJava)).tag(MiniTokenizer.Language.java)
-                Text(viewModel.tr(.languageKotlin)).tag(MiniTokenizer.Language.kotlin)
-                Text(viewModel.tr(.languageSQL)).tag(MiniTokenizer.Language.sql)
-                Text(viewModel.tr(.languageJSON)).tag(MiniTokenizer.Language.json)
-                Text(viewModel.tr(.languageShell)).tag(MiniTokenizer.Language.shell)
-                Text(viewModel.tr(.languageCSS)).tag(MiniTokenizer.Language.css)
-            }
-            .pickerStyle(.menu)
-
-            TextEditor(text: $codeSnippet)
-                .font(.system(size: 12, design: .monospaced))
-                .frame(minHeight: 120, maxHeight: 180)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(.quaternary, lineWidth: 1)
-                )
-
-            customSnippetSection
-        }
-    }
-
-    private var customSnippetSection: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(viewModel.tr(.customSnippets))
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-            if !viewModel.customSnippets.isEmpty {
-                Menu(viewModel.tr(.customSnippets)) {
-                    ForEach(viewModel.customSnippets) { snippet in
-                        Button(snippet.name) {
-                            codeSnippet = snippet.text
-                        }
-                    }
-                }
-                .pickerStyle(.menu)
-            }
-
-            HStack(spacing: 8) {
-                TextField(viewModel.tr(.customSnippetNamePlaceholder), text: $customSnippetName)
-                    .textFieldStyle(.roundedBorder)
-                Button(viewModel.tr(.addCustomSnippet)) {
-                    viewModel.addCustomSnippet(name: customSnippetName, text: codeSnippet)
-                    customSnippetName = ""
-                }
-                .disabled(
-                    customSnippetName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                        || codeSnippet.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                )
-            }
-
-            if !viewModel.customSnippets.isEmpty {
-                ForEach(viewModel.customSnippets) { snippet in
-                    HStack {
-                        Text(snippet.name)
-                            .font(.caption)
-                        Spacer()
-                        Button(viewModel.tr(.deleteCustomSnippet), role: .destructive) {
-                            viewModel.removeCustomSnippet(id: snippet.id)
-                        }
-                        .buttonStyle(.link)
-                        .font(.caption)
-                    }
-                }
-            }
-        }
+        FontPreviewCodeControls(
+            strategy: $snippetStrategy,
+            language: $codeLanguage,
+            code: $codeSnippet,
+            customSnippetName: $customSnippetName,
+            snippets: viewModel.customSnippets,
+            tr: viewModel.tr,
+            onAddSnippet: viewModel.addCustomSnippet,
+            onRemoveSnippet: viewModel.removeCustomSnippet
+        )
     }
 
     private var previewTextField: some View {

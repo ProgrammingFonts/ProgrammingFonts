@@ -61,4 +61,29 @@ final class FontSelectionControllerTests: XCTestCase {
             "a"
         )
     }
+
+    func testSelectionResolutionRestoresPendingThenRecoversAfterFiltering() {
+        let fonts = [
+            FontItem.sample(id: "a", familyName: "A", source: .user, styleTags: []),
+            FontItem.sample(id: "b", familyName: "B", source: .user, styleTags: [])
+        ]
+        let index = Dictionary(uniqueKeysWithValues: fonts.map { ($0.id, $0) })
+
+        let restored = FontSelectionController.resolvedSelection(
+            pendingID: "b",
+            current: nil,
+            visibleFonts: fonts,
+            fontsByID: index
+        )
+        XCTAssertEqual(restored.font?.id, "b")
+        XCTAssertTrue(restored.consumedPendingID)
+
+        let recovered = FontSelectionController.resolvedSelection(
+            pendingID: nil,
+            current: fonts[1],
+            visibleFonts: [fonts[0]],
+            fontsByID: index
+        )
+        XCTAssertEqual(recovered.font?.id, "a")
+    }
 }

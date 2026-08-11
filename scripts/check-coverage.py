@@ -13,12 +13,21 @@ def main() -> int:
     args = parser.parse_args()
 
     data = json.loads(args.coverage_json.read_text())
-    files = [
-        file
-        for item in data.get("data", [])
-        for file in item.get("files", [])
-        if "/Sources/RootFontApp/" in file.get("filename", "").replace("\\", "/")
-    ]
+    excluded = (
+        "/Sources/RootFontApp/Views/",
+        "/Sources/RootFontApp/Localization/Locales/",
+        "/Sources/RootFontApp/Localization/L10nKey.swift",
+        "/Sources/RootFontApp/RootFontApp.swift",
+    )
+    files = []
+    for item in data.get("data", []):
+        for file in item.get("files", []):
+            filename = file.get("filename", "").replace("\\", "/")
+            if "/Sources/RootFontApp/" not in filename:
+                continue
+            if any(path in filename for path in excluded):
+                continue
+            files.append(file)
     covered = sum(file["summary"]["lines"]["covered"] for file in files)
     total = sum(file["summary"]["lines"]["count"] for file in files)
     percentage = 100.0 if total == 0 else covered * 100.0 / total

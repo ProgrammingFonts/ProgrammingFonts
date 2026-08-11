@@ -1,0 +1,8 @@
+only_rules:
+  - empty_count
+  - trailing_whitespace
+
+excluded:
+  - .build
+
+reporter: github-actions-logging

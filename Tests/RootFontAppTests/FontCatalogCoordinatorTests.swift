@@ -56,6 +56,24 @@ final class FontCatalogCoordinatorTests: XCTestCase {
         XCTAssertFalse(coordinator.isLoading)
     }
 
+    func testCatalogChangeBurstCoalescesDuringLoad() async {
+        let coordinator = FontCatalogCoordinator()
+        var reloadCount = 0
+        coordinator.setReloadHandler { reloadCount += 1 }
+        coordinator.load(
+            service: SlowCatalogService(),
+            onPartial: { _ in },
+            onProgress: { _ in },
+            completion: { _ in }
+        )
+        coordinator.handleCatalogChange()
+        coordinator.handleCatalogChange()
+        coordinator.handleCatalogChange()
+        await waitUntilIdle(coordinator)
+
+        XCTAssertEqual(reloadCount, 1)
+    }
+
     private func waitUntilIdle(_ coordinator: FontCatalogCoordinator) async {
         while coordinator.isLoading {
             await Task.yield()

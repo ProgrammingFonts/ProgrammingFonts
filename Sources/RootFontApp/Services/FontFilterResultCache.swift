@@ -30,7 +30,15 @@ final class FontFilterResultCache {
     }
 
     func value(for signature: FontFilterSignature) -> [String]? {
-        values[signature]
+        let value = values[signature]
+#if DEBUG
+        if value == nil {
+            CacheDiagnostics.shared.recordMiss("filter-results")
+        } else {
+            CacheDiagnostics.shared.recordHit("filter-results")
+        }
+#endif
+        return value
     }
 
     func store(fontIDs: [String], for signature: FontFilterSignature) {
@@ -42,6 +50,9 @@ final class FontFilterResultCache {
         while order.count > limit {
             let stale = order.removeFirst()
             values.removeValue(forKey: stale)
+#if DEBUG
+            CacheDiagnostics.shared.recordEviction("filter-results")
+#endif
         }
     }
 

@@ -127,7 +127,6 @@ final class FontBrowserViewModelTests: XCTestCase {
         )
     }
 
-
     func testRestoresFilterStateFromStore() {
         let store = InMemoryPreferencesStore()
         store.searchQuery = "noto"
@@ -791,6 +790,60 @@ final class FontBrowserViewModelTests: XCTestCase {
         viewModel.batchToggleFavorite()
         XCTAssertTrue(viewModel.isFavorite(fonts[0]))
         XCTAssertTrue(viewModel.isFavorite(fonts[1]))
+    }
+
+    func testRapidSearchAndSortChangesCommitLatestState() async {
+        let fonts = (0..<80).map { index in
+            FontItem.sample(
+                id: "font-\(index)",
+                familyName: String(format: "Family %02d", index),
+                source: .user,
+                styleTags: index.isMultiple(of: 2) ? [.regular] : [.bold]
+            )
+        }
+        let viewModel = FontBrowserViewModel(
+            catalogService: MockCatalogService(fonts: fonts),
+            preferencesStore: InMemoryPreferencesStore()
+        )
+        viewModel.load()
+        await waitForLoad(viewModel)
+
+        for index in 0..<50 {
+            viewModel.updateSearchQuery(index == 49 ? "Family 79" : "Family \(index)")
+            viewModel.updateSortOption(index.isMultiple(of: 2) ? .familyName : .displayName)
+        }
+
+        XCTAssertEqual(viewModel.searchQuery, "Family 79")
+        XCTAssertEqual(viewModel.sortOption, .displayName)
+        XCTAssertEqual(viewModel.filteredFonts.map(\.id), ["font-79"])
+    }
+
+    func testRepeatedScoreWeightChangesCommitLatestWeight() async {
+        let mono = FontItem(
+            id: "Mono",
+            familyName: "Mono",
+            postScriptName: "Mono-Regular",
+            displayName: "Mono",
+            source: .user,
+            styleTags: [.regular, .monospace],
+            programming: ProgrammingProfile.empty.withMonospaced(true),
+            metrics: FontMetricsSample(asciiAdvanceVariance: 0.1, uniformWidth: true, confusableDistances: [:])
+        )
+        let viewModel = FontBrowserViewModel(
+            catalogService: MockCatalogService(fonts: [mono]),
+            preferencesStore: InMemoryPreferencesStore()
+        )
+        viewModel.load()
+        await waitForLoad(viewModel)
+
+        for value in stride(from: 4.0, through: 20.0, by: 1.0) {
+            viewModel.updateScoreWeight(\.monospaceBaseline, value: value)
+        }
+        viewModel.applyPendingScoreWeightRefresh()
+        await viewModel.waitForScoreRecalculation()
+
+        XCTAssertEqual(viewModel.scoreWeights.monospaceBaseline, 20)
+        XCTAssertNotNil(viewModel.allFonts.first?.programmingScore)
     }
 }
 

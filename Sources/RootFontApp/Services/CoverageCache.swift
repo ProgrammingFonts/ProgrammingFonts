@@ -11,7 +11,15 @@ struct CoverageCache: Sendable {
     }
 
     mutating func value(for key: String) -> Bool? {
-        guard let cached = values[key] else { return nil }
+        guard let cached = values[key] else {
+#if DEBUG
+            CacheDiagnostics.shared.recordMiss("coverage")
+#endif
+            return nil
+        }
+#if DEBUG
+        CacheDiagnostics.shared.recordHit("coverage")
+#endif
         touch(key)
         return cached
     }
@@ -54,6 +62,9 @@ struct CoverageCache: Sendable {
             values.removeValue(forKey: key)
             recentKeys.remove(key)
         }
+#if DEBUG
+        CacheDiagnostics.shared.recordEviction("coverage", count: overflow)
+#endif
         order.removeFirst(overflow)
     }
 }

@@ -8,25 +8,25 @@ final class FontBrowserViewModel: ObservableObject {
 
     private let catalogService: FontCatalogServiceProtocol
     private let fontImportService: FontImportServiceProtocol
-    private let preferencesStore: PreferencesStoreProtocol
+    let preferencesController: FontBrowserPreferencesController
     let activationService: FontActivationServiceProtocol
     private let maxRecents = 30
     private var searchIndexByFontID: [String: FontFilterEngine.SearchIndexEntry] = [:]
     private var coverageCache = CoverageCache(limit: 2048)
     private var familyWeightCoverage: FamilyWeightCoverage?
-    private var preparedSearchQuery = SearchMatcher.prepare(query: "")
-    private var trimmedCoverageQuery = ""
+    var preparedSearchQuery = SearchMatcher.prepare(query: "")
+    var trimmedCoverageQuery = ""
     private var tagToFontIDs: [String: Set<String>] = [:]
-    private var sortedUserTagNames: [String] = []
+    var sortedUserTagNames: [String] = []
     private var indexedFontIDs: Set<String> = []
     private var catalogEpoch: Int = 0
     private let filterCoordinator = FontFilterCoordinator()
     private let searchPresentationCache = FontSearchPresentationCache(limit: 320)
     private var monospacedFonts: [FontItem] = []
-    private var fontsByID: [String: FontItem] = [:]
-    private var filteredFontIDs: Set<String> = []
+    var fontsByID: [String: FontItem] = [:]
+    var filteredFontIDs: Set<String> = []
     private let scoreCoordinator = ProgrammingScoreCoordinator()
-    private let catalogCoordinator = FontCatalogCoordinator()
+    let catalogCoordinator = FontCatalogCoordinator()
     private var pendingSelectedFontID: String?
 
     @Published private(set) var allFonts: [FontItem] = []
@@ -38,8 +38,8 @@ final class FontBrowserViewModel: ObservableObject {
     @Published var selectedStyle: FontStyleTag?
     @Published var sidebarFilter: SidebarFilter = .all
     @Published var sortOption: SortOption = .familyName
-    @Published private(set) var favoriteIDs: Set<String>
-    @Published private(set) var recentFontIDs: [String]
+    @Published var favoriteIDs: Set<String>
+    @Published var recentFontIDs: [String]
     @Published var previewText: String
     @Published var previewSize: Double
     @Published private(set) var isLoading = false
@@ -52,9 +52,9 @@ final class FontBrowserViewModel: ObservableObject {
     @Published private(set) var language: AppLanguage
     @Published private(set) var appearanceMode: AppAppearanceMode
     @Published private(set) var showSystemAliasFonts: Bool
-    @Published private(set) var smartCollections: [SmartCollection] = []
-    @Published private(set) var manualCollections: [ManualCollection] = []
-    @Published private(set) var fontTagAssignments: [String: [String]] = [:]
+    @Published var smartCollections: [SmartCollection] = []
+    @Published var manualCollections: [ManualCollection] = []
+    @Published var fontTagAssignments: [String: [String]] = [:]
     @Published var activeManualCollectionID: String?
     @Published var activeTagName: String?
     @Published private(set) var workspaceModule: WorkspaceModule = .library
@@ -64,9 +64,7 @@ final class FontBrowserViewModel: ObservableObject {
     @Published private(set) var customSnippets: [CustomSnippet] = []
     @Published private(set) var batchSelectedFontIDs: Set<String> = []
     private var fontFeaturePrefsMap: [String: FontFeaturePreferences] = [:]
-    private var managedFontIDs: Set<String> = []
-    private var catalogWatcher: FontCatalogWatcher?
-    private var pendingCatalogReload = false
+    var managedFontIDs: Set<String> = []
 
     init(
         catalogService: FontCatalogServiceProtocol,
@@ -74,10 +72,11 @@ final class FontBrowserViewModel: ObservableObject {
         preferencesStore: PreferencesStoreProtocol,
         activationService: FontActivationServiceProtocol = FontActivationService()
     ) {
-        let restored = FontBrowserPreferencesController(store: preferencesStore).restore()
+        let preferencesController = FontBrowserPreferencesController(store: preferencesStore)
+        let restored = preferencesController.restore()
         self.catalogService = catalogService
         self.fontImportService = fontImportService
-        self.preferencesStore = preferencesStore
+        self.preferencesController = preferencesController
         self.activationService = activationService
         self.favoriteIDs = restored.favoriteIDs
         self.recentFontIDs = restored.recentFontIDs
@@ -100,40 +99,30 @@ final class FontBrowserViewModel: ObservableObject {
             self.scoreWeightPreset = Self.bestMatchingPreset(for: decoded)
         }
         self.fontFeaturePrefsMap = restored.featurePreferences
-        self.managedFontIDs = activationService.managedFontIDs()
+        self.managedFontIDs = catalogCoordinator.managedFontIDs(using: activationService)
         self.pendingSelectedFontID = restored.selectedFontID
         self.customSnippets = restored.customSnippets
     }
 
     func startCatalogWatcherIfNeeded() {
-        guard preferencesStore.watchFontFoldersEnabled else { return }
-        guard catalogWatcher == nil else { return }
+        guard preferencesController.watchFontFoldersEnabled else { return }
         let urls = FontCatalogWatcher.defaultWatchURLs()
-        catalogWatcher = FontCatalogWatcher(urls: urls) { [weak self] in
-            Task { @MainActor in
-                guard let self else { return }
-                if self.isLoading {
-                    self.pendingCatalogReload = true
-                    return
-                }
-                self.load()
-            }
+        catalogCoordinator.startWatcher(urls: urls) { [weak self] in
+            self?.load()
         }
-        catalogWatcher?.start()
     }
 
     func updateWatchFontFoldersEnabled(_ enabled: Bool) {
-        preferencesStore.watchFontFoldersEnabled = enabled
+        preferencesController.watchFontFoldersEnabled = enabled
         if enabled {
             startCatalogWatcherIfNeeded()
         } else {
-            catalogWatcher?.stop()
-            catalogWatcher = nil
+            catalogCoordinator.stopWatcher()
         }
     }
 
     var watchFontFoldersEnabled: Bool {
-        preferencesStore.watchFontFoldersEnabled
+        preferencesController.watchFontFoldersEnabled
     }
 
     var batchSelectionCount: Int {
@@ -170,7 +159,7 @@ final class FontBrowserViewModel: ObservableObject {
             selectedIDs: batchSelectedFontIDs,
             favorites: favoriteIDs
         )
-        preferencesStore.favoriteIDs = favoriteIDs
+        preferencesController.saveFavorites(favoriteIDs)
         if sidebarFilter == .favorites {
             applyFilters()
         }
@@ -206,26 +195,25 @@ final class FontBrowserViewModel: ObservableObject {
 
     func updateLanguage(_ value: AppLanguage) {
         language = value
-        preferencesStore.appLanguage = value
-        preferencesStore.didChooseAppLanguage = true
+        preferencesController.saveLanguage(value)
         rebuildSearchPresentations(for: filteredFonts)
     }
 
     func updateAppearanceMode(_ value: AppAppearanceMode) {
         appearanceMode = value
-        preferencesStore.appearanceMode = value
+        preferencesController.saveAppearance(value)
     }
 
     func updateShowSystemAliasFonts(_ value: Bool) {
         showSystemAliasFonts = value
-        preferencesStore.showSystemAliasFonts = value
+        preferencesController.saveShowSystemAliasFonts(value)
         applyFilters()
     }
 
     func updateSearchQuery(_ value: String) {
         searchQuery = value
         preparedSearchQuery = SearchMatcher.prepare(query: value)
-        preferencesStore.searchQuery = value
+        preferencesController.saveSearchQuery(value)
         applyFilters()
     }
 
@@ -235,135 +223,9 @@ final class FontBrowserViewModel: ObservableObject {
         applyFilters()
     }
 
-    func saveCurrentFiltersAsSmartCollection(named name: String) {
-        guard let item = FontCollectionController.smartCollection(
-            named: name,
-            searchQuery: searchQuery,
-            glyphCoverageQuery: glyphCoverageQuery,
-            selectedSource: selectedSource,
-            selectedStyle: selectedStyle,
-            sidebarFilter: sidebarFilter
-        ) else { return }
-        smartCollections.insert(item, at: 0)
-        persistSmartCollections()
-    }
-
-    func applySmartCollection(_ collection: SmartCollection) {
-        activeManualCollectionID = nil
-        activeTagName = nil
-        searchQuery = collection.searchQuery
-        preparedSearchQuery = SearchMatcher.prepare(query: collection.searchQuery)
-        glyphCoverageQuery = collection.glyphCoverageQuery
-        trimmedCoverageQuery = collection.glyphCoverageQuery.trimmingCharacters(in: .whitespacesAndNewlines)
-        selectedSource = collection.selectedSource
-        selectedStyle = collection.selectedStyle
-        sidebarFilter = collection.sidebarFilter
-        preferencesStore.searchQuery = searchQuery
-        preferencesStore.sidebarFilter = sidebarFilter.rawValue
-        applyFilters()
-    }
-
-    func removeSmartCollection(_ collection: SmartCollection) {
-        smartCollections.removeAll(where: { $0.id == collection.id })
-        persistSmartCollections()
-    }
-
-    var userTagNames: [String] {
-        sortedUserTagNames
-    }
-
-    func createManualCollection(named name: String) {
-        guard let collection = FontCollectionController.manualCollection(
-            named: name,
-            selectedFontID: selectedFont?.id
-        ) else { return }
-        manualCollections.insert(collection, at: 0)
-        persistManualCollections()
-    }
-
-    func removeManualCollection(_ collection: ManualCollection) {
-        manualCollections.removeAll(where: { $0.id == collection.id })
-        if activeManualCollectionID == collection.id {
-            activeManualCollectionID = nil
-            applyFilters()
-        }
-        persistManualCollections()
-    }
-
-    func selectManualCollection(_ collection: ManualCollection) {
-        activeManualCollectionID = collection.id
-        activeTagName = nil
-        applyFilters()
-    }
-
-    func clearManualCollectionFilter() {
-        guard activeManualCollectionID != nil else { return }
-        activeManualCollectionID = nil
-        applyFilters()
-    }
-
-    func selectTag(_ tagName: String) {
-        activeTagName = tagName
-        activeManualCollectionID = nil
-        applyFilters()
-    }
-
-    func clearTagFilter() {
-        guard activeTagName != nil else { return }
-        activeTagName = nil
-        applyFilters()
-    }
-
-    func isFont(_ item: FontItem, inCollection collectionID: String) -> Bool {
-        manualCollections.first(where: { $0.id == collectionID })?.fontIDs.contains(item.id) ?? false
-    }
-
-    func toggleFont(_ item: FontItem, inCollection collectionID: String) {
-        guard FontCollectionController.toggleFont(
-            fontID: item.id,
-            collectionID: collectionID,
-            in: &manualCollections
-        ) else { return }
-        persistManualCollections()
-        if activeManualCollectionID == collectionID {
-            applyFilters()
-        }
-    }
-
-    func hasTag(_ tag: String, on item: FontItem) -> Bool {
-        fontTagAssignments[item.id]?.contains(tag) ?? false
-    }
-
-    func toggleTag(_ tag: String, on item: FontItem) {
-        FontCollectionController.toggleTag(
-            tag,
-            fontID: item.id,
-            assignments: &fontTagAssignments
-        )
-        rebuildTagIndex()
-        persistFontTags()
-        if activeTagName == tag {
-            applyFilters()
-        }
-    }
-
-    func createTag(named name: String) {
-        guard let selectedFont,
-              let tag = FontCollectionController.addTag(
-                  named: name,
-                  fontID: selectedFont.id,
-                  assignments: &fontTagAssignments
-              ) else { return }
-        rebuildTagIndex()
-        persistFontTags()
-        if activeTagName == tag {
-            applyFilters()
-        }
-    }
-
     func updateSortOption(_ value: SortOption) {
         sortOption = value
-        preferencesStore.sortOption = value.rawValue
+        preferencesController.saveSortOption(value)
         applyFilters()
     }
 
@@ -371,7 +233,7 @@ final class FontBrowserViewModel: ObservableObject {
         activeManualCollectionID = nil
         activeTagName = nil
         sidebarFilter = value
-        preferencesStore.sidebarFilter = value.rawValue
+        preferencesController.saveSidebarFilter(value)
         applyFilters()
     }
 
@@ -463,7 +325,7 @@ final class FontBrowserViewModel: ObservableObject {
 
     func updateFeaturePreferences(_ prefs: FontFeaturePreferences, forFontID fontID: String) {
         fontFeaturePrefsMap[fontID] = prefs
-        preferencesStore.fontFeaturePrefsData = FontBrowserPreferencesCodec.encode(fontFeaturePrefsMap)
+        preferencesController.saveFeaturePreferences(fontFeaturePrefsMap)
     }
 
     @discardableResult
@@ -518,68 +380,11 @@ final class FontBrowserViewModel: ObservableObject {
         persistCustomSnippets()
     }
 
-    var fontHealthIssueCount: Int {
-        fontHealthReport.issueCount
-    }
-
-    func fontItem(forID id: String) -> FontItem? {
-        fontsByID[id]
-    }
-
-    func fontHealthIssues(for item: FontItem) -> Set<FontHealthIssueKind> {
-        fontHealthReport.issueKinds(for: item.id)
-    }
-
-    func fontHealthIssueLabel(_ kind: FontHealthIssueKind) -> String {
-        switch kind {
-        case .broken: return tr(.fontHealthBroken)
-        case .duplicate: return tr(.fontHealthDuplicates)
-        }
-    }
-
-    func fontHealthSummaryText() -> String {
-        String(
-            format: tr(.fontHealthSummaryDetailed),
-            fontHealthReport.brokenFontIDs.count,
-            fontHealthReport.duplicateGroupCount,
-            fontHealthReport.affectedFontIDs.count
-        )
-    }
-
-    func fontHealthTextReport() -> String {
-        FontHealthReportExporter.textReport(
-            report: fontHealthReport,
-            fontsByID: fontsByID,
-            context: FontHealthReportContext(
-                generatedAt: Date(),
-                brokenLabel: tr(.fontHealthBroken),
-                duplicateLabel: tr(.fontHealthDuplicates),
-                duplicateGroupLabel: tr(.fontHealthDuplicateGroups),
-                sourceSystemLabel: tr(.system),
-                sourceUserLabel: tr(.user),
-                styleLabel: styleLabel(for:),
-                familyName: { $0.familyName(for: self.language) },
-                displayName: { $0.displayName(for: self.language) }
-            )
-        )
-    }
-
-    func title(for sortOption: SortOption) -> String {
-        switch sortOption {
-        case .familyName:
-            return tr(.byFamilyName)
-        case .displayName:
-            return tr(.byDisplayName)
-        case .programmingFit:
-            return tr(.byProgrammingFit)
-        }
-    }
-
     func load() {
         guard !isLoading else { return }
         cancelScoreRecalculation()
         FontURLIndex.shared.invalidate()
-        managedFontIDs = activationService.managedFontIDs()
+        managedFontIDs = catalogCoordinator.managedFontIDs(using: activationService)
         isLoading = true
         loadProgress = 0
         loadErrorMessage = nil
@@ -637,157 +442,6 @@ final class FontBrowserViewModel: ObservableObject {
         }
         isLoading = false
         loadProgress = nil
-        if pendingCatalogReload {
-            pendingCatalogReload = false
-            load()
-        }
-    }
-
-    var selectedFontVisible: Bool {
-        guard let selectedFont else { return false }
-        return filteredFontIDs.contains(selectedFont.id)
-    }
-
-    var favoriteCount: Int {
-        favoriteIDs.count
-    }
-
-    var recentCount: Int {
-        recentFontIDs.count
-    }
-
-    var activeFilterSummary: String {
-        var parts: [String] = []
-        if workspaceModule == .programming {
-            parts.append(tr(.moduleProgramming))
-        }
-        if !searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            parts.append(tr(.filterKeyword))
-        }
-        if selectedSource != nil {
-            parts.append(tr(.filterSource))
-        }
-        if selectedStyle != nil {
-            parts.append(tr(.filterStyle))
-        }
-        if sidebarFilter != .all {
-            parts.append(tr(.filterSidebar))
-        }
-        if !trimmedCoverageQuery.isEmpty {
-            parts.append(tr(.filterGlyphCoverage))
-        }
-        if activeManualCollectionID != nil {
-            parts.append(tr(.filterCollection))
-        }
-        if activeTagName != nil {
-            parts.append(tr(.filterTag))
-        }
-        return parts.isEmpty ? tr(.noFilters) : "\(tr(.filtersEnabledPrefix)) \(parts.joined(separator: " · "))"
-    }
-
-    func clearAllFilters() {
-        searchQuery = ""
-        preparedSearchQuery = SearchMatcher.prepare(query: "")
-        selectedSource = nil
-        selectedStyle = nil
-        sidebarFilter = .all
-        sortOption = .familyName
-        glyphCoverageQuery = ""
-        trimmedCoverageQuery = ""
-        activeManualCollectionID = nil
-        activeTagName = nil
-        preferencesStore.searchQuery = ""
-        preferencesStore.sidebarFilter = SidebarFilter.all.rawValue
-        preferencesStore.sortOption = SortOption.familyName.rawValue
-        applyFilters()
-    }
-
-    func indexOfRecentFont(_ id: String) -> Int? {
-        recentFontIDs.firstIndex(of: id)
-    }
-
-    func hasRenderablePreviewFont() -> Bool {
-        guard let postScript = selectedFont?.postScriptName else { return false }
-        return NSFont(name: postScript, size: previewSize) != nil
-    }
-
-    func hasPartialGlyphFallback(for text: String) -> Bool {
-        guard let postScript = selectedFont?.postScriptName,
-              let font = NSFont(name: postScript, size: previewSize) else {
-            return false
-        }
-        return !supportsAllCharacters(font: font, text: text)
-    }
-
-    func styleLabel(for item: FontItem) -> String {
-        if item.styleTags.contains(.bold) { return tr(.bold) }
-        if item.styleTags.contains(.italic) { return tr(.italic) }
-        if item.styleTags.contains(.regular) { return tr(.regular) }
-        return tr(.other)
-    }
-
-    func sourceLabel(for item: FontItem) -> String {
-        item.source == .system ? tr(.system) : tr(.user)
-    }
-
-    func orderedRecentFonts() -> [FontItem] {
-        let map = Dictionary(uniqueKeysWithValues: allFonts.map { ($0.id, $0) })
-        return recentFontIDs.compactMap { map[$0] }
-    }
-
-    func orderedFavoriteFonts() -> [FontItem] {
-        allFonts
-            .filter { favoriteIDs.contains($0.id) }
-            .sorted { lhs, rhs in
-                lhs.familyName.localizedCaseInsensitiveCompare(rhs.familyName) == .orderedAscending
-            }
-    }
-
-    func clearRecents() {
-        recentFontIDs = []
-        preferencesStore.recentFontIDs = []
-        if sidebarFilter == .recents {
-            applyFilters()
-        }
-    }
-
-    func clearFavorites() {
-        favoriteIDs = []
-        preferencesStore.favoriteIDs = []
-        if sidebarFilter == .favorites {
-            applyFilters()
-        }
-    }
-
-    func updatePreviewText(_ text: String) {
-        previewText = text
-        preferencesStore.previewText = text
-    }
-
-    func updatePreviewSize(_ size: Double) {
-        previewSize = size
-        preferencesStore.previewSize = size
-    }
-
-    func jumpToFavorites() {
-        updateSidebarFilter(.favorites)
-    }
-
-    func jumpToRecents() {
-        updateSidebarFilter(.recents)
-    }
-
-    func jumpToAllFonts() {
-        updateSidebarFilter(.all)
-    }
-
-    func applyPreviewPreset(_ preset: PreviewPreset) {
-        updatePreviewText(preset.text)
-    }
-
-    func refreshManagedFontState() {
-        managedFontIDs = activationService.managedFontIDs()
-        applyFilters()
     }
 
     func applyFilters() {
@@ -941,7 +595,7 @@ final class FontBrowserViewModel: ObservableObject {
         invalidateFilterResultCache()
     }
 
-    private func rebuildTagIndex() {
+    func rebuildTagIndex() {
         let index = FontCollectionController.tagIndex(assignments: fontTagAssignments)
         tagToFontIDs = index.fontIDsByTag
         sortedUserTagNames = index.sortedNames
@@ -959,20 +613,20 @@ final class FontBrowserViewModel: ObservableObject {
         coverageCache.clear()
     }
 
-    private func persistSmartCollections() {
-        preferencesStore.smartCollectionsData = FontBrowserPreferencesCodec.encode(smartCollections)
+    func persistSmartCollections() {
+        preferencesController.saveSmartCollections(smartCollections)
     }
 
-    private func persistManualCollections() {
-        preferencesStore.manualCollectionsData = FontBrowserPreferencesCodec.encode(manualCollections)
+    func persistManualCollections() {
+        preferencesController.saveManualCollections(manualCollections)
     }
 
-    private func persistFontTags() {
-        preferencesStore.fontTagsData = FontBrowserPreferencesCodec.encode(fontTagAssignments)
+    func persistFontTags() {
+        preferencesController.saveFontTags(fontTagAssignments)
     }
 
     private func persistCustomSnippets() {
-        preferencesStore.customSnippetsData = CustomSnippetStore.encode(customSnippets)
+        preferencesController.saveCustomSnippets(customSnippets)
     }
 
     func searchPresentation(for item: FontItem) -> FontSearchPresentation {
@@ -1035,7 +689,7 @@ final class FontBrowserViewModel: ObservableObject {
     }
 
     private func persistScoreWeights() {
-        preferencesStore.scoreWeightsData = FontBrowserPreferencesCodec.encode(scoreWeights)
+        preferencesController.saveScoreWeights(scoreWeights)
     }
 
     private static func bestMatchingPreset(for weights: ScoreWeights) -> ScoreWeightPreset {
@@ -1046,7 +700,7 @@ final class FontBrowserViewModel: ObservableObject {
         return .default
     }
 
-    private func supportsAllCharacters(font: NSFont, text: String) -> Bool {
+    func supportsAllCharacters(font: NSFont, text: String) -> Bool {
         let filteredScalars = text.unicodeScalars.filter {
             !$0.properties.isWhitespace && !CharacterSet.controlCharacters.contains($0)
         }
@@ -1063,22 +717,26 @@ final class FontBrowserViewModel: ObservableObject {
             batchSelectedFontIDs = [item.id]
         }
         pendingSelectedFontID = nil
-        preferencesStore.selectedFontID = item.id
+        preferencesController.saveSelectedFontID(item.id)
         updateRecents(with: item.id)
     }
 
     func selectFirstIfNeeded() {
-        if let pending = pendingSelectedFontID,
-           let restored = fontsByID[pending],
-           filteredFontIDs.contains(restored.id) {
-            selectedFont = restored
+        let resolution = FontSelectionController.resolvedSelection(
+            pendingID: pendingSelectedFontID,
+            current: selectedFont,
+            visibleFonts: filteredFonts,
+            fontsByID: fontsByID
+        )
+        if resolution.consumedPendingID {
             pendingSelectedFontID = nil
-            return
         }
-        guard selectedFont == nil || !selectedFontVisible else { return }
-        selectedFont = filteredFonts.first
+        guard selectedFont?.id != resolution.font?.id else { return }
+        selectedFont = resolution.font
         if let selectedFont {
-            preferencesStore.selectedFontID = selectedFont.id
+            preferencesController.saveSelectedFontID(selectedFont.id)
+        } else {
+            preferencesController.saveSelectedFontID(nil)
         }
     }
 
@@ -1088,7 +746,7 @@ final class FontBrowserViewModel: ObservableObject {
         } else {
             favoriteIDs.insert(item.id)
         }
-        preferencesStore.favoriteIDs = favoriteIDs
+        preferencesController.saveFavorites(favoriteIDs)
         if sidebarFilter == .favorites {
             applyFilters()
         }
@@ -1104,7 +762,7 @@ final class FontBrowserViewModel: ObservableObject {
             to: recentFontIDs,
             limit: maxRecents
         )
-        preferencesStore.recentFontIDs = recentFontIDs
+        preferencesController.saveRecents(recentFontIDs)
         if sidebarFilter == .recents {
             applyFilters()
         }

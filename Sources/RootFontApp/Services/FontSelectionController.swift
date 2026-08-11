@@ -1,6 +1,24 @@
 import Foundation
 
 enum FontSelectionController {
+    static func resolvedSelection(
+        pendingID: String?,
+        current: FontItem?,
+        visibleFonts: [FontItem],
+        fontsByID: [String: FontItem]
+    ) -> (font: FontItem?, consumedPendingID: Bool) {
+        let visibleIDs = Set(visibleFonts.map(\.id))
+        if let pendingID,
+           let restored = fontsByID[pendingID],
+           visibleIDs.contains(pendingID) {
+            return (restored, true)
+        }
+        if let current, visibleIDs.contains(current.id) {
+            return (current, false)
+        }
+        return (visibleFonts.first, false)
+    }
+
     static func selectionAfterTap(
         fontID: String,
         commandKey: Bool,

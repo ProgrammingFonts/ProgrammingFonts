@@ -91,6 +91,9 @@ jobs:
       - name: Resolve package
         run: swift package resolve
 
+      - name: Check Swift style
+        run: bash scripts/check-swift-style.sh
+
       - name: Build
         shell: bash
         env:
@@ -154,10 +157,18 @@ jobs:
           summaries = data.get("data", [])
           covered = 0
           total = 0
+          excluded = (
+              "/Sources/RootFontApp/Views/",
+              "/Sources/RootFontApp/Localization/Locales/",
+              "/Sources/RootFontApp/Localization/L10nKey.swift",
+              "/Sources/RootFontApp/RootFontApp.swift",
+          )
           for item in summaries:
               for file in item.get("files", []):
                   filename = file.get("filename", "").replace("\\", "/")
                   if "/Sources/RootFontApp/" not in filename:
+                      continue
+                  if any(path in filename for path in excluded):
                       continue
                   summary = file.get("summary", {}).get("lines", {})
                   covered += summary.get("covered", 0)
@@ -166,7 +177,7 @@ jobs:
           print(f"Coverage: {pct:.2f}% ({covered}/{total})")
           Path("coverage-summary.txt").write_text(f"{pct:.2f}% ({covered}/{total})\n")
           PY
-          python3 scripts/check-coverage.py coverage.json --minimum 25.0
+          python3 scripts/check-coverage.py coverage.json --minimum 70.0
           echo "## Code coverage" >> "$GITHUB_STEP_SUMMARY"
           cat coverage-summary.txt >> "$GITHUB_STEP_SUMMARY"
           if grep -E "testFilterLargeCatalogCompletesWithinBudget|Executed .* tests" test.log > /dev/null; then
