@@ -1,45 +1,38 @@
 import AppKit
 import CoreText
 import Foundation
+import os
 
 protocol FontCatalogServiceProtocol: Sendable {
-    func loadFonts(
-        onPartial: (@Sendable ([FontItem]) -> Void)?,
-        reportProgress: (@Sendable (Double) -> Void)?
-    ) throws -> [FontItem]
+    /// Loads the font catalog, streaming partial results and progress as
+    /// events. The stream terminates with `.completed` or `.failed`.
+    func loadFonts() -> AsyncStream<FontCatalogEvent>
 }
 
-/// Thread-safe collector that gathers per-index font enrichment results produced
-/// by concurrent workers, so the shared array can be mutated serially afterwards.
-private final class FontEnrichmentCollector: @unchecked Sendable {
-    struct Result {
-        let programming: ProgrammingProfile
-        let metrics: FontMetricsSample?
-    }
-
-    private let lock = NSLock()
-    private var results: [Int: Result] = [:]
-    private var completed = 0
-
-    /// Records a worker's result and returns the overall progress fraction.
-    func record(index: Int, programming: ProgrammingProfile, metrics: FontMetricsSample?, total: Int) -> Double {
-        lock.lock()
-        defer { lock.unlock() }
-        results[index] = Result(programming: programming, metrics: metrics)
-        completed += 1
-        return 0.35 + 0.55 * (Double(completed) / Double(total))
-    }
-
-    func snapshot() -> [Int: Result] {
-        lock.lock()
-        defer { lock.unlock() }
-        return results
-    }
+/// Events emitted by `FontCatalogService.loadFonts()`.
+enum FontCatalogEvent: Sendable {
+    /// Initial/partial batch of fonts (pre-enrichment sort snapshot).
+    case partial([FontItem])
+    /// Progress fraction in `0...1`.
+    case progress(Double)
+    /// Final fully-enriched font list.
+    case completed([FontItem])
+    /// Catalog read failed.
+    case failed
 }
 
 extension FontCatalogServiceProtocol {
-    func loadFonts() throws -> [FontItem] {
-        try loadFonts(onPartial: nil, reportProgress: nil)
+    /// Convenience for one-shot callers and tests: drains the event stream
+    /// and returns the final font list (or throws on failure).
+    func drainFonts() async throws -> [FontItem] {
+        for await event in loadFonts() {
+            switch event {
+            case .completed(let fonts): return fonts
+            case .failed: throw FontCatalogService.CatalogError.unableToReadFontCatalog
+            default: continue
+            }
+        }
+        throw FontCatalogService.CatalogError.unableToReadFontCatalog
     }
 }
 
@@ -71,11 +64,36 @@ struct FontCatalogService: FontCatalogServiceProtocol {
         self.fontURLIndex = fontURLIndex
     }
 
-    func loadFonts(
-        onPartial: (@Sendable ([FontItem]) -> Void)?,
-        reportProgress: (@Sendable (Double) -> Void)?
-    ) throws -> [FontItem] {
+    func loadFonts() -> AsyncStream<FontCatalogEvent> {
+        AsyncStream { continuation in
+            let task = Task.detached(priority: .userInitiated) {
+                await Self.loadFontsImpl(
+                    styleResolver: self.styleResolver,
+                    featureInspector: self.featureInspector,
+                    metricsProbe: self.metricsProbe,
+                    scoreEngine: self.scoreEngine,
+                    scoreManifestStore: self.scoreManifestStore,
+                    fontURLIndex: self.fontURLIndex,
+                    yield: { continuation.yield($0) }
+                )
+                continuation.finish()
+            }
+            continuation.onTermination = { _ in task.cancel() }
+        }
+    }
+
+    private static func loadFontsImpl(
+        styleResolver: FontStyleResolverProtocol,
+        featureInspector: FontFeatureInspectorProtocol,
+        metricsProbe: FontMetricsProbeProtocol,
+        scoreEngine: ProgrammingScoreEngine,
+        scoreManifestStore: ScoreManifestStoreProtocol,
+        fontURLIndex: FontURLIndex,
+        yield: @Sendable @escaping (FontCatalogEvent) -> Void
+    ) async {
         let descriptors = fontURLIndex.urls
+
+        AppLog.catalog.info("loading catalog: \(descriptors.count, privacy: .public) url(s)")
 
         var seen = Set<String>()
         var items: [FontItem] = []
@@ -150,6 +168,7 @@ struct FontCatalogService: FontCatalogServiceProtocol {
         if pendingEnrichmentIndices.isEmpty {
             partialScored = items
         } else {
+            AppLog.catalog.info("enriching \(pendingEnrichmentIndices.count, privacy: .public) font(s) in parallel")
             partialScored = Self.attachProgrammingScores(
                 items,
                 scoreEngine: scoreEngine,
@@ -159,58 +178,56 @@ struct FontCatalogService: FontCatalogServiceProtocol {
         let partialSorted = partialScored.sorted { lhs, rhs in
             lhs.familyName.localizedCaseInsensitiveCompare(rhs.familyName) == .orderedAscending
         }
-        onPartial?(partialSorted)
-        reportProgress?(pendingEnrichmentIndices.isEmpty ? 1.0 : 0.35)
+        yield(.partial(partialSorted))
+        yield(.progress(pendingEnrichmentIndices.isEmpty ? 1.0 : 0.35))
 
         if !pendingEnrichmentIndices.isEmpty {
             let total = pendingEnrichmentIndices.count
             let postScriptNames = items.map(\.postScriptName)
-            let collector = FontEnrichmentCollector()
-            let featureInspector = self.featureInspector
-            let metricsProbe = self.metricsProbe
             let workerCount = min(
                 ProcessInfo.processInfo.activeProcessorCount,
                 max(1, total)
             )
-            let semaphore = DispatchSemaphore(value: workerCount)
-            let group = DispatchGroup()
 
-            for index in pendingEnrichmentIndices {
-                group.enter()
-                DispatchQueue.global(qos: .userInitiated).async {
-                    semaphore.wait()
-                    defer {
-                        semaphore.signal()
-                        group.leave()
+            // Shard pending indices across workers up-front so the
+            // task group can fan out in one pass instead of the previous
+            // N+1 popFirst handoff that effectively serialized scheduling.
+            let shards = Self.shard(pendingEnrichmentIndices, workerCount: workerCount)
+
+            var completed = 0
+            await withTaskGroup(of: [(Int, ProgrammingProfile, FontMetricsSample?)].self) { group in
+                for shard in shards {
+                    group.addTask {
+                        var results: [(Int, ProgrammingProfile, FontMetricsSample?)] = []
+                        results.reserveCapacity(shard.count)
+                        for index in shard {
+                            let name = postScriptNames[index]
+                            let programming = featureInspector.inspect(postScriptName: name)
+                            let metrics = metricsProbe.measure(
+                                postScriptName: name,
+                                isMonospaced: programming.isMonospaced
+                            )
+                            results.append((index, programming, metrics))
+                        }
+                        return results
                     }
-
-                    let postScriptName = postScriptNames[index]
-                    let programmingProfile = featureInspector.inspect(postScriptName: postScriptName)
-                    let metrics = metricsProbe.measure(
-                        postScriptName: postScriptName,
-                        isMonospaced: programmingProfile.isMonospaced
-                    )
-
-                    let progress = collector.record(
-                        index: index,
-                        programming: programmingProfile,
-                        metrics: metrics,
-                        total: total
-                    )
-                    reportProgress?(progress)
                 }
-            }
-            group.wait()
-
-            for (index, result) in collector.snapshot() {
-                items[index].programming = result.programming
-                items[index].metrics = result.metrics
+                for await batchResults in group {
+                    for (index, programming, metrics) in batchResults {
+                        items[index].programming = programming
+                        items[index].metrics = metrics
+                        completed &+= 1
+                        let progress = 0.35 + 0.55 * (Double(completed) / Double(total))
+                        yield(.progress(progress))
+                    }
+                }
             }
         }
 
         if pendingEnrichmentIndices.isEmpty {
-            reportProgress?(1.0)
-            return partialSorted
+            yield(.progress(1.0))
+            yield(.completed(partialSorted))
+            return
         }
 
         let coverage = FamilyWeightCoverage.build(from: items)
@@ -227,10 +244,10 @@ struct FontCatalogService: FontCatalogServiceProtocol {
             }
         }
         scoreManifestStore.save(nextCache)
-        reportProgress?(1.0)
-        return scoredItems.sorted { lhs, rhs in
+        yield(.progress(1.0))
+        yield(.completed(scoredItems.sorted { lhs, rhs in
             lhs.familyName.localizedCaseInsensitiveCompare(rhs.familyName) == .orderedAscending
-        }
+        }))
     }
 
     static func attachProgrammingScores(
@@ -250,15 +267,34 @@ struct FontCatalogService: FontCatalogServiceProtocol {
         }
     }
 
+    /// Splits `indices` into `workerCount` contiguous shards so a
+    /// `TaskGroup` can fan out in one pass instead of the previous
+    /// popFirst handoff that effectively serialized scheduling.
+    private static func shard(_ indices: [Int], workerCount: Int) -> [[Int]] {
+        guard workerCount > 0, !indices.isEmpty else { return [] }
+        let perWorker = (indices.count + workerCount - 1) / workerCount
+        var shards: [[Int]] = []
+        shards.reserveCapacity(workerCount)
+        var start = indices.startIndex
+        while start < indices.endIndex {
+            let end = min(start + perWorker, indices.endIndex)
+            shards.append(Array(indices[start..<end]))
+            start = end
+        }
+        return shards
+    }
+
     /// Supported app languages we try to bucket localized names into. BCP47
     /// tags match `AppLanguage.rawValue`.
-    private static let supportedLanguageTags: [String] = ["en", "zh-Hans", "zh-Hant", "ja", "ko"]
+    private static let supportedLanguageTags: [String] = [
+        "en", "zh-Hans", "zh-Hant", "ja", "ko", "fr", "de", "es"
+    ]
 
     /// Returns the font's *native* localized name, keyed by the BCP47 tag
     /// CoreText reports. macOS picks the best-matching name from the
     /// font's own name table based on the current user locale, which for
     /// CJK fonts is typically the font's native locale entry.
-    private func nativeLocalizedName(for font: CTFont, nameID: CFString, fallback: String) -> [String: String] {
+    private static func nativeLocalizedName(for font: CTFont, nameID: CFString, fallback: String) -> [String: String] {
         var actualLanguage: Unmanaged<CFString>?
         guard let cfName = CTFontCopyLocalizedName(font, nameID, &actualLanguage) else {
             return [:]

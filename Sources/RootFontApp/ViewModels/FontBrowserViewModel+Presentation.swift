@@ -39,10 +39,13 @@ extension FontBrowserViewModel {
 
     func indexOfRecentFont(_ id: String) -> Int? { recentFontIDs.firstIndex(of: id) }
     func hasRenderablePreviewFont() -> Bool {
-        selectedFont.flatMap { NSFont(name: $0.postScriptName, size: previewSize) } != nil
+        guard let selectedFont else { return false }
+        return NSFontResolveCache.shared.font(postScriptName: selectedFont.postScriptName, size: previewSize) != nil
     }
     func hasPartialGlyphFallback(for text: String) -> Bool {
-        guard let selectedFont, let font = NSFont(name: selectedFont.postScriptName, size: previewSize) else { return false }
+        guard let selectedFont,
+              let font = NSFontResolveCache.shared.font(postScriptName: selectedFont.postScriptName, size: previewSize)
+        else { return false }
         return !supportsAllCharacters(font: font, text: text)
     }
     func styleLabel(for item: FontItem) -> String {
@@ -53,8 +56,7 @@ extension FontBrowserViewModel {
     }
     func sourceLabel(for item: FontItem) -> String { item.source == .system ? tr(.system) : tr(.user) }
     func orderedRecentFonts() -> [FontItem] {
-        let map = Dictionary(uniqueKeysWithValues: allFonts.map { ($0.id, $0) })
-        return recentFontIDs.compactMap { map[$0] }
+        recentFontIDs.compactMap { fontsByID[$0] }
     }
     func orderedFavoriteFonts() -> [FontItem] {
         allFonts.filter { favoriteIDs.contains($0.id) }.sorted {

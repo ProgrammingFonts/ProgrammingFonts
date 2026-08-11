@@ -174,10 +174,9 @@ struct FontListView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .onAppear {
-            displayMode = DisplayMode(rawValue: UserDefaults.standard.string(forKey: "rootfont.displayMode") ?? "grid") ?? .grid
-            densityMode = DensityMode(rawValue: UserDefaults.standard.string(forKey: "rootfont.densityMode") ?? "compact") ?? .compact
-            let savedPreviewSize = UserDefaults.standard.double(forKey: "rootfont.listPreviewSize")
-            let initialSize = savedPreviewSize == 0 ? 18 : savedPreviewSize
+            displayMode = DisplayMode(rawValue: viewModel.preferencesController.displayMode) ?? .grid
+            densityMode = DensityMode(rawValue: viewModel.preferencesController.densityMode) ?? .compact
+            let initialSize = viewModel.preferencesController.listPreviewSize
             listPreviewSize = initialSize
             listPreviewSizeSlider = initialSize
             searchInput = viewModel.searchQuery
@@ -192,14 +191,14 @@ struct FontListView: View {
             isSearchFieldFocused = true
         }
         .onChange(of: displayMode) { _, newValue in
-            UserDefaults.standard.set(newValue.rawValue, forKey: "rootfont.displayMode")
+            viewModel.preferencesController.displayMode = newValue.rawValue
         }
         .onChange(of: densityMode) { _, newValue in
-            UserDefaults.standard.set(newValue.rawValue, forKey: "rootfont.densityMode")
+            viewModel.preferencesController.densityMode = newValue.rawValue
             updateGridColumnCountIfNeeded(for: lastGridContainerWidth)
         }
         .onChange(of: listPreviewSize) { _, newValue in
-            UserDefaults.standard.set(newValue, forKey: "rootfont.listPreviewSize")
+            viewModel.preferencesController.listPreviewSize = newValue
             updateGridColumnCountIfNeeded(for: lastGridContainerWidth)
         }
         .onChange(of: listPreviewSizeSlider) { _, newValue in

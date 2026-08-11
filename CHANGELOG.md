@@ -8,6 +8,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- Persisted stores now carry a `version` field and migrate forward
+  automatically: `PreferencesStore` stamps schema v2, `ScoreManifestStore`
+  cache keys incorporate nanosecond mtime + file size, and the font
+  activation manifest is wrapped in a versioned `ActivatedFontManifest`
+  that reads legacy v1 layouts transparently.
+- Caches (`LockedLRUCache`, `FontURLIndex`, `CacheDiagnostics`,
+  `ScoreMemoryCache`, `ManifestMemoryCache`, `CodeHighlightCache`) are
+  now backed by `os_unfair_lock` instead of `NSLock` for lower overhead
+  on the read-heavy font lookup / glyph coverage hot path.
+- `FontBrowserViewModel` delegates programming-score weight state and
+  search-presentation caching to `ProgrammingScorePreferencesController`
+  and `FontSearchPresentationCoordinator`; the view model shrinks from
+  823 to 768 lines.
+- `FontCatalogService` enrichment now shards pending indices across
+  workers up front so the task group fans out in one pass instead of
+  the previous popFirst N+1 handoff.
+- `FontListView` reads `displayMode`/`densityMode`/`listPreviewSize`
+  through the preferences controller instead of writing scattered
+  `UserDefaults.standard` keys directly.
+- The About panel resets copy-feedback state via `Task.sleep` instead of
+  `DispatchQueue.main.asyncAfter`, cancelling any in-flight timer when
+  the button is pressed again.
+- The app no longer calls `NSApplication.activate(ignoringOtherApps:)` on
+  launch; macOS activates the app naturally when the user opens it.
+- SwiftLint now also enforces `force_cast`, `force_try`, and several
+  style rules; SwiftFormat normalizes indentation and trailing
+  whitespace. CI pins Xcode via `maxim-lobanov/setup-xcode@v1`.
 - `FontBrowserViewModel` delegates preview presets, filter-result caching,
   preference coding, and detached catalog loading to focused support types
   while preserving its existing UI-facing API.
@@ -29,9 +56,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   name. Code module/target names such as `RootFontApp` are unchanged.
 
 ### Added
+- `AppLog` (`os.Logger`) categorized logging across catalog, activation,
+  preferences, score, filter, search, cache, watcher, UI, and app
+  subsystems — services now log decode/save failures and lifecycle
+  events instead of silently swallowing them.
+- `AppError` enum centralizes user-facing service errors with
+  `localizedKey` and `detail` so the view layer can localize messages
+  without services depending on `AppLanguage`.
+- `AGENTS.md` documents build/test/lint commands and architecture
+  conventions for AI agents.
+- CodeQL workflow runs weekly on `macos-15` for Swift security analysis.
+- Localization buckets now cover `fr`, `de`, and `es` font native names
+  in addition to the original `en`/`zh-Hans`/`zh-Hant`/`ja`/`ko` set.
+- `FontActivationService.installForUser` rejects symlinks and other
+  non-regular files before copying into the managed fonts directory.
+- Tests cover preference schema migration, `reset()`, list-preview-size
+  defaults, symlink rejection on font install, and legacy manifest
+  migration (176 → 184 tests).
 - UI locales for French (`fr`), German (`de`), and Spanish (`es`).
 
 ### Fixed
+- `ScoreManifestStore.cacheKey` now detects sub-second font file
+  replacements via nanosecond mtime + file size, preventing stale cache
+  hits when an installer overwrites the same path quickly.
+- Force-unwrap on ASCII lowercase in `SearchMatcher.normalizeWithMap`
+  replaced with safe optional binding.
 - Font-folder watching now serializes FSEvents lifecycle state, retains its
   callback context safely, avoids duplicate nested watches, and queues a reload
   when a catalog change arrives during an active load.

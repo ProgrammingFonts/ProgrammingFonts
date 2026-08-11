@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 #if DEBUG
 final class CacheDiagnostics: @unchecked Sendable {
@@ -10,7 +11,7 @@ final class CacheDiagnostics: @unchecked Sendable {
 
     static let shared = CacheDiagnostics()
 
-    private let lock = NSLock()
+    private var lock = os_unfair_lock_s()
     private var counters: [String: (hits: Int, misses: Int, evictions: Int)] = [:]
 
     func recordHit(_ cache: String) { update(cache) { $0.hits += 1 } }
@@ -20,27 +21,27 @@ final class CacheDiagnostics: @unchecked Sendable {
     }
 
     func snapshot(for cache: String) -> Snapshot {
-        lock.lock()
-        defer { lock.unlock() }
+        os_unfair_lock_lock(&lock)
+        defer { os_unfair_lock_unlock(&lock) }
         let value = counters[cache] ?? (0, 0, 0)
         return Snapshot(hits: value.hits, misses: value.misses, evictions: value.evictions)
     }
 
     func reset() {
-        lock.lock()
+        os_unfair_lock_lock(&lock)
+        defer { os_unfair_lock_unlock(&lock) }
         counters.removeAll()
-        lock.unlock()
     }
 
     private func update(
         _ cache: String,
         mutation: (inout (hits: Int, misses: Int, evictions: Int)) -> Void
     ) {
-        lock.lock()
+        os_unfair_lock_lock(&lock)
+        defer { os_unfair_lock_unlock(&lock) }
         var value = counters[cache] ?? (0, 0, 0)
         mutation(&value)
         counters[cache] = value
-        lock.unlock()
     }
 }
 #endif

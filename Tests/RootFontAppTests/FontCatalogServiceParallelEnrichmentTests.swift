@@ -3,7 +3,7 @@ import XCTest
 @testable import RootFontApp
 
 final class FontCatalogServiceParallelEnrichmentTests: XCTestCase {
-    func testEnrichmentInspectsMultipleFontsConcurrently() throws {
+    func testEnrichmentInspectsMultipleFontsConcurrently() async throws {
         let temp = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: temp, withIntermediateDirectories: true)
@@ -24,7 +24,7 @@ final class FontCatalogServiceParallelEnrichmentTests: XCTestCase {
             fontURLIndex: FontURLIndex(prefetchedURLs: urls)
         )
 
-        _ = try service.loadFonts()
+        _ = try await service.drainFonts()
         XCTAssertGreaterThanOrEqual(inspector.maxInFlight, 2)
         XCTAssertEqual(inspector.inspectCount, names.count)
     }

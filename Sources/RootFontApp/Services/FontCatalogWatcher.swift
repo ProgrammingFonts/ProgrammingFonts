@@ -1,5 +1,6 @@
 import CoreServices
 import Foundation
+import os
 
 final class FontCatalogWatcher: @unchecked Sendable {
     private final class CallbackBox: @unchecked Sendable {
@@ -38,6 +39,8 @@ final class FontCatalogWatcher: @unchecked Sendable {
 
     private func startLocked() {
         guard stream == nil, !paths.isEmpty else { return }
+
+        AppLog.watcher.info("starting watch on \(self.paths.count, privacy: .public) path(s)")
 
         let box = CallbackBox { [weak self] in
             self?.scheduleReloadLocked()
@@ -86,6 +89,7 @@ final class FontCatalogWatcher: @unchecked Sendable {
     }
 
     private func stopLocked() {
+        AppLog.watcher.info("stopping watch")
         debounceWorkItem?.cancel()
         debounceWorkItem = nil
         if let stream {
@@ -101,6 +105,7 @@ final class FontCatalogWatcher: @unchecked Sendable {
     }
 
     private func scheduleReloadLocked() {
+        AppLog.watcher.debug("filesystem change detected, debouncing reload")
         debounceWorkItem?.cancel()
         let work = DispatchWorkItem { [weak self] in
             DispatchQueue.main.async { [weak self] in

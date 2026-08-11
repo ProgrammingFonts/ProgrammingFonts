@@ -58,6 +58,19 @@ final class FontBrowserPreferencesController {
         set { store.watchFontFoldersEnabled = newValue }
     }
 
+    var displayMode: String {
+        get { store.displayMode }
+        set { store.displayMode = newValue }
+    }
+    var densityMode: String {
+        get { store.densityMode }
+        set { store.densityMode = newValue }
+    }
+    var listPreviewSize: Double {
+        get { store.listPreviewSize }
+        set { store.listPreviewSize = newValue }
+    }
+
     func saveFavorites(_ value: Set<String>) { store.favoriteIDs = value }
     func saveRecents(_ value: [String]) { store.recentFontIDs = value }
     func savePreviewText(_ value: String) { store.previewText = value }

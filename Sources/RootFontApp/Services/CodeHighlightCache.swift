@@ -1,9 +1,10 @@
 import AppKit
 import Foundation
+import os
 
 /// Memoizes highlighted code attributed strings for preview + waterfall reuse.
 enum CodeHighlightCache {
-    private static let lock = NSLock()
+    nonisolated(unsafe) private static var lock = os_unfair_lock_s()
     nonisolated(unsafe) private static var cachedKey: String?
     nonisolated(unsafe) private static var cachedValue: AttributedString?
     private static let tokenizer = MiniTokenizer()
@@ -13,27 +14,27 @@ enum CodeHighlightCache {
         language: MiniTokenizer.Language
     ) -> AttributedString {
         let key = "\(language.rawValue)\u{1E}\(text)"
-        lock.lock()
+        os_unfair_lock_lock(&lock)
         if cachedKey == key, let cachedValue {
-            lock.unlock()
+            os_unfair_lock_unlock(&lock)
             return cachedValue
         }
-        lock.unlock()
+        os_unfair_lock_unlock(&lock)
 
         let rendered = render(text: text, language: language)
 
-        lock.lock()
+        os_unfair_lock_lock(&lock)
         cachedKey = key
         cachedValue = rendered
-        lock.unlock()
+        os_unfair_lock_unlock(&lock)
         return rendered
     }
 
     static func clear() {
-        lock.lock()
+        os_unfair_lock_lock(&lock)
         cachedKey = nil
         cachedValue = nil
-        lock.unlock()
+        os_unfair_lock_unlock(&lock)
     }
 
     private static func render(

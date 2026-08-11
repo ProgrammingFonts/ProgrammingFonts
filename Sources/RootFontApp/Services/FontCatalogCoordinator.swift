@@ -1,17 +1,9 @@
 import Foundation
+import os
 
-private final class FontCatalogCallbackBridge: @unchecked Sendable {
-    weak var coordinator: FontCatalogCoordinator?
-
-    @MainActor
-    func partial(_ fonts: [FontItem]) {
-        coordinator?.deliverPartial(fonts)
-    }
-
-    @MainActor
-    func progress(_ value: Double) {
-        coordinator?.deliverProgress(value)
-    }
+struct FontCatalogLoadOutcome: Sendable {
+    let fonts: [FontItem]?
+    let failed: Bool
 }
 
 @MainActor
@@ -42,25 +34,41 @@ final class FontCatalogCoordinator {
         self.onPartial = onPartial
         self.onProgress = onProgress
 
-        let bridge = FontCatalogCallbackBridge()
-        bridge.coordinator = self
         loadTask = Task { @MainActor [weak self] in
-            let outcome = await FontCatalogLoadExecutor.execute(
-                service: service,
-                onPartial: { fonts in
-                    Task { @MainActor in bridge.partial(fonts) }
-                },
-                reportProgress: { progress in
-                    Task { @MainActor in bridge.progress(progress) }
+            guard let self else { return }
+            let stream = service.loadFonts()
+            for await event in stream {
+                guard !Task.isCancelled, expectedGeneration == self.generation else { return }
+                switch event {
+                case .partial(let fonts):
+                    self.onPartial?(fonts)
+                case .progress(let value):
+                    self.onProgress?(value)
+                case .completed(let fonts):
+                    self.loadTask = nil
+                    self.onPartial = nil
+                    self.onProgress = nil
+                    AppLog.catalog.info("catalog loaded: \(fonts.count, privacy: .public) font(s)")
+                    completion(FontCatalogLoadOutcome(fonts: fonts, failed: false))
+                    self.drainPendingReload()
+                    return
+                case .failed:
+                    self.loadTask = nil
+                    self.onPartial = nil
+                    self.onProgress = nil
+                    AppLog.catalog.error("catalog load failed")
+                    completion(FontCatalogLoadOutcome(fonts: nil, failed: true))
+                    self.drainPendingReload()
+                    return
                 }
-            )
-            guard let self,
-                  !Task.isCancelled,
-                  expectedGeneration == self.generation else { return }
+            }
+            // Stream finished without a terminal event — treat as failure.
+            guard !Task.isCancelled, expectedGeneration == self.generation else { return }
             self.loadTask = nil
             self.onPartial = nil
             self.onProgress = nil
-            completion(outcome)
+            AppLog.catalog.error("catalog stream ended without terminal event")
+            completion(FontCatalogLoadOutcome(fonts: nil, failed: true))
             self.drainPendingReload()
         }
     }
@@ -100,14 +108,6 @@ final class FontCatalogCoordinator {
         loadTask = nil
         onPartial = nil
         onProgress = nil
-    }
-
-    fileprivate func deliverPartial(_ fonts: [FontItem]) {
-        onPartial?(fonts)
-    }
-
-    fileprivate func deliverProgress(_ progress: Double) {
-        onProgress?(progress)
     }
 
     private func drainPendingReload() {

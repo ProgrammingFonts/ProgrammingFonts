@@ -141,6 +141,26 @@ enum SearchMatcher {
         var map: [String.Index] = []
         for scalarIdx in input.unicodeScalars.indices {
             let scalar = input.unicodeScalars[scalarIdx]
+
+            // Fast path: ASCII scalars never expand under NFKC and never
+            // contract with neighbors (NFKC compatibility decomposition
+            // only targets non-ASCII compatibility characters). Avoid the
+            // three allocations (String + precomposedStringWith* + lowercased)
+            // that the general path performs for every scalar — font names
+            // are overwhelmingly ASCII.
+            if scalar.isASCII {
+                if isStrippedSeparator(scalar) { continue }
+                if scalar.value >= 0x41 && scalar.value <= 0x5A,
+                   let lower = Unicode.Scalar(scalar.value + 0x20) {
+                    outputScalars.append(lower)
+                    map.append(scalarIdx)
+                } else {
+                    outputScalars.append(scalar)
+                    map.append(scalarIdx)
+                }
+                continue
+            }
+
             let singleFolded = String(scalar).precomposedStringWithCompatibilityMapping.lowercased()
             for normScalar in singleFolded.unicodeScalars {
                 if isStrippedSeparator(normScalar) { continue }

@@ -67,6 +67,44 @@ enum FontFilterEngine {
                 return false
             }
 
+            // Run the cheap sidebar-membership filter before the expensive
+            // CoreText coverage check. Small sidebar sets (.favorites,
+            // .recents, .managed, .fontHealth) otherwise pay the glyph
+            // lookup cost for every font that already passed the cheap
+            // predicates above.
+            switch inputs.sidebarFilter {
+            case .all:
+                break
+            case .system:
+                if item.source != .system { return false }
+            case .user:
+                if item.source != .user { return false }
+            case .favorites:
+                if !favoriteIDs.contains(item.id) { return false }
+            case .recents:
+                if !recentIDSet.contains(item.id) { return false }
+            case .recommendedForCode:
+                guard let familyCoveragePre = familyCoverage, let scoreEnginePre = scoreEngine else {
+                    return false
+                }
+                if !isRecommendedForCode(item, coverage: familyCoveragePre, scoreEngine: scoreEnginePre) {
+                    return false
+                }
+            case .avoidForCode:
+                guard let familyCoveragePre = familyCoverage, let scoreEnginePre = scoreEngine else {
+                    return false
+                }
+                if !isAvoidForCode(item, coverage: familyCoveragePre, scoreEngine: scoreEnginePre) {
+                    return false
+                }
+            case .managed:
+                if !inputs.managedFontIDs.contains(item.id) { return false }
+            case .fontHealth:
+                guard let ids = inputs.fontHealthFontIDs, ids.contains(item.id) else {
+                    return false
+                }
+            }
+
             if !inputs.preparedQuery.isEmpty,
                !matches(item: item, index: searchIndex[item.id], query: inputs.preparedQuery) {
                 return false
@@ -100,29 +138,7 @@ enum FontFilterEngine {
                 }
             }
 
-            switch inputs.sidebarFilter {
-            case .all:
-                return true
-            case .system:
-                return item.source == .system
-            case .user:
-                return item.source == .user
-            case .favorites:
-                return favoriteIDs.contains(item.id)
-            case .recents:
-                return recentIDSet.contains(item.id)
-            case .recommendedForCode:
-                guard let familyCoverage, let scoreEngine else { return false }
-                return isRecommendedForCode(item, coverage: familyCoverage, scoreEngine: scoreEngine)
-            case .avoidForCode:
-                guard let familyCoverage, let scoreEngine else { return false }
-                return isAvoidForCode(item, coverage: familyCoverage, scoreEngine: scoreEngine)
-            case .managed:
-                return inputs.managedFontIDs.contains(item.id)
-            case .fontHealth:
-                guard let ids = inputs.fontHealthFontIDs else { return false }
-                return ids.contains(item.id)
-            }
+            return true
         }
 
         let presentation = inputs.showSystemAliasFonts

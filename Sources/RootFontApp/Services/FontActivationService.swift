@@ -1,5 +1,6 @@
 import CoreText
 import Foundation
+import os
 
 enum FontActivationScope: String, Codable, Sendable {
     case process
@@ -20,6 +21,20 @@ struct ActivatedFontEntry: Codable, Hashable, Sendable {
     var scope: FontActivationScope
 }
 
+/// Persisted manifest wrapper with a schema version. Older manifests
+/// without a version field decode as v1 and migrate forward on next save.
+struct ActivatedFontManifest: Codable, Sendable {
+    static let currentSchemaVersion = 2
+
+    var version: Int
+    var entries: [String: ActivatedFontEntry]
+
+    init(version: Int = ActivatedFontManifest.currentSchemaVersion, entries: [String: ActivatedFontEntry] = [:]) {
+        self.version = version
+        self.entries = entries
+    }
+}
+
 protocol FontActivationServiceProtocol: Sendable {
     func activateForProcess(fontID: String) throws
     func installForUser(fontID: String) throws
@@ -33,18 +48,18 @@ protocol FontActivationServiceProtocol: Sendable {
 
 struct FontActivationService: FontActivationServiceProtocol, @unchecked Sendable {
     private final class ManifestMemoryCache: @unchecked Sendable {
-        private let lock = NSLock()
+        private var lock = os_unfair_lock_s()
         private var manifest: [String: ActivatedFontEntry]?
 
         func read() -> [String: ActivatedFontEntry]? {
-            lock.lock()
-            defer { lock.unlock() }
+            os_unfair_lock_lock(&lock)
+            defer { os_unfair_lock_unlock(&lock) }
             return manifest
         }
 
         func write(_ value: [String: ActivatedFontEntry]) {
-            lock.lock()
-            defer { lock.unlock() }
+            os_unfair_lock_lock(&lock)
+            defer { os_unfair_lock_unlock(&lock) }
             manifest = value
         }
     }
@@ -283,6 +298,16 @@ struct FontActivationService: FontActivationServiceProtocol, @unchecked Sendable
         guard allowedExtensions.contains(url.pathExtension.lowercased()) else {
             throw FontActivationError.invalidFontFile(url)
         }
+        // Reject symlinks and other non-regular files to prevent a
+        // maliciously crafted link from copying a system file into the
+        // managed fonts directory.
+        let attrs = try? fileManager.attributesOfItem(atPath: url.path)
+        if let attrs,
+           let type = attrs[.type] as? FileAttributeType,
+           type != .typeRegular {
+            AppLog.activation.error("rejecting non-regular font file: \(url.path, privacy: .public)")
+            throw FontActivationError.invalidFontFile(url)
+        }
     }
 
     private func validateManagedDestination(_ destination: URL) throws {
@@ -323,11 +348,23 @@ struct FontActivationService: FontActivationServiceProtocol, @unchecked Sendable
     }
 
     private func readManifestFromDisk() -> [String: ActivatedFontEntry] {
-        guard let data = try? Data(contentsOf: appSupportManifestURL),
-              let decoded = try? JSONDecoder().decode([String: ActivatedFontEntry].self, from: data) else {
+        guard let data = try? Data(contentsOf: appSupportManifestURL) else {
             return [:]
         }
-        return decoded
+        // Try the new versioned wrapper first, then fall back to the
+        // legacy bare `[String: ActivatedFontEntry]` layout (v1).
+        if let wrapped = try? JSONDecoder().decode(ActivatedFontManifest.self, from: data) {
+            if wrapped.version < ActivatedFontManifest.currentSchemaVersion {
+                AppLog.activation.info("activation manifest migrating v\(wrapped.version, privacy: .public) -> v\(ActivatedFontManifest.currentSchemaVersion, privacy: .public)")
+            }
+            return wrapped.entries
+        }
+        if let legacy = try? JSONDecoder().decode([String: ActivatedFontEntry].self, from: data) {
+            AppLog.activation.info("activation manifest migrated legacy v1 layout")
+            return legacy
+        }
+        AppLog.activation.error("activation manifest decode failed; ignoring existing file")
+        return [:]
     }
 
     private func saveManifest(_ manifest: [String: ActivatedFontEntry]) throws {
@@ -336,9 +373,18 @@ struct FontActivationService: FontActivationServiceProtocol, @unchecked Sendable
         }
 
         let directory = appSupportManifestURL.deletingLastPathComponent()
-        try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
-        let data = try JSONEncoder().encode(manifest)
-        try data.write(to: appSupportManifestURL, options: .atomic)
-        manifestCache.write(manifest)
+        do {
+            try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
+            let wrapped = ActivatedFontManifest(
+                version: ActivatedFontManifest.currentSchemaVersion,
+                entries: manifest
+            )
+            let data = try JSONEncoder().encode(wrapped)
+            try data.write(to: appSupportManifestURL, options: .atomic)
+            manifestCache.write(manifest)
+        } catch {
+            AppLog.activation.error("activation manifest save failed: \(String(describing: error), privacy: .public)")
+            throw error
+        }
     }
 }

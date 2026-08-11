@@ -3,7 +3,7 @@ import Foundation
 final class FontSearchPresentationCache {
     private let limit: Int
     private var values: [String: FontSearchPresentation] = [:]
-    private var order: [String] = []
+    private var order = LRUOrder<String>()
     private var token = ""
 
     init(limit: Int) {
@@ -21,27 +21,27 @@ final class FontSearchPresentationCache {
     }
 
     func retain(fontIDs: Set<String>) {
-        for staleID in values.keys where !fontIDs.contains(staleID) {
+        let staleIDs = values.keys.filter { !fontIDs.contains($0) }
+        for staleID in staleIDs {
             values.removeValue(forKey: staleID)
-            order.removeAll { $0 == staleID }
+            order.remove(staleID)
         }
     }
 
     func store(_ presentation: FontSearchPresentation, for fontID: String) {
         if values[fontID] != nil {
-            order.removeAll { $0 == fontID }
+            order.remove(fontID)
         }
         values[fontID] = presentation
-        order.append(fontID)
-        while order.count > limit {
-            let stale = order.removeFirst()
+        order.touch(fontID)
+        while order.count > limit, let stale = order.popTail() {
             values.removeValue(forKey: stale)
         }
     }
 
     func clear() {
         values.removeAll(keepingCapacity: true)
-        order.removeAll(keepingCapacity: true)
+        order.clear()
         token = ""
     }
 }

@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import os
 
 @main
 struct RootFontApp: App {
@@ -18,11 +19,14 @@ struct RootFontApp: App {
         self.activationService = activation
         _viewModel = StateObject(wrappedValue: browserViewModel)
         NSApplication.shared.setActivationPolicy(.regular)
-        NSApplication.shared.activate(ignoringOtherApps: true)
+        // Modern macOS discourages stealing focus on launch; the app will
+        // activate naturally when the user opens it. We only set the
+        // activation policy here.
         AppAppearanceApplier.applyImmediately(preferences.appearanceMode)
         do {
             try activation.reconcile()
         } catch {
+            AppLog.activation.error("startup reconcile failed: \(String(describing: error), privacy: .public)")
             browserViewModel.reportActivationReconcileFailure()
         }
     }
@@ -163,6 +167,8 @@ private struct AboutPanelView: View {
     let copyrightText: String
     @State private var didCopyVersion = false
     @State private var didCopySystemInfo = false
+    @State private var copyVersionResetTask: Task<Void, Never>?
+    @State private var copySystemInfoResetTask: Task<Void, Never>?
     private let logoFileName = "logo-rootfont-300x300"
     private let logoFileExtension = "png"
 
@@ -205,8 +211,10 @@ private struct AboutPanelView: View {
                 Button(didCopyVersion ? versionCopiedLabel : copyVersionLabel) {
                     copyToPasteboard(diagnosticsLine)
                     didCopyVersion = true
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-                        didCopyVersion = false
+                    copyVersionResetTask?.cancel()
+                    copyVersionResetTask = Task { @MainActor in
+                        try? await Task.sleep(nanoseconds: 1_200_000_000)
+                        if !Task.isCancelled { didCopyVersion = false }
                     }
                 }
                 .font(.caption)
@@ -214,8 +222,10 @@ private struct AboutPanelView: View {
                 Button(didCopySystemInfo ? systemInfoCopiedLabel : copySystemInfoLabel) {
                     copyToPasteboard("\(diagnosticsLine)\n\(systemInfoLine)")
                     didCopySystemInfo = true
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-                        didCopySystemInfo = false
+                    copySystemInfoResetTask?.cancel()
+                    copySystemInfoResetTask = Task { @MainActor in
+                        try? await Task.sleep(nanoseconds: 1_200_000_000)
+                        if !Task.isCancelled { didCopySystemInfo = false }
                     }
                 }
                 .font(.caption)

@@ -1,11 +1,12 @@
 import CoreText
 import Foundation
+import os
 
 /// Shared cache of `CTFontManagerCopyAvailableFontURLs` results.
 final class FontURLIndex: @unchecked Sendable {
     static let shared = FontURLIndex()
 
-    private let lock = NSLock()
+    private var lock = os_unfair_lock_s()
     private var cachedURLs: [URL]?
     private var cachedURLByPostScriptName: [String: URL]?
 
@@ -18,8 +19,8 @@ final class FontURLIndex: @unchecked Sendable {
     }
 
     var urls: [URL] {
-        lock.lock()
-        defer { lock.unlock() }
+        os_unfair_lock_lock(&lock)
+        defer { os_unfair_lock_unlock(&lock) }
         if let cachedURLs {
             return cachedURLs
         }
@@ -30,8 +31,8 @@ final class FontURLIndex: @unchecked Sendable {
     }
 
     func url(forPostScriptName postScriptName: String) -> URL? {
-        lock.lock()
-        defer { lock.unlock() }
+        os_unfair_lock_lock(&lock)
+        defer { os_unfair_lock_unlock(&lock) }
         if cachedURLByPostScriptName == nil {
             let urls = (CTFontManagerCopyAvailableFontURLs() as? [URL]) ?? []
             cachedURLs = urls
@@ -41,10 +42,10 @@ final class FontURLIndex: @unchecked Sendable {
     }
 
     func invalidate() {
-        lock.lock()
+        os_unfair_lock_lock(&lock)
+        defer { os_unfair_lock_unlock(&lock) }
         cachedURLs = nil
         cachedURLByPostScriptName = nil
-        lock.unlock()
     }
 
     private static func buildIndex(from urls: [URL]) -> [String: URL] {

@@ -3,7 +3,7 @@ import XCTest
 @testable import RootFontApp
 
 final class FontCatalogServiceWarmLoadTests: XCTestCase {
-    func testWarmLoadUsesCachedMetadataWithoutStyleResolver() throws {
+    func testWarmLoadUsesCachedMetadataWithoutStyleResolver() async throws {
         let temp = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: temp, withIntermediateDirectories: true)
@@ -37,7 +37,7 @@ final class FontCatalogServiceWarmLoadTests: XCTestCase {
             fontURLIndex: FontURLIndex(prefetchedURLs: [fontURL])
         )
 
-        let fonts = try service.loadFonts()
+        let fonts = try await service.drainFonts()
         XCTAssertEqual(fonts.count, 1)
         XCTAssertEqual(fonts[0].familyName, "Warm Mono")
         XCTAssertEqual(fonts[0].localizedFamilyNames["ja"], "ウォームモノ")

@@ -249,6 +249,61 @@ final class FontActivationServiceTests: XCTestCase {
         XCTAssertTrue(installed.hasPrefix(userFonts.standardizedFileURL.path + "/"))
     }
 
+    func testInstallRejectsSymlink() throws {
+        let sandbox = try makeSandbox()
+        defer { try? FileManager.default.removeItem(at: sandbox) }
+        let realFile = sandbox.appendingPathComponent("Real.ttf")
+        try Data("font".utf8).write(to: realFile)
+        let symlink = sandbox.appendingPathComponent("Link.ttf")
+        try FileManager.default.createSymbolicLink(at: symlink, withDestinationURL: realFile)
+
+        let service = FontActivationService(
+            manifestURL: sandbox.appendingPathComponent("manifest.json"),
+            userInstallDirectoryURL: sandbox.appendingPathComponent("UserFonts", isDirectory: true),
+            availableFontURLsProvider: { [symlink] },
+            registerAction: { _, _ in },
+            unregisterAction: { _, _ in }
+        )
+
+        XCTAssertThrowsError(try service.installForUser(fontID: "Link")) { error in
+            guard case FontActivationError.invalidFontFile = error else {
+                return XCTFail("Expected invalidFontFile for symlink, got \(error)")
+            }
+        }
+        XCTAssertFalse(service.isManaged(fontID: "Link"))
+    }
+
+    func testManifestMigratesLegacyV1Layout() throws {
+        let sandbox = try makeSandbox()
+        defer { try? FileManager.default.removeItem(at: sandbox) }
+        let manifestURL = sandbox.appendingPathComponent("manifest.json")
+        // Write a legacy v1 layout (bare dictionary, no version wrapper).
+        let legacy: [String: ActivatedFontEntry] = [
+            "Fira": ActivatedFontEntry(
+                fontID: "Fira",
+                originalURL: sandbox.appendingPathComponent("Fira.ttf"),
+                installedURL: nil,
+                scope: .process
+            )
+        ]
+        try JSONEncoder().encode(legacy).write(to: manifestURL)
+
+        let service = FontActivationService(
+            manifestURL: manifestURL,
+            userInstallDirectoryURL: sandbox.appendingPathComponent("UserFonts", isDirectory: true),
+            availableFontURLsProvider: { [] },
+            registerAction: { _, _ in },
+            unregisterAction: { _, _ in }
+        )
+
+        XCTAssertTrue(service.isManaged(fontID: "Fira"))
+        // Saving (via uninstall) should write the new versioned layout.
+        try service.uninstall(fontID: "Fira")
+        let wrapped = try JSONDecoder().decode(ActivatedFontManifest.self, from: Data(contentsOf: manifestURL))
+        XCTAssertEqual(wrapped.version, ActivatedFontManifest.currentSchemaVersion)
+        XCTAssertFalse(service.isManaged(fontID: "Fira"))
+    }
+
     private func makeSandbox() throws -> URL {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)

@@ -1,5 +1,6 @@
 import CoreText
 import Foundation
+import os
 
 protocol FontImportServiceProtocol: Sendable {
     @discardableResult
@@ -15,6 +16,7 @@ struct FontImportService: FontImportServiceProtocol {
             let ok = CTFontManagerRegisterFontsForURL(url as CFURL, .process, &error)
             if !ok {
                 _ = error?.takeRetainedValue()
+                AppLog.catalog.error("font import failed: \(url.path, privacy: .public)")
             }
             return ok
         }
@@ -24,10 +26,16 @@ struct FontImportService: FontImportServiceProtocol {
     func registerFonts(at urls: [URL]) -> Int {
         var success = 0
         for url in urls {
-            guard Self.isSupportedFontURL(url) else { continue }
+            guard Self.isSupportedFontURL(url) else {
+                AppLog.catalog.info("skipping unsupported font extension: \(url.path, privacy: .public)")
+                continue
+            }
             if registerAction(url) {
                 success += 1
             }
+        }
+        if success > 0 {
+            AppLog.catalog.info("imported \(success, privacy: .public) font(s)")
         }
         return success
     }

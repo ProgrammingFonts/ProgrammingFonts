@@ -23,7 +23,7 @@ struct FontFilterSignature: Hashable, Sendable {
 final class FontFilterResultCache {
     private let limit: Int
     private var values: [FontFilterSignature: [String]] = [:]
-    private var order: [FontFilterSignature] = []
+    private var order = LRUOrder<FontFilterSignature>()
 
     init(limit: Int) {
         self.limit = max(1, limit)
@@ -31,33 +31,32 @@ final class FontFilterResultCache {
 
     func value(for signature: FontFilterSignature) -> [String]? {
         let value = values[signature]
-#if DEBUG
+        #if DEBUG
         if value == nil {
             CacheDiagnostics.shared.recordMiss("filter-results")
         } else {
             CacheDiagnostics.shared.recordHit("filter-results")
         }
-#endif
+        #endif
         return value
     }
 
     func store(fontIDs: [String], for signature: FontFilterSignature) {
         if values[signature] != nil {
-            order.removeAll { $0 == signature }
+            order.remove(signature)
         }
         values[signature] = fontIDs
-        order.append(signature)
-        while order.count > limit {
-            let stale = order.removeFirst()
+        order.touch(signature)
+        while order.count > limit, let stale = order.popTail() {
             values.removeValue(forKey: stale)
-#if DEBUG
+            #if DEBUG
             CacheDiagnostics.shared.recordEviction("filter-results")
-#endif
+            #endif
         }
     }
 
     func clear() {
         values.removeAll(keepingCapacity: true)
-        order.removeAll(keepingCapacity: true)
+        order.clear()
     }
 }

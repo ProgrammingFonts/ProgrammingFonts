@@ -87,11 +87,15 @@ private enum TestError: Error, Sendable {
 }
 
 private struct SlowCatalogService: FontCatalogServiceProtocol {
-    func loadFonts(
-        onPartial: (@Sendable ([FontItem]) -> Void)?,
-        reportProgress: (@Sendable (Double) -> Void)?
-    ) throws -> [FontItem] {
-        Thread.sleep(forTimeInterval: 0.05)
-        return []
+    func loadFonts() -> AsyncStream<FontCatalogEvent> {
+        AsyncStream { continuation in
+            Task.detached(priority: .userInitiated) {
+                try? await Task.sleep(nanoseconds: 50_000_000)
+                continuation.yield(.partial([]))
+                continuation.yield(.progress(1.0))
+                continuation.yield(.completed([]))
+                continuation.finish()
+            }
+        }
     }
 }

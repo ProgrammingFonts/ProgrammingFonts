@@ -10,16 +10,17 @@ struct MockCatalogService: FontCatalogServiceProtocol {
         self.error = error
     }
 
-    func loadFonts(
-        onPartial: (@Sendable ([FontItem]) -> Void)?,
-        reportProgress: (@Sendable (Double) -> Void)?
-    ) throws -> [FontItem] {
-        if let error {
-            throw error
+    func loadFonts() -> AsyncStream<FontCatalogEvent> {
+        AsyncStream { continuation in
+            if error == nil {
+                continuation.yield(.partial(fonts))
+                continuation.yield(.progress(1.0))
+                continuation.yield(.completed(fonts))
+            } else {
+                continuation.yield(.failed)
+            }
+            continuation.finish()
         }
-        onPartial?(fonts)
-        reportProgress?(1.0)
-        return fonts
     }
 }
 
@@ -74,6 +75,7 @@ final class InMemoryPreferencesStore: PreferencesStoreProtocol {
     var sortOption: String = "familyName"
     var displayMode: String = "grid"
     var densityMode: String = "compact"
+    var listPreviewSize: Double = 18
     var smartCollectionsData: Data?
     var manualCollectionsData: Data?
     var fontTagsData: Data?
@@ -86,6 +88,35 @@ final class InMemoryPreferencesStore: PreferencesStoreProtocol {
     var appLanguage: AppLanguage {
         get { didChooseAppLanguage ? storedLanguage : .english }
         set { storedLanguage = newValue }
+    }
+
+    var schemaVersion: Int = PreferencesStore.currentSchemaVersion
+
+    func synchronize() {}
+
+    func reset() {
+        favoriteIDs.removeAll()
+        recentFontIDs.removeAll()
+        previewText = "Preview"
+        previewSize = 24
+        storedLanguage = .english
+        didChooseAppLanguage = false
+        appearanceMode = .system
+        showSystemAliasFonts = false
+        searchQuery = ""
+        sidebarFilter = "all"
+        sortOption = "familyName"
+        displayMode = "grid"
+        densityMode = "compact"
+        listPreviewSize = 18
+        smartCollectionsData = nil
+        manualCollectionsData = nil
+        fontTagsData = nil
+        scoreWeightsData = nil
+        fontFeaturePrefsData = nil
+        selectedFontID = nil
+        customSnippetsData = nil
+        watchFontFoldersEnabled = true
     }
 }
 

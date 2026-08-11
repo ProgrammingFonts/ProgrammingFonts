@@ -21,13 +21,15 @@ final class FontBrowserViewModel: ObservableObject {
     private var indexedFontIDs: Set<String> = []
     private var catalogEpoch: Int = 0
     private let filterCoordinator = FontFilterCoordinator()
-    private let searchPresentationCache = FontSearchPresentationCache(limit: 320)
+    private let presentationCoordinator = FontSearchPresentationCoordinator()
     private var monospacedFonts: [FontItem] = []
     var fontsByID: [String: FontItem] = [:]
     var filteredFontIDs: Set<String> = []
     private let scoreCoordinator = ProgrammingScoreCoordinator()
     let catalogCoordinator = FontCatalogCoordinator()
     private var pendingSelectedFontID: String?
+    private var searchIndexTask: Task<Void, Never>?
+    private var lastReportedProgress: Double = 0
 
     @Published private(set) var allFonts: [FontItem] = []
     @Published private(set) var filteredFonts: [FontItem] = []
@@ -58,6 +60,7 @@ final class FontBrowserViewModel: ObservableObject {
     @Published var activeManualCollectionID: String?
     @Published var activeTagName: String?
     @Published private(set) var workspaceModule: WorkspaceModule = .library
+    private let scorePreferences: ProgrammingScorePreferencesController
     @Published private(set) var scoreWeights: ScoreWeights = .default
     @Published private(set) var scoreWeightPreset: ScoreWeightPreset = .default
     @Published private(set) var fontHealthReport: FontHealthReport = .empty
@@ -74,6 +77,11 @@ final class FontBrowserViewModel: ObservableObject {
     ) {
         let preferencesController = FontBrowserPreferencesController(store: preferencesStore)
         let restored = preferencesController.restore()
+        let scorePrefs = ProgrammingScorePreferencesController(
+            preferencesController: preferencesController,
+            restored: restored.scoreWeights
+        )
+        self.scorePreferences = scorePrefs
         self.catalogService = catalogService
         self.fontImportService = fontImportService
         self.preferencesController = preferencesController
@@ -92,18 +100,15 @@ final class FontBrowserViewModel: ObservableObject {
         self.smartCollections = restored.smartCollections
         self.manualCollections = restored.manualCollections
         self.fontTagAssignments = restored.fontTagAssignments
+        self.scoreWeights = scorePrefs.weights
+        self.scoreWeightPreset = scorePrefs.preset
         self.rebuildTagIndex()
         self.trimmedCoverageQuery = ""
-        if let decoded = restored.scoreWeights {
-            self.scoreWeights = decoded
-            self.scoreWeightPreset = Self.bestMatchingPreset(for: decoded)
-        }
         self.fontFeaturePrefsMap = restored.featurePreferences
         self.managedFontIDs = catalogCoordinator.managedFontIDs(using: activationService)
         self.pendingSelectedFontID = restored.selectedFontID
         self.customSnippets = restored.customSnippets
     }
-
     func startCatalogWatcherIfNeeded() {
         guard preferencesController.watchFontFoldersEnabled else { return }
         let urls = FontCatalogWatcher.defaultWatchURLs()
@@ -134,11 +139,14 @@ final class FontBrowserViewModel: ObservableObject {
     }
 
     func handleFontTap(_ item: FontItem, commandKey: Bool) {
-        batchSelectedFontIDs = FontSelectionController.selectionAfterTap(
+        let next = FontSelectionController.selectionAfterTap(
             fontID: item.id,
             commandKey: commandKey,
             current: batchSelectedFontIDs
         )
+        if batchSelectedFontIDs != next {
+            batchSelectedFontIDs = next
+        }
         selectFont(item)
     }
 
@@ -196,7 +204,11 @@ final class FontBrowserViewModel: ObservableObject {
     func updateLanguage(_ value: AppLanguage) {
         language = value
         preferencesController.saveLanguage(value)
-        rebuildSearchPresentations(for: filteredFonts)
+        presentationCoordinator.rebuild(
+            for: filteredFonts,
+            language: language,
+            preparedQuery: preparedSearchQuery
+        )
     }
 
     func updateAppearanceMode(_ value: AppAppearanceMode) {
@@ -253,9 +265,9 @@ final class FontBrowserViewModel: ObservableObject {
     }
 
     func applyScoreWeightPreset(_ preset: ScoreWeightPreset) {
-        scoreWeightPreset = preset
-        scoreWeights = preset.weights
-        persistScoreWeights()
+        scorePreferences.applyPreset(preset)
+        scoreWeightPreset = scorePreferences.preset
+        scoreWeights = scorePreferences.weights
         scheduleProgrammingScoreRecalculation()
     }
 
@@ -263,9 +275,9 @@ final class FontBrowserViewModel: ObservableObject {
         _ keyPath: WritableKeyPath<ScoreWeights, Double>,
         value: Double
     ) {
-        scoreWeights[keyPath: keyPath] = value
-        scoreWeightPreset = Self.bestMatchingPreset(for: scoreWeights)
-        persistScoreWeights()
+        scorePreferences.updateWeight(keyPath, value: value)
+        scoreWeightPreset = scorePreferences.preset
+        scoreWeights = scorePreferences.weights
         scheduleScoreWeightRefresh()
     }
 
@@ -363,7 +375,9 @@ final class FontBrowserViewModel: ObservableObject {
             offset: offset,
             in: filteredFonts
         ) else { return }
-        batchSelectedFontIDs = [next.id]
+        if batchSelectedFontIDs != [next.id] {
+            batchSelectedFontIDs = [next.id]
+        }
         selectFont(next)
     }
 
@@ -383,10 +397,14 @@ final class FontBrowserViewModel: ObservableObject {
     func load() {
         guard !isLoading else { return }
         cancelScoreRecalculation()
+        searchIndexTask?.cancel()
+        searchIndexTask = nil
+        presentationCoordinator.cancel()
         FontURLIndex.shared.invalidate()
         managedFontIDs = catalogCoordinator.managedFontIDs(using: activationService)
         isLoading = true
         loadProgress = 0
+        lastReportedProgress = 0
         loadErrorMessage = nil
         catalogCoordinator.load(
             service: catalogService,
@@ -394,12 +412,25 @@ final class FontBrowserViewModel: ObservableObject {
                 self?.applyPartialLoadResult(fonts: fonts)
             },
             onProgress: { [weak self] progress in
-                self?.loadProgress = progress
+                self?.setLoadProgress(progress)
             },
             completion: { [weak self] outcome in
                 self?.applyLoadResult(fonts: outcome.fonts, failed: outcome.failed)
             }
         )
+    }
+
+    /// Throttles `loadProgress` so a catalog of thousands of fonts does not
+    /// fire `objectWillChange` once per enrichment completion. Only updates
+    /// when the value moves by at least 1%, or transitions to/from the
+    /// terminal `1.0` / `nil` states.
+    private func setLoadProgress(_ value: Double) {
+        let isTerminal = value >= 1.0
+        let delta = abs(value - lastReportedProgress)
+        if isTerminal || delta >= 0.01 {
+            lastReportedProgress = value
+            loadProgress = value
+        }
     }
 
     private func applyPartialLoadResult(fonts: [FontItem]) {
@@ -442,6 +473,7 @@ final class FontBrowserViewModel: ObservableObject {
         }
         isLoading = false
         loadProgress = nil
+        lastReportedProgress = 0
     }
 
     func applyFilters() {
@@ -507,10 +539,19 @@ final class FontBrowserViewModel: ObservableObject {
     }
 
     private func commitFilterResult(_ items: [FontItem]) {
+        // Skip the @Published write when the result is structurally identical
+        // to the current list — Combine's @Published does not diff, so an
+        // identical reassignment would still fire objectWillChange and
+        // re-render every observing view.
+        if items == filteredFonts { return }
         filteredFonts = items
         filteredFontIDs = Set(items.map(\.id))
         batchSelectedFontIDs = batchSelectedFontIDs.intersection(filteredFontIDs)
-        rebuildSearchPresentations(for: items)
+        presentationCoordinator.rebuild(
+            for: items,
+            language: language,
+            preparedQuery: preparedSearchQuery
+        )
         selectFirstIfNeeded()
     }
 
@@ -582,17 +623,27 @@ final class FontBrowserViewModel: ObservableObject {
             return
         }
 
-        searchIndexByFontID = Dictionary(uniqueKeysWithValues: allFonts.map { item in
-            let names = item.searchableNames
-            let normalized = names.map(SearchMatcher.normalize)
-            let choseong = names.map(SearchMatcher.choseongProjection)
-            return (item.id, FontFilterEngine.SearchIndexEntry(normalizedNames: normalized, choseongNames: choseong))
-        })
-        familyWeightCoverage = FamilyWeightCoverage.build(from: allFonts)
-        indexedFontIDs = nextIDs
-        rebuildMonospacedFonts()
-        catalogEpoch &+= 1
-        invalidateFilterResultCache()
+        let fonts = allFonts
+        searchIndexTask?.cancel()
+        searchIndexTask = Task { @MainActor [weak self] in
+            let (index, coverage) = await Task.detached(priority: .userInitiated) {
+                let index = Dictionary(uniqueKeysWithValues: fonts.map { item in
+                    let names = item.searchableNames
+                    let normalized = names.map(SearchMatcher.normalize)
+                    let choseong = names.map(SearchMatcher.choseongProjection)
+                    return (item.id, FontFilterEngine.SearchIndexEntry(normalizedNames: normalized, choseongNames: choseong))
+                })
+                return (index, FamilyWeightCoverage.build(from: fonts))
+            }.value
+            guard let self, !Task.isCancelled else { return }
+            self.searchIndexByFontID = index
+            self.familyWeightCoverage = coverage
+            self.indexedFontIDs = nextIDs
+            self.rebuildMonospacedFonts()
+            self.catalogEpoch &+= 1
+            self.invalidateFilterResultCache()
+            self.applyFilters()
+        }
     }
 
     func rebuildTagIndex() {
@@ -630,52 +681,11 @@ final class FontBrowserViewModel: ObservableObject {
     }
 
     func searchPresentation(for item: FontItem) -> FontSearchPresentation {
-        if preparedSearchQuery.isEmpty {
-            return FontSearchPresentationBuilder.build(
-                for: item,
-                language: language,
-                preparedQuery: preparedSearchQuery
-            )
-        }
-        if let cached = searchPresentationCache.value(for: item.id) {
-            return cached
-        }
-        let built = FontSearchPresentationBuilder.build(
+        presentationCoordinator.presentation(
             for: item,
             language: language,
             preparedQuery: preparedSearchQuery
         )
-        searchPresentationCache.store(built, for: item.id)
-        return built
-    }
-
-    private func rebuildSearchPresentations(for items: [FontItem]? = nil) {
-        guard !preparedSearchQuery.isEmpty else {
-            searchPresentationCache.clear()
-            return
-        }
-        let token = searchPresentationToken()
-        let sourceItems = items ?? filteredFonts
-        searchPresentationCache.resetIfNeeded(token: token)
-
-        let sourceIDs = Set(sourceItems.map(\.id))
-        searchPresentationCache.retain(fontIDs: sourceIDs)
-
-        let lang = language
-        let prepared = preparedSearchQuery
-        for item in sourceItems.prefix(320) {
-            if searchPresentationCache.value(for: item.id) != nil { continue }
-            let built = FontSearchPresentationBuilder.build(
-                for: item,
-                language: lang,
-                preparedQuery: prepared
-            )
-            searchPresentationCache.store(built, for: item.id)
-        }
-    }
-
-    private func searchPresentationToken() -> String {
-        "\(language.rawValue)|\(preparedSearchQuery.normalized)|\(preparedSearchQuery.choseong)"
     }
 
     func preferredSearchDisplay(for item: FontItem) -> (primary: String, secondary: String) {
@@ -686,18 +696,6 @@ final class FontBrowserViewModel: ObservableObject {
     /// Exposed for list/grid highlighting so cells reuse the same prepared query.
     var preparedQueryForHighlight: SearchMatcher.PreparedQuery {
         preparedSearchQuery
-    }
-
-    private func persistScoreWeights() {
-        preferencesController.saveScoreWeights(scoreWeights)
-    }
-
-    private static func bestMatchingPreset(for weights: ScoreWeights) -> ScoreWeightPreset {
-        if weights == ScoreWeightPreset.default.weights { return .default }
-        if weights == ScoreWeightPreset.terminalHeavy.weights { return .terminalHeavy }
-        if weights == ScoreWeightPreset.ideHeavy.weights { return .ideHeavy }
-        if weights == ScoreWeightPreset.minimalist.weights { return .minimalist }
-        return .default
     }
 
     func supportsAllCharacters(font: NSFont, text: String) -> Bool {

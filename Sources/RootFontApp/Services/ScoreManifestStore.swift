@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 protocol ScoreManifestStoreProtocol: Sendable {
     func load() -> [String: CachedScoreEntry]
@@ -62,21 +63,26 @@ struct CachedScoreEntry: Codable, Sendable, Hashable {
 
 struct ScoreManifestStore: ScoreManifestStoreProtocol, @unchecked Sendable {
     private final class ScoreMemoryCache: @unchecked Sendable {
-        private let lock = NSLock()
+        private var lock = os_unfair_lock_s()
         private var entries: [String: CachedScoreEntry]?
 
         func read() -> [String: CachedScoreEntry]? {
-            lock.lock()
-            defer { lock.unlock() }
+            os_unfair_lock_lock(&lock)
+            defer { os_unfair_lock_unlock(&lock) }
             return entries
         }
 
         func write(_ value: [String: CachedScoreEntry]) {
-            lock.lock()
-            defer { lock.unlock() }
+            os_unfair_lock_lock(&lock)
+            defer { os_unfair_lock_unlock(&lock) }
             entries = value
         }
     }
+
+    /// Current persisted manifest schema version. Bump on breaking
+    /// changes to `CachedScoreEntry` / `CachedCatalogMetadata` and add a
+    /// migration branch in `readEntriesFromDisk()`.
+    static let currentSchemaVersion = 2
 
     private let fileManager: FileManager
     private let manifestURL: URL
@@ -121,6 +127,7 @@ struct ScoreManifestStore: ScoreManifestStoreProtocol, @unchecked Sendable {
             entryCache.write(entries)
             return true
         } catch {
+            AppLog.score.error("score manifest save failed: \(String(describing: error), privacy: .public)")
             return false
         }
     }
@@ -129,17 +136,35 @@ struct ScoreManifestStore: ScoreManifestStoreProtocol, @unchecked Sendable {
         guard let data = try? Data(contentsOf: manifestURL) else {
             return [:]
         }
-        return (try? JSONDecoder().decode([String: CachedScoreEntry].self, from: data)) ?? [:]
+        do {
+            return try JSONDecoder().decode([String: CachedScoreEntry].self, from: data)
+        } catch {
+            AppLog.score.error("score manifest decode failed: \(String(describing: error), privacy: .public)")
+            return [:]
+        }
     }
 
+    /// Cache key combines PostScript name + file mtime at nanosecond
+    /// precision + file size. Sub-second font file replacements (e.g. an
+    /// installer overwriting the same path) are detected via the
+    /// nanosecond component; size handles same-mtime replacements.
     func cacheKey(for postScriptName: String, fileURL: URL) -> String {
+        let attrs = try? fileManager.attributesOfItem(atPath: fileURL.path)
         let mtime: TimeInterval
-        if let attrs = try? fileManager.attributesOfItem(atPath: fileURL.path),
+        let size: UInt64
+        if let attrs,
            let date = attrs[.modificationDate] as? Date {
             mtime = date.timeIntervalSince1970
         } else {
             mtime = 0
         }
-        return "\(postScriptName)|\(Int(mtime))"
+        if let attrs,
+           let sizeValue = attrs[.size] as? NSNumber {
+            size = sizeValue.uint64Value
+        } else {
+            size = 0
+        }
+        let mtimeNanos = Int64((mtime * 1_000_000_000).rounded())
+        return "\(postScriptName)|\(mtimeNanos)|\(size)"
     }
 }
